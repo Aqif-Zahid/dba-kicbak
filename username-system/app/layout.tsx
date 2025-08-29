@@ -1,17 +1,16 @@
-// app/layout.tsx
-import { ClerkProvider } from "@clerk/nextjs";
+import Providers from './providers';
 
 export const metadata = {
-  title: "kicbak",
-  description: "kicbak app",
+  title: 'kicbak',
+  description: 'kicbak app',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <ClerkProvider>
-      <html lang="en">
-        <body>{children}</body>
-      </html>
-    </ClerkProvider>
+    <html lang="en">
+      <body>
+        <Providers>{children}</Providers>
+      </body>
+    </html>
   );
 }
