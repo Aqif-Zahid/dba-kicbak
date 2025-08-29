@@ -1,18 +1,8 @@
-// middleware.ts (project root)
-
+// middleware.ts
 import { clerkMiddleware } from "@clerk/nextjs/server";
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
-import { updateSession } from "@/lib/supabase/middleware";
 
-// Run Clerk first, then your Supabase session updater.
-// Return the response from updateSession if it sets cookies, else continue.
-export default clerkMiddleware(async (_auth, req: NextRequest) => {
-  const res = await updateSession(req);
-  return res || NextResponse.next();
-});
+export default clerkMiddleware();
 
-// One config only. Use Clerk's recommended matcher plus API routes.
 export const config = {
   matcher: [
     // Skip Next.js internals and static files unless in query
