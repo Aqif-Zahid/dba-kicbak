@@ -56,7 +56,7 @@ export default function HomePage() {
         <div className="max-w-2xl mx-auto text-center space-y-8">
           <div className="space-y-4">
             <h1 className="text-4xl md:text-6xl font-bold text-foreground">
-              Claim Your <span className="text-primary">Username</span>
+              Claim Your Username
             </h1>
             <p className="text-xl text-muted-foreground">
               Secure your unique identity on Kicbak before someone else does.
