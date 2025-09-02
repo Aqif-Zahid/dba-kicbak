@@ -1,15 +1,19 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { GeistSans } from "geist/font/sans"
-import { GeistMono } from "geist/font/mono"
-import { Analytics } from "@vercel/analytics/next"
-import { ClerkProvider } from "@clerk/nextjs"
+import { Geist } from "next/font/google"
 import { Suspense } from "react"
+import { ClerkProvider } from "@clerk/nextjs"
 import "./globals.css"
+
+const geistSans = Geist({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-geist-sans",
+})
 
 export const metadata: Metadata = {
   title: "Kicbak",
-  description: "Your Kicbak application",
+  description: "Experience the power of innovation",
   generator: "v0.app",
 }
 
@@ -20,10 +24,10 @@ export default function RootLayout({
 }>) {
   return (
     <ClerkProvider>
-      <html lang="en">
-        <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable}`}>
-          <Suspense fallback={null}>{children}</Suspense>
-          <Analytics />
+      <html lang="en" className={`${geistSans.variable} antialiased`}>
+        <body className="font-sans">
+          <Suspense fallback={<div>Loading...</div>}>{children}</Suspense>
+          {/* Analytics component removed */}
         </body>
       </html>
     </ClerkProvider>
