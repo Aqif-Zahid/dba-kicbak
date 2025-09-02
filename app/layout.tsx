@@ -9,6 +9,11 @@ export const metadata: Metadata = {
   title: "Kicbak",
   description: "Experience the power of innovation",
   generator: "v0.app",
+  icons: {
+    icon: "/favicon.png",
+    shortcut: "/favicon.png",
+    apple: "/favicon.png",
+  },
 }
 
 export default function RootLayout({
