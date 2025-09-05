@@ -37,7 +37,7 @@ export default function HomePage() {
           </div>
         </header>
         <main className="container mx-auto px-4 py-12">
-          <div className="max-w-2xl mx-auto text-center space-y-6">
+          <div className="max-w-2xl mx-auto text-center space-y-12">
             <h1 className="text-3xl font-bold">Welcome back, {user.firstName}!</h1>
             <p className="text-muted-foreground">Your Kicbak account is ready to go.</p>
           </div>
@@ -50,7 +50,7 @@ export default function HomePage() {
     <div className="min-h-screen bg-background">
       <header className="border-b border-border">
         <div className="container mx-auto px-4 py-6 flex justify-between items-center">
-          <Image src="/kicbak-logo.png" alt="Kicbak" width={200} height={60} className="h-6 w-auto" />
+          <Image src="/kicbak-logo.png" alt="Kicbak" width={200} height={60} className="h-12 w-auto" />
           <div className="flex gap-4">
             <SignInButton mode="modal">
               <button className="text-foreground hover:text-primary transition-colors">Sign In</button>
@@ -60,20 +60,17 @@ export default function HomePage() {
       </header>
 
       <main className="container mx-auto px-4 py-12">
-        <div className="max-w-2xl mx-auto text-center space-y-8">
-          <div className="space-y-4">
-            <h1 className="text-4xl md:text-5xl text-foreground">
-              Kicbak cuts out the travel middlemen.
-              <br />
-              Now, you get their commission.
+        <div className="max-w-full mx-auto text-center space-y-16">
+          <div className="space-y-12">
+            <h1 className="text-5xl md:text-6xl lg:text-7xl text-foreground">
+              Kicbak cuts out the travel middlemen.<br />Now, you get their commission.
             </h1>
-            <p className="text-lg sm:text-xl lg:text-xl text-muted-foreground">
-              Kicbak™ is a peer-to-peer travel ecosystem where everyone is rewarded when travelers book direct. Unlike
-              extractive middlemen, we kick 100% of the commissions back to you, the members.
+            <p className="max-w-4xl mx-auto text-lg sm:text-xl lg:text-xl text-muted-foreground">
+              Kicbak™ is a peer-to-peer travel ecosystem where everyone is rewarded when travelers book direct. Unlike extractive middlemen, we kick 100% of the commissions back to you, the members.
             </p>
           </div>
 
-          <div className="max-w-md mx-auto space-y-4">
+          <div className="max-w-md mx-auto space-y-12">
             <div className="flex gap-2">
               <div className="flex-1 relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">@</span>
