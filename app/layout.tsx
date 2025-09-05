@@ -7,7 +7,7 @@ import "./globals.css"
 
 export const metadata: Metadata = {
   title: "Kicbak",
-  description: "Experience the power of innovation",
+  description: "Kicbak cuts out the travel middleman.",
   generator: "v0.app",
   icons: {
     icon: "/favicon.png",
@@ -22,7 +22,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <ClerkProvider>
+    <ClerkProvider publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}>
       <html lang="en" className={`${GeistSans.variable} ${GeistMono.variable} antialiased`}>
         <body className="font-sans">
           <Suspense fallback={<div>Loading...</div>}>{children}</Suspense>

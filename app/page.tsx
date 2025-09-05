@@ -9,15 +9,22 @@ export default function HomePage() {
   const [username, setUsername] = useState("")
   const [isChecking, setIsChecking] = useState(false)
   const [isAvailable, setIsAvailable] = useState<boolean | null>(null)
+  const [isValidLength, setIsValidLength] = useState(false)
 
   const checkUsername = async () => {
-    if (!username.trim()) return
+    if (!username.trim() || username.length < 4) return
 
     setIsChecking(true)
-    // Simulate username availability check
     await new Promise((resolve) => setTimeout(resolve, 1000))
-    setIsAvailable(Math.random() > 0.3) // 70% chance available
+    setIsAvailable(Math.random() > 0.3)
     setIsChecking(false)
+  }
+
+  const handleClaimUsername = () => {
+    if (isAvailable && username.length >= 4) {
+      localStorage.setItem("claimUsername", username)
+      document.querySelector("[data-clerk-sign-up]")?.click()
+    }
   }
 
   if (isSignedIn) {
@@ -43,7 +50,7 @@ export default function HomePage() {
     <div className="min-h-screen bg-background">
       <header className="border-b border-border">
         <div className="container mx-auto px-4 py-6 flex justify-between items-center">
-          <Image src="/kicbak-logo.png" alt="Kicbak" width={200} height={60} className="h-12 w-auto" />
+          <Image src="/kicbak-logo.png" alt="Kicbak" width={200} height={60} className="h-6 w-auto" />
           <div className="flex gap-4">
             <SignInButton mode="modal">
               <button className="text-foreground hover:text-primary transition-colors">Sign In</button>
@@ -55,11 +62,14 @@ export default function HomePage() {
       <main className="container mx-auto px-4 py-12">
         <div className="max-w-2xl mx-auto text-center space-y-8">
           <div className="space-y-4">
-            <h1 className="text-4xl md:text-6xl font-bold text-foreground">
-              Claim Your Username
+            <h1 className="text-4xl md:text-5xl text-foreground">
+              Kicbak cuts out the travel middlemen.
+              <br />
+              Now, you get their commission.
             </h1>
-            <p className="text-xl text-muted-foreground">
-              Secure your unique identity on Kicbak before someone else does.
+            <p className="text-lg sm:text-xl lg:text-xl text-muted-foreground">
+              Kicbak™ is a peer-to-peer travel ecosystem where everyone is rewarded when travelers book direct. Unlike
+              extractive middlemen, we kick 100% of the commissions back to you, the members.
             </p>
           </div>
 
@@ -69,23 +79,33 @@ export default function HomePage() {
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">@</span>
                 <input
                   type="text"
-                  placeholder="your-username"
+                  placeholder="username"
                   value={username}
                   onChange={(e) => {
-                    setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))
+                    const newUsername = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "")
+                    setUsername(newUsername)
+                    setIsValidLength(newUsername.length >= 4)
                     setIsAvailable(null)
                   }}
-                  className="w-full pl-8 pr-4 py-3 border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full pl-8 pr-4 py-3 border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none ring-2 ring-primary focus:ring-primary"
                 />
               </div>
               <button
                 onClick={checkUsername}
-                disabled={!username.trim() || isChecking}
-                className="px-6 py-3 bg-primary text-primary-foreground rounded-lg font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={!isValidLength || isChecking}
+                className={`px-6 py-3 bg-primary text-primary-foreground rounded-lg font-semibold transition-all duration-200 hover:bg-primary/90 hover:scale-105 cursor-pointer ${
+                  username.trim() && isValidLength ? "animate-pulse shadow-lg shadow-primary/25" : ""
+                }`}
               >
-                {isChecking ? "Checking..." : "Check"}
+                {isChecking ? "Checking..." : "Claim Your Username"}
               </button>
             </div>
+
+            {username.length > 0 && username.length < 4 && (
+              <div className="p-3 rounded-lg text-sm bg-yellow-50 text-yellow-700 border border-yellow-200">
+                Username must be at least 4 characters long
+              </div>
+            )}
 
             {isAvailable !== null && (
               <div
@@ -100,8 +120,12 @@ export default function HomePage() {
             )}
 
             {isAvailable && (
-              <SignUpButton mode="modal">
-                <button className="w-full bg-primary text-primary-foreground px-8 py-3 rounded-lg font-semibold hover:bg-primary/90 transition-colors">
+              <SignUpButton mode="modal" forceRedirectUrl={`/?username=${username}`}>
+                <button
+                  onClick={handleClaimUsername}
+                  data-clerk-sign-up
+                  className="w-full bg-primary text-primary-foreground px-8 py-3 rounded-lg font-semibold hover:bg-primary/90 transition-colors"
+                >
                   Claim @{username}
                 </button>
               </SignUpButton>
