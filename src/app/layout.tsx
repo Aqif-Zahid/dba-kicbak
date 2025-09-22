@@ -1,9 +1,10 @@
 import type React from "react";
 import type { Metadata } from "next";
-import { GeistSans, GeistMono } from "geist/font";
+import { GeistSans } from "geist/font/sans";
+import { GeistMono } from "geist/font/mono";
 import { Suspense } from "react";
-import { ClerkProvider } from "@clerk/nextjs";
 import "../styles/globals.css";
+import { NuqsAdapter } from "nuqs/adapters/next/app";
 
 export const metadata: Metadata = {
   title: "Kicbak",
@@ -21,17 +22,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider
-      publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
+    <html
+      lang="en"
+      className={`${GeistSans.variable} ${GeistMono.variable} antialiased`}
     >
-      <html
-        lang="en"
-        className={`${GeistSans.variable} ${GeistMono.variable} antialiased`}
-      >
-        <body className="font-sans">
+      <body className="font-sans">
+        <NuqsAdapter>
           <Suspense fallback={<div>Loading...</div>}>{children}</Suspense>
-        </body>
-      </html>
-    </ClerkProvider>
+        </NuqsAdapter>
+      </body>
+    </html>
   );
 }

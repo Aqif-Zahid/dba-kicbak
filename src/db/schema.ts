@@ -1,4 +1,3 @@
-// drizzle/schema.ts
 import {
   pgTable,
   text,
@@ -10,94 +9,129 @@ import {
   primaryKey,
   unique,
   foreignKey,
-  serial
-} from 'drizzle-orm/pg-core';
+  serial,
+} from "drizzle-orm/pg-core";
 
 // ===== Enums =====
-export const userStatusEnum = pgEnum('user_status', ['PENDING', 'ACTIVE', 'BLOCKED']);
-export const profileRoleEnum = pgEnum('profile_role', ['TRAVELER', 'OPERATOR', 'CREATOR', 'AGENT', 'ADMIN']);
-export const referralCodeTypeEnum = pgEnum('referral_code_type', ['WAITLIST', 'CAMPAIGN']);
-export const waitlistStatusEnum = pgEnum('waitlist_status', ['UNCONFIRMED', 'CONFIRMED', 'ACTIVATED']);
-export const referralStatusEnum = pgEnum('referral_status', ['CLICKED', 'SIGNED_UP', 'CONFIRMED', 'ACTIVATED']);
-export const rewardsReasonEnum = pgEnum('rewards_reason', ['REFERRAL_SIGNUP', 'REFERRAL_ACTIVATION', 'INVITE_BOUNTY', 'MANUAL_ADJUST']);
-export const emailEventEnum = pgEnum('email_event', ['SEND_CONFIRM', 'CONFIRM_CLICKED', 'WELCOME_SENT']);
+export const userStatusEnum = pgEnum("user_status", [
+  "PENDING",
+  "ACTIVE",
+  "BLOCKED",
+]);
+export const profileRoleEnum = pgEnum("profile_role", [
+  "TRAVELER",
+  "OPERATOR",
+  "CREATOR",
+  "AGENT",
+  "ADMIN",
+]);
+export const referralCodeTypeEnum = pgEnum("referral_code_type", [
+  "WAITLIST",
+  "CAMPAIGN",
+]);
+export const waitlistStatusEnum = pgEnum("waitlist_status", [
+  "UNCONFIRMED",
+  "CONFIRMED",
+  "ACTIVATED",
+]);
+export const referralStatusEnum = pgEnum("referral_status", [
+  "CLICKED",
+  "SIGNED_UP",
+  "CONFIRMED",
+  "ACTIVATED",
+]);
+export const rewardsReasonEnum = pgEnum("rewards_reason", [
+  "REFERRAL_SIGNUP",
+  "REFERRAL_ACTIVATION",
+  "INVITE_BOUNTY",
+  "MANUAL_ADJUST",
+]);
+export const emailEventEnum = pgEnum("email_event", [
+  "SEND_CONFIRM",
+  "CONFIRM_CLICKED",
+  "WELCOME_SENT",
+]);
 
 // ===== Tables =====
 
 // Users
-export const users = pgTable('users', {
+export const users = pgTable("users", {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
-  email: text('email').notNull().unique(),
-  status: userStatusEnum('status').notNull(),
-  username: text('username').notNull().unique(),
-  displayName: text('display_name'),
-  role: profileRoleEnum('role').notNull(),
-  personaTags: jsonb('persona_tags').default([]),
-  positionNumber: integer('position_number').unique(),
+  email: text("email").notNull().unique(),
+  status: userStatusEnum("status").notNull(),
+  username: text("username").notNull().unique(),
+  displayName: text("display_name"),
+  role: profileRoleEnum("role").notNull(),
+  personaTags: jsonb("persona_tags").default([]),
+  positionNumber: integer("position_number").unique(),
 });
 
 // Referral Codes
-export const referralCodes = pgTable('referral_codes', {
-  code: text('code').notNull().primaryKey(),
-  type: referralCodeTypeEnum('type').notNull(),
-  active: boolean('active').default(true),
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+export const referralCodes = pgTable("referral_codes", {
+  code: text("code").notNull().primaryKey(),
+  type: referralCodeTypeEnum("type").notNull(),
+  active: boolean("active").default(true),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
 });
 
 // Waitlist Signups
-export const waitlistSignups = pgTable('waitlist_signups', {
+export const waitlistSignups = pgTable("waitlist_signups", {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
-  userId: integer('user_id').references(() => users.id),
-  email: text('email').notNull(),
-  usernameDesired: text('username_desired'),
-  personaSelected: jsonb('persona_selected').default([]),
-  source: text('source'),
-  referralCode: text('referral_code').references(() => referralCodes.code),
-  referrerUserId: integer('referrer_user_id').references(() => users.id),
-  inviteRequired: boolean('invite_required').default(true),
-  status: waitlistStatusEnum('status').notNull(),
-  positionNumber: integer('position_number'),
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  userId: integer("user_id").references(() => users.id),
+  email: text("email").notNull(),
+  usernameDesired: text("username_desired"),
+  personaSelected: jsonb("persona_selected").default([]),
+  source: text("source"),
+  referralCode: text("referral_code").references(() => referralCodes.code),
+  referrerUserId: integer("referrer_user_id").references(() => users.id),
+  inviteRequired: boolean("invite_required").default(true),
+  status: waitlistStatusEnum("status").notNull(),
+  positionNumber: integer("position_number"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
 });
 
 // Referrals
-export const referrals = pgTable('referrals', {
-  id: integer().primaryKey().generatedAlwaysAsIdentity(),
-  referrerUserId: integer('referrer_user_id').references(() => users.id),
-  referredEmail: text('referred_email'),
-  referredUserId: integer('referred_user_id').references(() => users.id),
-  referralCode: text('referral_code').references(() => referralCodes.code),
-  signupId: integer('signup_id').references(() => waitlistSignups.id),
-  status: referralStatusEnum('status').notNull(),
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
-  lastEventAt: timestamp('last_event_at', { withTimezone: true }),
-}, (table) => ({
-  referrerIdx: unique().on(table.referrerUserId),
-  referredIdx: unique().on(table.referredUserId),
-}));
+export const referrals = pgTable(
+  "referrals",
+  {
+    id: integer().primaryKey().generatedAlwaysAsIdentity(),
+    referrerUserId: integer("referrer_user_id").references(() => users.id),
+    referredEmail: text("referred_email"),
+    referredUserId: integer("referred_user_id").references(() => users.id),
+    referralCode: text("referral_code").references(() => referralCodes.code),
+    signupId: integer("signup_id").references(() => waitlistSignups.id),
+    status: referralStatusEnum("status").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+    lastEventAt: timestamp("last_event_at", { withTimezone: true }),
+  },
+  (table) => ({
+    referrerIdx: unique().on(table.referrerUserId),
+    referredIdx: unique().on(table.referredUserId),
+  })
+);
 
 // Rewards Ledger
-export const rewardsLedger = pgTable('rewards_ledger', {
+export const rewardsLedger = pgTable("rewards_ledger", {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
-  userId: integer('user_id').references(() => users.id),
-  deltaPoints: integer('delta_points').notNull(),
-  reason: rewardsReasonEnum('reason').notNull(),
-  refId: integer('ref_id'),
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  userId: integer("user_id").references(() => users.id),
+  deltaPoints: integer("delta_points").notNull(),
+  reason: rewardsReasonEnum("reason").notNull(),
+  refId: integer("ref_id"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
 });
 
 // Email Events
-export const emailEvents = pgTable('email_events', {
+export const emailEvents = pgTable("email_events", {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
-  signupId: integer('signup_id').references(() => waitlistSignups.id),
-  email: text('email'),
-  event: emailEventEnum('event').notNull(),
-  providerId: text('provider_id'),
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  signupId: integer("signup_id").references(() => waitlistSignups.id),
+  email: text("email"),
+  event: emailEventEnum("event").notNull(),
+  providerId: text("provider_id"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
 });
 
 // ===== Indexes & Constraints Notes (for manual migration if needed) =====
 // profiles(username) => already unique
 // waitlist_signups(email) => partial index (status in ('unconfirmed','confirmed','activated')) -- must be added manually in migration
 // referral_codes(code) => already unique
-// referrals(referrer_user_id), referrals(referred_user_id), referrals(status) => you can define indexes manually in migration or use `drizzle-kit` 
+// referrals(referrer_user_id), referrals(referred_user_id), referrals(status) => you can define indexes manually in migration or use `drizzle-kit`

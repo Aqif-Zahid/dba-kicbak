@@ -1,11 +1,11 @@
 // src/app/api/signup/route.ts
 
-import { NextResponse } from 'next/server';
-import { z } from 'zod';
-import { db } from '@/src/lib/db'; // adjust this to your actual DB client
-import { waitlistSignups, referralCodes, referrals } from '@/src/db/schema';
-import { eq } from 'drizzle-orm';
-import { nanoid } from 'nanoid';
+import { NextResponse } from "next/server";
+import { z } from "zod";
+import { db } from "@/lib/db"; // adjust this to your actual DB client
+import { waitlistSignups, referralCodes, referrals } from "@/db/schema";
+import { eq } from "drizzle-orm";
+import { nanoid } from "nanoid";
 
 // === Zod validation ===
 const signupSchema = z.object({
@@ -23,12 +23,18 @@ export async function POST(req: Request) {
 
   if (!parse.success) {
     return NextResponse.json(
-      { error: 'Invalid input', details: parse.error.flatten() },
+      { error: "Invalid input", details: parse.error.flatten() },
       { status: 400 }
     );
   }
 
-  const { email, usernameDesired, personaSelected = [], referralCode, source } = parse.data;
+  const {
+    email,
+    usernameDesired,
+    personaSelected = [],
+    referralCode,
+    source,
+  } = parse.data;
 
   try {
     // 1. Check if already signed up
@@ -38,7 +44,7 @@ export async function POST(req: Request) {
 
     if (existingSignup) {
       return NextResponse.json({
-        message: 'Already signed up',
+        message: "Already signed up",
         status: existingSignup.status,
       });
     }
@@ -54,7 +60,7 @@ export async function POST(req: Request) {
 
       if (!code || !code.active) {
         return NextResponse.json(
-          { error: 'Invalid or inactive referral code' },
+          { error: "Invalid or inactive referral code" },
           { status: 400 }
         );
       }
@@ -73,7 +79,7 @@ export async function POST(req: Request) {
       referralCode: validReferralCode,
       referrerUserId,
       inviteRequired: true,
-      status: 'UNCONFIRMED',
+      status: "UNCONFIRMED",
       createdAt: new Date(),
     });
 
@@ -84,21 +90,20 @@ export async function POST(req: Request) {
         referredEmail: email,
         referralCode: validReferralCode,
         signupId: signupId,
-        status: 'SIGNED_UP',
+        status: "SIGNED_UP",
         createdAt: new Date(),
       });
     }
 
     // 5. Return success
     return NextResponse.json(
-      { message: 'Signed up successfully', status: 'UNCONFIRMED' },
+      { message: "Signed up successfully", status: "UNCONFIRMED" },
       { status: 201 }
     );
-
   } catch (err) {
-    console.error('Signup Error:', err);
+    console.error("Signup Error:", err);
     return NextResponse.json(
-      { error: 'Internal Server Error' },
+      { error: "Internal Server Error" },
       { status: 500 }
     );
   }
