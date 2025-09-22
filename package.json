@@ -49,6 +49,7 @@
     "drizzle-orm": "^0.44.5",
     "embla-carousel-react": "8.5.1",
     "eslint-config-next": "^15.5.3",
+    "framer-motion": "^12.23.18",
     "geist": "^1.5.1",
     "input-otp": "1.4.1",
     "lucide-react": "^0.454.0",

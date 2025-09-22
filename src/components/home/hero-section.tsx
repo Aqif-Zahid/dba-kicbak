@@ -2,10 +2,10 @@
 import { useSigninModal } from "@/hooks/use-signin-modal";
 import { useSignupModal } from "@/hooks/use-signup-modal";
 import { useState } from "react";
+import { motion } from "framer-motion";
 
 export const HeroSection = () => {
   const isSignedIn = false;
-  // const { isSignedIn, user } = useUser()
   const { open } = useSigninModal();
   const { open: openSignup } = useSignupModal();
 
@@ -28,6 +28,22 @@ export const HeroSection = () => {
       openSignup();
     }
   };
+
+  // Framer Motion variants
+  const fadeUp = {
+    hidden: { opacity: 0, y: 30 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.6 } },
+  };
+
+  const fadeUpStagger = {
+    hidden: { opacity: 0, y: 30 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { staggerChildren: 0.15, delayChildren: 0.3 },
+    },
+  };
+
   return (
     <section>
       {isSignedIn ? (
@@ -43,8 +59,13 @@ export const HeroSection = () => {
         </main>
       ) : (
         <main className="container mx-auto px-4 py-12">
-          <div className="max-w-full mx-auto text-center space-y-16">
-            <div className="space-y-12">
+          <motion.div
+            className="max-w-full mx-auto text-center space-y-16"
+            initial="hidden"
+            animate="visible"
+            variants={fadeUpStagger}
+          >
+            <motion.div className="space-y-12" variants={fadeUp}>
               <h1 className="text-5xl md:text-6xl lg:text-7xl text-foreground">
                 Kicbak cuts out the travel middlemen.
                 <br />
@@ -56,9 +77,12 @@ export const HeroSection = () => {
                 middlemen, we kick 100% of the commissions back to you, the
                 members.
               </p>
-            </div>
+            </motion.div>
 
-            <div className="max-w-md mx-auto space-y-12">
+            <motion.div
+              className="max-w-md mx-auto space-y-12"
+              variants={fadeUp}
+            >
               <div className="flex gap-2">
                 <div>
                   <div className="flex-1 relative">
@@ -128,15 +152,18 @@ export const HeroSection = () => {
                   Claim @{username}
                 </button>
               )}
-            </div>
+            </motion.div>
 
-            <div className="text-sm text-muted-foreground">
+            <motion.div
+              className="text-sm text-muted-foreground"
+              variants={fadeUp}
+            >
               Already have an account?
               <button className="text-primary hover:underline" onClick={open}>
                 Sign in here
               </button>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
         </main>
       )}
     </section>
