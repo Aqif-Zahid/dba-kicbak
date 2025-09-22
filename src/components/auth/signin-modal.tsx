@@ -63,9 +63,11 @@ export const SigninModal = () => {
   };
 
   return (
-    <ResponsiveModal open={isOpen} onOpenChange={close}>
+    <ResponsiveModal open={isOpen} onOpenChange={close} size={"sm"}>
       <div className="text-center mb-4">
-        <h2 className="font-bold text-lg mb-1">Sign in to Kicbak </h2>
+        <h2 className="font-bold text-gray-700 text-lg mb-1">
+          Sign in to Kicbak{" "}
+        </h2>
         <p className="text-muted-foreground text-sm">
           Welcome back! Please sign in to continue
         </p>

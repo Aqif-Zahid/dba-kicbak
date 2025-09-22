@@ -1,11 +1,13 @@
 "use client";
 import { useSigninModal } from "@/hooks/use-signin-modal";
+import { useSignupModal } from "@/hooks/use-signup-modal";
 import { useState } from "react";
 
 export const HeroSection = () => {
   const isSignedIn = false;
   // const { isSignedIn, user } = useUser()
   const { open } = useSigninModal();
+  const { open: openSignup } = useSignupModal();
 
   const [username, setUsername] = useState("");
   const [isChecking, setIsChecking] = useState(false);
@@ -23,6 +25,7 @@ export const HeroSection = () => {
 
   const handleClaimUsername = () => {
     if (isAvailable && username.length >= 4) {
+      openSignup();
     }
   };
   return (
@@ -57,36 +60,43 @@ export const HeroSection = () => {
 
             <div className="max-w-md mx-auto space-y-12">
               <div className="flex gap-2">
-                <div className="flex-1 relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                    @
-                  </span>
-                  <input
-                    type="text"
-                    placeholder="username"
-                    value={username}
-                    onChange={(e) => {
-                      const newUsername = e.target.value
-                        .toLowerCase()
-                        .replace(/[^a-z0-9-]/g, "");
-                      setUsername(newUsername);
-                      setIsValidLength(newUsername.length >= 4);
-                      setIsAvailable(null);
-                    }}
-                    className="w-full pl-8 pr-4 py-3 border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none ring-2 ring-primary focus:ring-primary"
-                  />
+                <div>
+                  <div className="flex-1 relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                      @
+                    </span>
+                    <input
+                      type="text"
+                      placeholder="username"
+                      value={username}
+                      onChange={(e) => {
+                        const newUsername = e.target.value
+                          .toLowerCase()
+                          .replace(/[^a-z0-9-]/g, "");
+                        setUsername(newUsername);
+                        setIsValidLength(newUsername.length >= 4);
+                        setIsAvailable(null);
+                      }}
+                      className="w-full pl-8 pr-4 py-3 border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none ring-2 ring-primary focus:ring-primary"
+                    />
+                  </div>
                 </div>
-                <button
-                  onClick={checkUsername}
-                  disabled={!isValidLength || isChecking}
-                  className={`px-6 py-3 bg-primary text-primary-foreground rounded-lg font-semibold transition-all duration-200 hover:bg-primary/90 hover:scale-105 cursor-pointer ${
-                    username.trim() && isValidLength
-                      ? "animate-pulse shadow-lg shadow-primary/25"
-                      : ""
-                  }`}
-                >
-                  {isChecking ? "Checking..." : "Claim Your Username"}
-                </button>
+                <div>
+                  <button
+                    onClick={checkUsername}
+                    disabled={!isValidLength || isChecking}
+                    className={`px-6 py-[12px] bg-primary text-primary-foreground rounded-lg font-semibold text-nowrap transition-all duration-200 hover:bg-primary/90 hover:scale-105 cursor-pointer ${
+                      username.trim() && isValidLength
+                        ? "animate-pulse shadow-lg shadow-primary/25"
+                        : ""
+                    }`}
+                  >
+                    {isChecking ? "Checking..." : "Claim Your Username"}
+                  </button>
+                  <div className="text-muted-foreground text-sm mt-1">
+                    (before someone else does)
+                  </div>
+                </div>
               </div>
 
               {username.length > 0 && username.length < 4 && (

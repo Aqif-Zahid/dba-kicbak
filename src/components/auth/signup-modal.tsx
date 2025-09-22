@@ -12,7 +12,7 @@ import {
   FormMessage,
 } from "../ui/form";
 import { getErrorMessage } from "@/lib/utils";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { AxiosError } from "axios";
 import { Input } from "../ui/input";
@@ -77,17 +77,37 @@ export const SignupModal = () => {
     close();
   };
 
+  // Password strength logic
+  const passwordValue = form.watch("password");
+  const passwordStrength = useMemo(() => {
+    let score = 0;
+    if (!passwordValue) return { label: "", color: "bg-gray-200", score };
+
+    if (passwordValue.length >= 8) score++;
+    if (/[A-Z]/.test(passwordValue)) score++;
+    if (/[a-z]/.test(passwordValue)) score++;
+    if (/\d/.test(passwordValue)) score++;
+    if (/[!@#$%^&*]/.test(passwordValue)) score++;
+
+    if (score <= 2) return { label: "Weak", color: "bg-red-500", score };
+    if (score === 3) return { label: "Medium", color: "bg-yellow-500", score };
+    if (score === 4) return { label: "Strong", color: "bg-blue-500", score };
+    return { label: "Very Strong", color: "bg-green-500", score: 5 };
+  }, [passwordValue]);
+
   return (
-    <ResponsiveModal open={isOpen} onOpenChange={close}>
+    <ResponsiveModal open={isOpen} onOpenChange={close} fullScreen={true}>
       <div className="text-center mb-4">
-        <h2 className="font-bold text-lg mb-1">Create your account</h2>
+        <h2 className="font-bold text-gray-700 text-lg mb-1">
+          Create your account
+        </h2>
         <p className="text-muted-foreground text-sm">
           Welcome! Please fill in the details to get started.
         </p>
       </div>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 px-2">
-          {/* First Name & Last Name in same row */}
+          {/* First Name & Last Name */}
           <div className="flex gap-4">
             <FormField
               name="firstName"
@@ -157,6 +177,7 @@ export const SignupModal = () => {
             )}
           />
 
+          {/* Password Field */}
           <FormField
             name="password"
             control={form.control}
@@ -183,6 +204,23 @@ export const SignupModal = () => {
                   </div>
                 </FormControl>
                 <FormMessage />
+
+                {/* Password Strength */}
+                {passwordValue && (
+                  <div className="mt-1">
+                    <div className="w-full h-2 rounded bg-gray-200">
+                      <div
+                        className={`${passwordStrength.color} h-2 rounded`}
+                        style={{
+                          width: `${(passwordStrength.score / 5) * 100}%`,
+                        }}
+                      />
+                    </div>
+                    <p className="text-xs mt-1 text-gray-700">
+                      Strength: {passwordStrength.label}
+                    </p>
+                  </div>
+                )}
               </FormItem>
             )}
           />
