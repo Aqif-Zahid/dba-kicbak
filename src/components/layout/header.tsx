@@ -5,9 +5,11 @@ import { SigninModal } from "../auth/signin-modal";
 import { SignupModal } from "../auth/signup-modal";
 import { useState } from "react";
 import { RequestInviteCodeModal } from "../auth/request-invite-code-modal";
+import { UserButton } from "./user-button";
+import { useUser } from "@/providers/auth-provider";
 
 export const Header = () => {
-  const isSignedIn = false;
+  const { user } = useUser();
   const [showInviteCodeModal, setShowInviteCodeModal] = useState(false);
 
   return (
@@ -21,7 +23,7 @@ export const Header = () => {
         />
       )}
 
-      {isSignedIn ? (
+      {user ? (
         <div className="container mx-auto px-4 py-6 flex justify-between items-center">
           <Image
             src="/kicbak-logo.png"
@@ -30,7 +32,7 @@ export const Header = () => {
             height={60}
             className="h-12 w-auto"
           />
-          {/* <UserButton /> */}
+          <UserButton />
         </div>
       ) : (
         <div className="container mx-auto px-4 py-6 flex justify-between items-center">

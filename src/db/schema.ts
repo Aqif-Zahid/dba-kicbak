@@ -11,6 +11,7 @@ import {
   foreignKey,
   serial,
 } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 
 // ===== Enums =====
 export const userStatusEnum = pgEnum("user_status", [
@@ -52,6 +53,12 @@ export const emailEventEnum = pgEnum("email_event", [
   "WELCOME_SENT",
 ]);
 
+export const authProviderEnum = pgEnum("auth_provider", [
+  "LOCAL",
+  "GOOGLE",
+  "FACEBOOK",
+  "APPLE",
+]);
 // ===== Tables =====
 
 // Users
@@ -64,6 +71,12 @@ export const users = pgTable("users", {
   role: profileRoleEnum("role").notNull(),
   personaTags: jsonb("persona_tags").default([]),
   positionNumber: integer("position_number").unique(),
+  passwordHash: text("password_hash"),
+  provider: authProviderEnum("auth_provider").default("LOCAL"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .defaultNow()
+    .$onUpdateFn(() => sql`NOW()`),
 });
 
 // Referral Codes

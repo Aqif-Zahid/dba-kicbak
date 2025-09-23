@@ -5,6 +5,7 @@ import { GeistMono } from "geist/font/mono";
 import { Suspense } from "react";
 import "../styles/globals.css";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
+import { AuthWrapper } from "@/providers/auth-wrapper";
 
 export const metadata: Metadata = {
   title: "Kicbak",
@@ -27,9 +28,11 @@ export default function RootLayout({
       className={`${GeistSans.variable} ${GeistMono.variable} antialiased`}
     >
       <body className="font-sans">
-        <NuqsAdapter>
-          <Suspense fallback={<div>Loading...</div>}>{children}</Suspense>
-        </NuqsAdapter>
+        <AuthWrapper>
+          <NuqsAdapter>
+            <Suspense fallback={<div>Loading...</div>}>{children}</Suspense>
+          </NuqsAdapter>
+        </AuthWrapper>
       </body>
     </html>
   );

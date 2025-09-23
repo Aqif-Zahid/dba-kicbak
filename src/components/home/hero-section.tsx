@@ -3,9 +3,12 @@ import { useSigninModal } from "@/hooks/use-signin-modal";
 import { useSignupModal } from "@/hooks/use-signup-modal";
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { useUser } from "@/providers/auth-provider";
 
 export const HeroSection = () => {
-  const isSignedIn = false;
+  const { user } = useUser();
+  const isSignedIn = user ? true : false;
+
   const { open } = useSigninModal();
   const { open: openSignup } = useSignupModal();
 
@@ -49,9 +52,7 @@ export const HeroSection = () => {
       {isSignedIn ? (
         <main className="container mx-auto px-4 py-12">
           <div className="max-w-2xl mx-auto text-center space-y-12">
-            <h1 className="text-3xl font-bold">
-              {/* Welcome back, {user?.firstName}! */}
-            </h1>
+            <h1 className="text-3xl font-bold">Welcome back, {user?.name}!</h1>
             <p className="text-muted-foreground">
               Your Kicbak account is ready to go.
             </p>

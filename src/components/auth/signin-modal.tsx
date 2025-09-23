@@ -16,17 +16,17 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { AxiosError } from "axios";
 import { Input } from "../ui/input";
-import { AlertTriangle, Eye, EyeOff } from "lucide-react";
+import { AlertTriangle, Eye, EyeOff, LogIn } from "lucide-react";
 import { Button } from "../ui/button";
 import { Checkbox } from "../ui/checkbox";
 import { useSignupModal } from "@/hooks/use-signup-modal";
+import { signIn } from "next-auth/react";
 
 export const SigninModal = () => {
   const { isOpen, close } = useSigninModal();
   const { open: openSignup } = useSignupModal();
 
-  const [showPassword, setShowPassword] = useState<boolean>(false);
-  const [showForgetPassword, setShowForgetPassword] = useState<boolean>(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -37,18 +37,26 @@ export const SigninModal = () => {
       .min(1, "Password is required")
       .max(256, "Password must be at best 256 characters"),
   });
+
   const form = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
-    defaultValues: {
-      email: "",
-      password: "",
-    },
+    defaultValues: { email: "", password: "" },
   });
 
   const onSubmit = async (values: z.infer<typeof loginSchema>) => {
     try {
+      setLoading(true);
       setError(null);
+      const res = await signIn("credentials", {
+        redirect: false,
+        email: values.email,
+        password: values.password,
+      });
+      if (res?.error) setError("Invalid credentials");
+      setLoading(false);
+      close();
     } catch (error: unknown) {
+      setLoading(false);
       if (error instanceof AxiosError && error.response) {
         setError(getErrorMessage(error.response.data));
       } else {
@@ -62,16 +70,45 @@ export const SigninModal = () => {
     close();
   };
 
+  const handleGoogleLogin = async () => {
+    await signIn("google", { callbackUrl: "/profile" });
+  };
+
   return (
-    <ResponsiveModal open={isOpen} onOpenChange={close} size={"sm"}>
-      <div className="text-center mb-4">
+    <ResponsiveModal open={isOpen} onOpenChange={close} size="sm">
+      <div className="text-center mb-0">
         <h2 className="font-bold text-gray-700 text-lg mb-1">
-          Sign in to Kicbak{" "}
+          Sign in to Kicbak
         </h2>
         <p className="text-muted-foreground text-sm">
           Welcome back! Please sign in to continue
         </p>
       </div>
+
+      {/* --- Google Login Button --- */}
+      <div className="flex justify-center">
+        <Button
+          onClick={handleGoogleLogin}
+          size="sm"
+          variant="outline"
+          className="w-15 flex justify-center items-center  py-4"
+        >
+          <img
+            src="https://img.clerk.com/static/google.svg?width=160"
+            alt="Google Logo"
+            className="h-5 w-5"
+          />
+          <span className="sr-only">Sign in with Google</span>
+        </Button>
+      </div>
+
+      <div className="flex items-center mb-2">
+        <hr className="flex-grow border-gray-300" />
+        <span className="mx-2 text-gray-400 text-sm">or</span>
+        <hr className="flex-grow border-gray-300" />
+      </div>
+
+      {/* --- Email/Password Form --- */}
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 px-2">
           <FormField
@@ -81,19 +118,20 @@ export const SigninModal = () => {
               <FormItem>
                 <FormLabel>
                   Email address or username{" "}
-                  <span className="text-red-900">*</span>{" "}
+                  <span className="text-red-900">*</span>
                 </FormLabel>
                 <FormControl>
                   <Input
                     {...field}
                     type="text"
-                    placeholder="Enter email address  or username"
+                    placeholder="Enter email address or username"
                   />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
+
           <FormField
             name="password"
             control={form.control}
@@ -125,12 +163,12 @@ export const SigninModal = () => {
           />
 
           <div className="flex justify-between items-center mb-6">
-            <Checkbox label={"Remember me"} defaultChecked />
+            <Checkbox label="Remember me" defaultChecked />
             <Button
               type="button"
               variant="ghost"
               className="text-sm text-gray-500 font-normal"
-              onClick={() => setShowForgetPassword(true)}
+              onClick={() => {}}
             >
               Forgot password?
             </Button>
@@ -138,17 +176,12 @@ export const SigninModal = () => {
 
           {error && (
             <div className="flex items-center">
-              <AlertTriangle className="size-5 text-red-700 mr-2" />
+              <AlertTriangle className="text-red-700 mr-2" />
               <p className="text-red-700 text-sm font-medium">{error}</p>
             </div>
           )}
 
-          <Button
-            type="submit"
-            size="lg"
-            className="w-full "
-            disabled={loading}
-          >
+          <Button type="submit" size="lg" className="w-full" disabled={loading}>
             {loading ? (
               <span className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white"></span>
             ) : (
@@ -157,6 +190,7 @@ export const SigninModal = () => {
           </Button>
         </form>
       </Form>
+
       <div className="text-sm text-muted-foreground mt-4 text-center">
         Don't have an account?
         <button
