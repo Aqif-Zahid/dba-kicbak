@@ -14,7 +14,7 @@ import {
 import { getErrorMessage } from "@/lib/utils";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { AxiosError } from "axios";
+import axios, { AxiosError } from "axios";
 import { Input } from "../ui/input";
 import { AlertTriangle } from "lucide-react";
 import { Button } from "../ui/button";
@@ -46,11 +46,7 @@ export const RequestInviteCodeModal = ({
     try {
       setLoading(true);
       setError(null);
-
-      // TODO: API request to submit the email goes here
-      await new Promise((res) => setTimeout(res, 1000)); // simulate API delay
-
-      setShow(false);
+      const res = await axios.post("/api/invite", values)
       form.reset();
     } catch (error: unknown) {
       if (error instanceof AxiosError && error.response) {
@@ -116,7 +112,7 @@ export const RequestInviteCodeModal = ({
             {loading ? (
               <span className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white mx-auto"></span>
             ) : (
-              "Continue"
+              "Submit"
             )}
           </Button>
         </form>
