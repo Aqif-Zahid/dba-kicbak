@@ -1,34 +1,44 @@
 "use client";
 import { useSigninModal } from "@/hooks/use-signin-modal";
-import { useSignupModal } from "@/hooks/use-signup-modal";
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { useUser } from "@/providers/auth-provider";
+import axios from "axios";
+import { SignupModal } from "../auth/signup-modal";
 
 export const HeroSection = () => {
   const { user } = useUser();
   const isSignedIn = user ? true : false;
+  const [showSignup, setShowSignUp] = useState(false);
 
   const { open } = useSigninModal();
-  const { open: openSignup } = useSignupModal();
-
   const [username, setUsername] = useState("");
   const [isChecking, setIsChecking] = useState(false);
-  const [isAvailable, setIsAvailable] = useState<boolean | null>(null);
+  const [isAvailable, setIsAvailable] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
   const [isValidLength, setIsValidLength] = useState(false);
 
   const checkUsername = async () => {
     if (!username.trim() || username.length < 4) return;
-
     setIsChecking(true);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setIsAvailable(Math.random() > 0.3);
-    setIsChecking(false);
+    try {
+      const res = await axios.get(`/api/check-username?username=${username}`);
+      if (res.data.status === 1) {
+        setIsAvailable(true);
+      } else {
+        setError(res.data.message);
+      }
+      setIsChecking(false);
+    } catch (e) {
+      setIsChecking(false);
+      setError("Something went wrong");
+      console.log(e);
+    }
   };
 
   const handleClaimUsername = () => {
     if (isAvailable && username.length >= 4) {
-      openSignup();
+      setShowSignUp(true);
     }
   };
 
@@ -49,6 +59,13 @@ export const HeroSection = () => {
 
   return (
     <section>
+      {showSignup && (
+        <SignupModal
+          show={showSignup}
+          setShow={setShowSignUp}
+          username={username}
+        />
+      )}
       {isSignedIn ? (
         <main className="container mx-auto px-4 py-12">
           <div className="max-w-2xl mx-auto text-center space-y-12">
@@ -67,7 +84,7 @@ export const HeroSection = () => {
             variants={fadeUpStagger}
           >
             <motion.div className="space-y-12" variants={fadeUp}>
-              <h1 className="text-5xl md:text-6xl lg:text-7xl text-foreground">
+              <h1 className="text-5xl md:text-4xl lg:text-6xl text-foreground">
                 Kicbak cuts out the travel middlemen.
                 <br />
                 Now, you get their commission.
@@ -100,7 +117,7 @@ export const HeroSection = () => {
                           .replace(/[^a-z0-9-]/g, "");
                         setUsername(newUsername);
                         setIsValidLength(newUsername.length >= 4);
-                        setIsAvailable(null);
+                        setIsAvailable(false);
                       }}
                       className="w-full pl-8 pr-4 py-3 border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none ring-2 ring-primary focus:ring-primary"
                     />
@@ -129,25 +146,20 @@ export const HeroSection = () => {
                   Username must be at least 4 characters long
                 </div>
               )}
-
-              {isAvailable !== null && (
-                <div
-                  className={`p-3 rounded-lg text-sm ${
-                    isAvailable
-                      ? "bg-green-50 text-green-700 border border-green-200"
-                      : "bg-red-50 text-red-700 border border-red-200"
-                  }`}
-                >
-                  {isAvailable
-                    ? `@${username} is available! 🎉`
-                    : `@${username} is already taken. Try another one.`}
+              {isAvailable && (
+                <div className="p-3 rounded-lg text-sm bg-green-50 text-green-700 border border-green-200">
+                  @{username} is available! 🎉
                 </div>
               )}
 
+              {error && (
+                <div className="p-3 rounded-lg text-sm bg-red-50 text-red-700 border border-red-200">
+                  {error}
+                </div>
+              )}
               {isAvailable && (
                 <button
                   onClick={handleClaimUsername}
-                  data-clerk-sign-up
                   className="w-full bg-primary text-primary-foreground px-8 py-3 rounded-lg font-semibold hover:bg-primary/90 transition-colors"
                 >
                   Claim @{username}

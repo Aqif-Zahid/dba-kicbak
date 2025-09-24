@@ -7,15 +7,17 @@ import { useState } from "react";
 import { RequestInviteCodeModal } from "../auth/request-invite-code-modal";
 import { UserButton } from "./user-button";
 import { useUser } from "@/providers/auth-provider";
+import { useSignupModal } from "@/hooks/use-signup-modal";
 
 export const Header = () => {
   const { user } = useUser();
   const [showInviteCodeModal, setShowInviteCodeModal] = useState(false);
+  const { isOpen, setIsOpen } = useSignupModal();
 
   return (
     <header className="border-b border-border">
       <SigninModal />
-      <SignupModal />
+      <SignupModal show={isOpen} setShow={setIsOpen} />
       {showInviteCodeModal && (
         <RequestInviteCodeModal
           show={showInviteCodeModal}

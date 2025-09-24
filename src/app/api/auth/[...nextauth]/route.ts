@@ -31,9 +31,8 @@ export const authOptions: AuthOptions = {
           .where(eq(users.email, credentials.email))
           .limit(1);
 
-        console.log("hi", user);
-
-        if (!user[0] || !user[0].passwordHash) return null;
+        if (!user[0] || !user[0].passwordHash || user[0].status !== "ACTIVE")
+          return null;
 
         const isValid = await bcrypt.compare(
           credentials.password,

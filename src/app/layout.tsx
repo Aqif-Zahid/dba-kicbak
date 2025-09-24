@@ -6,6 +6,7 @@ import { Suspense } from "react";
 import "../styles/globals.css";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { AuthWrapper } from "@/providers/auth-wrapper";
+import { PageLoader } from "@/components/loader";
 
 export const metadata: Metadata = {
   title: "Kicbak",
@@ -30,7 +31,7 @@ export default function RootLayout({
       <body className="font-sans">
         <AuthWrapper>
           <NuqsAdapter>
-            <Suspense fallback={<div>Loading...</div>}>{children}</Suspense>
+            <Suspense fallback={<PageLoader />}>{children}</Suspense>
           </NuqsAdapter>
         </AuthWrapper>
       </body>

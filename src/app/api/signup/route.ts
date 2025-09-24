@@ -1,8 +1,6 @@
-// src/app/api/signup/route.ts
-
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { db } from "@/lib/db"; // adjust this to your actual DB client
+import { db } from "@/lib/db";
 import { waitlistSignups, referralCodes, referrals } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { nanoid } from "nanoid";
@@ -23,7 +21,7 @@ export async function POST(req: Request) {
 
   if (!parse.success) {
     return NextResponse.json(
-      { error: "Invalid input", details: parse.error.flatten() },
+      { status: 0, message: parse.error.flatten() },
       { status: 400 }
     );
   }
@@ -44,8 +42,9 @@ export async function POST(req: Request) {
 
     if (existingSignup) {
       return NextResponse.json({
+        status: 0,
         message: "Already signed up",
-        status: existingSignup.status,
+        registrationStatus: existingSignup.status,
       });
     }
 
@@ -60,7 +59,7 @@ export async function POST(req: Request) {
 
       if (!code || !code.active) {
         return NextResponse.json(
-          { error: "Invalid or inactive referral code" },
+          { status: 0, message: "Invalid or inactive referral code" },
           { status: 400 }
         );
       }
@@ -97,13 +96,17 @@ export async function POST(req: Request) {
 
     // 5. Return success
     return NextResponse.json(
-      { message: "Signed up successfully", status: "UNCONFIRMED" },
+      {
+        status: 1,
+        message: "Signed up successfully",
+        registrationStatus: "UNCONFIRMED",
+      },
       { status: 201 }
     );
   } catch (err) {
     console.error("Signup Error:", err);
     return NextResponse.json(
-      { error: "Internal Server Error" },
+      { status: 0, message: "Internal Server Error" },
       { status: 500 }
     );
   }
