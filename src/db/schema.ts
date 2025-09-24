@@ -15,6 +15,7 @@ import { sql } from "drizzle-orm";
 
 // ===== Enums =====
 export const userStatusEnum = pgEnum("user_status", [
+  "WAITLISTED",
   "PENDING",
   "ACTIVE",
   "BLOCKED",
@@ -77,6 +78,11 @@ export const users = pgTable("users", {
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .defaultNow()
     .$onUpdateFn(() => sql`NOW()`),
+  usernameDesired: text("username_desired"),
+  personaSelected: jsonb("persona_selected").default([]),
+  source: text("source"),
+  referralCode: text("referral_code").references(() => referralCodes.code),
+  inviteRequired: boolean("invite_required").default(true),
 });
 
 // Referral Codes
@@ -84,22 +90,6 @@ export const referralCodes = pgTable("referral_codes", {
   code: text("code").notNull().primaryKey(),
   type: referralCodeTypeEnum("type").notNull(),
   active: boolean("active").default(true),
-  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
-});
-
-// Waitlist Signups
-export const waitlistSignups = pgTable("waitlist_signups", {
-  id: integer().primaryKey().generatedAlwaysAsIdentity(),
-  userId: integer("user_id").references(() => users.id),
-  email: text("email").notNull(),
-  usernameDesired: text("username_desired"),
-  personaSelected: jsonb("persona_selected").default([]),
-  source: text("source"),
-  referralCode: text("referral_code").references(() => referralCodes.code),
-  referrerUserId: integer("referrer_user_id").references(() => users.id),
-  inviteRequired: boolean("invite_required").default(true),
-  status: waitlistStatusEnum("status").notNull(),
-  positionNumber: integer("position_number"),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
 });
 
@@ -112,7 +102,6 @@ export const referrals = pgTable(
     referredEmail: text("referred_email"),
     referredUserId: integer("referred_user_id").references(() => users.id),
     referralCode: text("referral_code").references(() => referralCodes.code),
-    signupId: integer("signup_id").references(() => waitlistSignups.id),
     status: referralStatusEnum("status").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
     lastEventAt: timestamp("last_event_at", { withTimezone: true }),
@@ -136,7 +125,6 @@ export const rewardsLedger = pgTable("rewards_ledger", {
 // Email Events
 export const emailEvents = pgTable("email_events", {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
-  signupId: integer("signup_id").references(() => waitlistSignups.id),
   email: text("email"),
   event: emailEventEnum("event").notNull(),
   providerId: text("provider_id"),
