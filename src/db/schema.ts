@@ -66,7 +66,7 @@ export const users = pgTable("users", {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
   email: text("email").notNull().unique(),
   status: userStatusEnum("status").notNull(),
-  username: text("username").notNull().unique(),
+  username: text("username").unique(),
   displayName: text("display_name"),
   role: profileRoleEnum("role").notNull(),
   personaTags: jsonb("persona_tags").default([]),
