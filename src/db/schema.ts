@@ -31,11 +31,6 @@ export const referralCodeTypeEnum = pgEnum("referral_code_type", [
   "WAITLIST",
   "CAMPAIGN",
 ]);
-export const waitlistStatusEnum = pgEnum("waitlist_status", [
-  "UNCONFIRMED",
-  "CONFIRMED",
-  "ACTIVATED",
-]);
 export const referralStatusEnum = pgEnum("referral_status", [
   "CLICKED",
   "SIGNED_UP",

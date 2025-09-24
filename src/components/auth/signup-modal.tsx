@@ -19,6 +19,7 @@ import { Input } from "../ui/input";
 import { AlertTriangle, CheckCircle, Eye, EyeOff } from "lucide-react";
 import { Button } from "../ui/button";
 import { motion } from "framer-motion";
+import { useRouter } from "next/navigation";
 interface SignupModalProps {
   show: boolean;
   setShow: React.Dispatch<React.SetStateAction<boolean>>;
@@ -26,6 +27,7 @@ interface SignupModalProps {
 }
 
 export const SignupModal = ({ show, setShow, username }: SignupModalProps) => {
+  const router = useRouter();
   const close = () => {
     setShow(false);
   };
@@ -94,6 +96,11 @@ export const SignupModal = ({ show, setShow, username }: SignupModalProps) => {
     close();
   };
 
+  const handleContinue = () => {
+    router.refresh();
+    close();
+  };
+
   // Password strength logic
   const passwordValue = form.watch("password");
   const passwordStrength = useMemo(() => {
@@ -138,7 +145,7 @@ export const SignupModal = ({ show, setShow, username }: SignupModalProps) => {
                 color: "#ffffff",
                 boxShadow: "0px 4px 15px rgba(236, 72, 153, 0.5)",
               }}
-              onClick={() => setShow(false)}
+              onClick={handleContinue}
               whileTap={{ scale: 0.95 }}
               transition={{ type: "spring", stiffness: 300 }}
               className="text-primary cursor-pointer transition-colors duration-300 border border-primary px-10 py-2 rounded-xl"
