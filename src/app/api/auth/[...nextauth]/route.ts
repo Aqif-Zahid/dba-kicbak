@@ -44,8 +44,12 @@ export const authOptions: AuthOptions = {
         return {
           id: user[0].id.toString(),
           email: user[0].email,
-          name: user[0].displayName,
+          displayName: user[0].displayName,
           role: user[0].role,
+          username: user[0].username,
+          phoneNumber: user[0].phoneNumber,
+          profilePicture: user[0].profilePicture,
+          dateOfBirth: user[0].dateOfBirth,
         };
       },
     }),
@@ -76,11 +80,18 @@ export const authOptions: AuthOptions = {
     // Attach role to JWT
     async jwt({ token, user, account }) {
       if (user) {
+        // Attach all relevant fields from user to token
         token.id = user.id as string;
         token.role = user.role as string;
+        token.displayName = user.displayName;
+        token.username = user.username;
+        token.phoneNumber = user.phoneNumber;
+        token.profilePicture = user.profilePicture;
+        token.dateOfBirth = user.dateOfBirth;
+        token.email = user.email;
       }
 
-      // --- Auto create social user if first login ---
+      // Auto-create social user
       if (account && account.provider !== "credentials" && !user) {
         const email = token.email;
         if (email) {
@@ -107,21 +118,37 @@ export const authOptions: AuthOptions = {
 
             token.id = inserted[0].id.toString();
             token.role = inserted[0].role;
+            token.displayName = inserted[0].displayName;
+            token.username = inserted[0].username;
+            token.phoneNumber = inserted[0].phoneNumber;
+            token.profilePicture = inserted[0].profilePicture;
+            token.dateOfBirth = inserted[0].dateOfBirth;
           } else {
             token.id = existing[0].id.toString();
             token.role = existing[0].role;
+            token.displayName = existing[0].displayName;
+            token.username = existing[0].username;
+            token.phoneNumber = existing[0].phoneNumber;
+            token.profilePicture = existing[0].profilePicture;
+            token.dateOfBirth = existing[0].dateOfBirth;
           }
         }
       }
 
       return token;
     },
-
-    // Attach JWT data to session
     async session({ session, token }) {
       if (token) {
-        (session.user as any).id = token.id;
-        (session.user as any).role = token.role;
+        session.user = {
+          id: token.id as string,
+          role: token.role as string,
+          displayName: token.displayName as string,
+          username: token.username as string,
+          phoneNumber: token.phoneNumber as string,
+          profilePicture: token.profilePicture as string,
+          dateOfBirth: token.dateOfBirth as string,
+          email: token.email,
+        };
       }
       return session;
     },

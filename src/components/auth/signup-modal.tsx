@@ -122,7 +122,7 @@ export const SignupModal = ({ show, setShow, username }: SignupModalProps) => {
   return (
     <ResponsiveModal open={show} onOpenChange={close} fullScreen={true}>
       {submitted ? (
-        <section className="border border-slate-100">
+        <section>
           <div className="flex flex-col items-center text-center gap-4">
             <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-emerald-100 to-emerald-50 shadow-md">
               <CheckCircle className="w-12 h-12 text-emerald-600" />

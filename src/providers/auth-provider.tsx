@@ -12,7 +12,7 @@ import { useSession, signOut } from "next-auth/react";
 interface User {
   id: string;
   email: string;
-  name?: string;
+  displayName?: string;
   role?: string;
 }
 
@@ -33,7 +33,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       setUser({
         id: (session.user as any).id,
         email: session.user.email!,
-        name: session.user.name ?? undefined,
+        displayName: session.user.displayName ?? undefined,
         role: (session.user as any).role,
       });
     } else {

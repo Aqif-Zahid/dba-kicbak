@@ -101,7 +101,6 @@ export async function POST(req: Request) {
       personaSelected,
       passwordHash,
       source,
-      referralCode: validReferralCode,
       inviteRequired: true,
       status: "PENDING",
       role: "TRAVELER",

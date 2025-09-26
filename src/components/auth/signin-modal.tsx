@@ -19,12 +19,12 @@ import { Input } from "../ui/input";
 import { AlertTriangle, Eye, EyeOff, LogIn } from "lucide-react";
 import { Button } from "../ui/button";
 import { Checkbox } from "../ui/checkbox";
-import { useSignupModal } from "@/hooks/use-signup-modal";
 import { signIn } from "next-auth/react";
+import { useRequestInviteModal } from "@/hooks/use-request-invite-modal";
 
 export const SigninModal = () => {
   const { isOpen, close } = useSigninModal();
-  const { open: openSignup } = useSignupModal();
+  const { open: openInviteCodeModal } = useRequestInviteModal();
 
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -65,8 +65,8 @@ export const SigninModal = () => {
     }
   };
 
-  const handleSignup = () => {
-    openSignup();
+  const handleInviteCode = () => {
+    openInviteCodeModal();
     close();
   };
 
@@ -195,9 +195,9 @@ export const SigninModal = () => {
         Don't have an account?
         <button
           className="text-primary hover:underline ms-1"
-          onClick={handleSignup}
+          onClick={handleInviteCode}
         >
-          Sign up
+          Request an invite
         </button>
       </div>
     </ResponsiveModal>

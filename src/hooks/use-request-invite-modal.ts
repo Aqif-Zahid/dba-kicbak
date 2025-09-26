@@ -1,7 +1,7 @@
 import { parseAsBoolean, useQueryState } from "nuqs";
-export const useSignupModal = () => {
+export const useRequestInviteModal = () => {
   const [isOpen, setIsOpen] = useQueryState(
-    "signup",
+    "request-invite",
     parseAsBoolean.withDefault(false).withOptions({ clearOnDefault: true })
   );
   const open = () => setIsOpen(true);

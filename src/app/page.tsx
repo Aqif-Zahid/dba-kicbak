@@ -1,13 +1,12 @@
 import { TravelBenefits } from "@/components/home/traveler-benefits";
 import { HeroSection } from "../components/home/hero-section";
-import { Header } from "../components/layout/header";
+import { Layout } from "@/components/layout/layout";
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
+    <Layout>
       <HeroSection />
       <TravelBenefits />
-    </div>
+    </Layout>
   );
 }

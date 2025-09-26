@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { motion, AnimatePresence } from "framer-motion";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState } from "react";
 
 const benefitData = {
   Travelers: [
@@ -14,65 +15,86 @@ const benefitData = {
     "Get Personalized Offers: Get personalized offers from travel sellers based on your preferences.",
     "Get Expert Travel Advice: Get experts advice from our community of travel experts and locals from around the world.",
   ],
-  Suppliers: ["Supplier Benefit 1", "Supplier Benefit 2"], // Example data
+  Suppliers: ["Supplier Benefit 1", "Supplier Benefit 2"],
   "Creators & Affiliates": ["Creator Benefit 1", "Creator Benefit 2"],
   "Agents & Advisors": ["Agent Benefit 1", "Agent Benefit 2"],
   "Tech & Ecosystem Partners": ["Tech Benefit 1", "Tech Benefit 2"],
 };
 
-// Define a type for the keys of the benefitData object
-type TabKey = keyof typeof benefitData;
-
 export function TravelBenefits() {
-  // State to track the active tab, defaulting to 'Travelers'
-  const [activeTab, setActiveTab] = useState<TabKey>("Travelers");
+  const [activeTab, setActiveTab] = useState("Travelers");
 
   return (
-    <Card className="w-full max-w-4xl p-8 mx-auto shadow-lg bg-gray-100 mb-40">
+    <Card className="w-full max-w-5xl p-6 mx-auto shadow-lg bg-gray-50 mb-40">
       <CardHeader>
-        <CardTitle className="text-3xl font-bold">
+        <CardTitle className="text-3xl font-bold text-center">
           Which are you? See how you benefit
         </CardTitle>
       </CardHeader>
       <CardContent>
-        {/* Tab Buttons */}
-        <div className="flex flex-wrap gap-2 mb-8">
-          {Object.keys(benefitData).map((tab) => (
-            <Button
-              key={tab}
-              variant="outline"
-              onClick={() => setActiveTab(tab as TabKey)}
-              className={`
-                px-6 py-3 rounded-lg text-lg font-semibold
-                ${
-                  activeTab === tab
-                    ? "bg-gray-800 text-white"
-                    : "bg-gray-300 text-gray-800"
-                }
-              `}
-            >
-              {tab}
-            </Button>
-          ))}
-        </div>
+        <Tabs
+          defaultValue="Travelers"
+          value={activeTab}
+          onValueChange={setActiveTab}
+          className="w-full"
+        >
+          {/* Sticky Scrollable Tab List */}
+          <div className="sticky top-0 z-10 bg-gray-50 py-2">
+            <div className="overflow-x-auto">
+              <TabsList className="flex w-max min-w-full gap-2 rounded-lg bg-gray-200 p-6 shadow-sm">
+                {Object.keys(benefitData).map((tab) => (
+                  <TabsTrigger
+                    key={tab}
+                    value={tab}
+                    className="data-[state=active]:bg-[oklch(0.64_0.25_13.47)]
+                               data-[state=active]:text-white 
+                               text-sm sm:text-base rounded-md p-4 whitespace-nowrap"
+                  >
+                    {tab}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </div>
+          </div>
 
-        {/* Content Section */}
-        <div>
-          <h2 className="text-2xl font-bold mb-4">{activeTab} Benefits</h2>
-          <ul className="space-y-4">
-            {benefitData[activeTab].map((benefit, index) => (
-              <li key={index} className="flex items-start">
-                <span className="mr-2 text-xl">•</span>
-                <p className="text-gray-700 leading-relaxed">
-                  <strong className="font-semibold">
-                    {benefit.split(": ")[0]}
-                  </strong>
-                  : {benefit.split(": ")[1]}
-                </p>
-              </li>
-            ))}
-          </ul>
-        </div>
+          {/* Tab Content with animation */}
+          <div className="mt-8 min-h-[250px]">
+            <AnimatePresence mode="wait">
+              {Object.entries(benefitData).map(([tab, benefits]) =>
+                activeTab === tab ? (
+                  <TabsContent key={tab} value={tab} forceMount>
+                    <motion.div
+                      key={tab}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <h2 className="text-2xl font-bold mb-4">
+                        {tab} Benefits
+                      </h2>
+                      <ul className="space-y-4">
+                        {benefits.map((benefit, index) => (
+                          <li key={index} className="flex items-start">
+                            <span className="mr-2 text-xl text-[oklch(0.64_0.25_13.47)]">
+                              •
+                            </span>
+                            <p className="text-gray-700 leading-relaxed">
+                              <strong className="font-semibold">
+                                {benefit.split(": ")[0]}
+                              </strong>
+                              : {benefit.split(": ")[1]}
+                            </p>
+                          </li>
+                        ))}
+                      </ul>
+                    </motion.div>
+                  </TabsContent>
+                ) : null
+              )}
+            </AnimatePresence>
+          </div>
+        </Tabs>
       </CardContent>
     </Card>
   );
