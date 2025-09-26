@@ -1,9 +1,13 @@
+"use client";
 import axios from "axios";
 import { useState } from "react";
 import { SignupModal } from "../auth/signup-modal";
 import { motion } from "framer-motion";
+interface ClaimUsernameProps {
+  referralCode: string;
+}
 
-export const ClaimUsername = () => {
+export const ClaimUsername = ({ referralCode }: ClaimUsernameProps) => {
   // Framer Motion variants
   const fadeUp = {
     hidden: { opacity: 0, y: 30 },
@@ -47,6 +51,7 @@ export const ClaimUsername = () => {
           show={showSignup}
           setShow={setShowSignUp}
           username={username}
+          referralCode={referralCode}
         />
       )}
       <motion.div className="max-w-md mx-auto space-y-12" variants={fadeUp}>
@@ -76,7 +81,7 @@ export const ClaimUsername = () => {
             <button
               onClick={checkUsername}
               disabled={!isValidLength || isChecking}
-              className={`px-6 py-[12px] bg-primary text-primary-foreground rounded-lg font-semibold text-nowrap transition-all duration-200 hover:bg-primary/90 hover:scale-105 cursor-pointer ${
+              className={`w-[220px] px-6 py-[12px] bg-primary text-primary-foreground rounded-lg font-semibold text-nowrap transition-all duration-200 hover:bg-primary/90 hover:scale-105 cursor-pointer ${
                 username.trim() && isValidLength
                   ? "animate-pulse shadow-lg shadow-primary/25"
                   : ""

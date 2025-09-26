@@ -7,11 +7,15 @@ import { authOptions } from "../api/auth/[...nextauth]/route";
 import { getUserDetails } from "@/actions/user-actions";
 import { UserNotFound } from "@/components/users/user-not-found";
 
-const UserPage = async ({ params }: { params: { username: string } }) => {
-  const { username } = params;
+interface PageProps {
+  params: Promise<{ username: string }>;
+}
+
+const UserPage = async ({ params }: PageProps) => {
+  const resolvedParams = await params; // await since it's a Promise
 
   // Fetch user by username
-  const user = await getUserDetails(username);
+  const user = await getUserDetails(resolvedParams.username);
 
   // Fetch logged-in user
   const session = await getServerSession(authOptions);

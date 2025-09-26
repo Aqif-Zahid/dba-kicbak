@@ -14,6 +14,7 @@ interface User {
   email: string;
   displayName?: string;
   role?: string;
+  username?: string;
 }
 
 interface UserContextType {
@@ -35,6 +36,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         email: session.user.email!,
         displayName: session.user.displayName ?? undefined,
         role: (session.user as any).role,
+        username: session.user.username ?? "",
       });
     } else {
       setUser(null);

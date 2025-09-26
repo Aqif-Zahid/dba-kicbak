@@ -6,6 +6,7 @@ import { UserButton } from "./user-button";
 import { useUser } from "@/providers/auth-provider";
 import { RequestInviteCodeModal } from "../auth/request-invite-code-modal";
 import { useSigninModal } from "@/hooks/use-signin-modal";
+import Link from "next/link";
 
 export const Header = () => {
   const { user } = useUser();
@@ -18,13 +19,15 @@ export const Header = () => {
 
       {user ? (
         <div className="container mx-auto px-4 py-6 flex justify-between items-center">
-          <Image
-            src="/kicbak-logo.png"
-            alt="Kicbak"
-            width={200}
-            height={60}
-            className="h-12 w-auto"
-          />
+          <Link href="/">
+            <Image
+              src="/kicbak-logo.png"
+              alt="Kicbak"
+              width={200}
+              height={60}
+              className="h-12 w-auto"
+            />
+          </Link>
           <UserButton />
         </div>
       ) : (

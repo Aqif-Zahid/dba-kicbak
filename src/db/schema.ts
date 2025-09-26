@@ -87,6 +87,7 @@ export const users = pgTable("users", {
   profilePicture: text("profile_picture"),
   dateOfBirth: text("date_of_birth"),
   source: text("source"),
+  referralCode: text("referral_code"),
   inviteRequired: boolean("invite_required").default(true),
   points: integer("points").default(0),
 });

@@ -6,12 +6,17 @@ import { useUser } from "@/providers/auth-provider";
 const LogOutButton = () => {
   const { loading, logout } = useUser();
 
+  const handleLogout = () => {
+    logout();
+    window.location.reload();
+  };
+
   return (
     <Button
       variant="ghost"
       className="flex items-center justify-start gap-3 hover:bg-primary hover:text-white mb-0 w-full"
       title="Log Out"
-      onClick={logout}
+      onClick={handleLogout}
     >
       <LogOut />
       {loading ? (

@@ -12,6 +12,7 @@ import { FaUserGroup } from "react-icons/fa6";
 import LogOutButton from "./log-out-button";
 import { usePathname } from "next/navigation";
 import { useUser } from "@/providers/auth-provider";
+import { useParams } from "next/navigation";
 
 interface SidebarProps {
   className?: string;
@@ -20,21 +21,37 @@ interface SidebarProps {
 export const Sidebar = ({ className }: SidebarProps) => {
   const { user } = useUser();
   const isAdmin = user && user.role === "ADMIN";
-
   const pathname = usePathname();
+  const params = useParams();
+  const { username } = params;
+
   return (
     <div className={className}>
-      <Button
-        variant={pathname === "/admin" ? "default" : "ghost"}
-        className="flex items-center justify-start gap-3 mb-2 hover:bg-primary hover:text-white"
-        title="My Profile"
-        asChild
-      >
-        <Link href="/admin">
-          <CircleUser />
-          <span className="hidden lg:inline">My Profile</span>
-        </Link>
-      </Button>
+      {isAdmin ? (
+        <Button
+          variant={pathname === "/admin" ? "default" : "ghost"}
+          className="flex items-center justify-start gap-3 mb-2 hover:bg-primary hover:text-white"
+          title="My Profile"
+          asChild
+        >
+          <Link href="/admin">
+            <CircleUser />
+            <span className="hidden lg:inline">My Profile</span>
+          </Link>
+        </Button>
+      ) : (
+        <Button
+          variant={pathname === `/${username}` ? "default" : "ghost"}
+          className="flex items-center justify-start gap-3 mb-2 hover:bg-primary hover:text-white"
+          title="My Profile"
+          asChild
+        >
+          <Link href={`/${username}`}>
+            <CircleUser />
+            <span className="hidden lg:inline">My Profile</span>
+          </Link>
+        </Button>
+      )}
 
       {isAdmin && (
         <>

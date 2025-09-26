@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { referralCodes, referrals, users } from "@/db/schema";
+import { profiles, users } from "@/db/schema";
 import { eq } from "drizzle-orm";
-import { nanoid } from "nanoid";
 import { sql } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 
@@ -14,7 +13,7 @@ const signupSchema = z.object({
   email: z.string().email(),
   usernameDesired: z.string().min(3).max(20),
   personaSelected: z.array(z.string()).optional(),
-  referralCode: z.string().optional(),
+  referralCode: z.string(),
   source: z.string().optional(),
   password: z
     .string()
@@ -50,83 +49,78 @@ export async function POST(req: Request) {
   } = parse.data;
 
   try {
-    // 1. Check if already signed up
-    const existingSignup = await db.query.users.findFirst({
+    // 1. Find the existing user by email
+    const existingUser = await db.query.users.findFirst({
       where: eq(users.email, email),
     });
 
-    if (existingSignup) {
+    if (!existingUser) {
       return NextResponse.json({
         status: 0,
-        message: "Already signed up",
-        registrationStatus: existingSignup.status,
+        message: "You haven't got any referral code yet",
       });
     }
 
     // 2. Validate referral code
-    let validReferralCode: string | null = null;
-    let referrerUserId: string | null = null;
-
-    if (referralCode) {
-      const code = await db.query.referralCodes.findFirst({
-        where: eq(referralCodes.code, referralCode),
-      });
-
-      if (!code || !code.active) {
-        return NextResponse.json(
-          { status: 0, message: "Invalid or inactive referral code" },
-          { status: 400 }
-        );
-      }
-
-      validReferralCode = code.code;
+    const referralUser = await db.query.users.findFirst({
+      where: eq(users.username, referralCode),
+    });
+    if (!referralUser) {
+      return NextResponse.json(
+        { status: 0, message: "Invalid or inactive referral code" },
+        { status: 400 }
+      );
     }
 
-    // 3. Create  signup
-    const signupId = nanoid();
-    const passwordHash = await bcrypt.hash(password, 10);
+    // 3. Compute the latest positionNumber
+    //  Find the latest user with a positionNumber not null
     const latestUser = await db.query.users.findFirst({
-      orderBy: (u) => sql`CAST(${u.positionNumber} AS INT) DESC`, // cast to INT if stored as string
+      where: sql`${users.positionNumber} IS NOT NULL`,
+      orderBy: (u) => sql`CAST(${u.positionNumber} AS INT) DESC`,
     });
 
     const positionNumber = latestUser
       ? Number(latestUser.positionNumber) + 1
-      : 1000; // start from 1000 if no users exist
+      : 1001; // start at 1001 if no users have positionNumber
 
-    await db.insert(users).values({
-      positionNumber: positionNumber,
-      displayName: `${firstName} ${lastName}`,
-      email,
-      usernameDesired,
-      personaSelected,
-      passwordHash,
-      source,
-      inviteRequired: true,
-      status: "PENDING",
+    // 4. Hash password
+    const passwordHash = await bcrypt.hash(password, 10);
+
+    // 5. Update existing user (do NOT insert a new one)
+    await db
+      .update(users)
+      .set({
+        positionNumber,
+        displayName: `${firstName} ${lastName}`,
+        usernameDesired,
+        username: usernameDesired,
+        personaSelected,
+        passwordHash,
+        source,
+        inviteRequired: true,
+        status: "ACTIVE",
+        role: "TRAVELER",
+        updatedAt: new Date(),
+      })
+      .where(eq(users.email, email));
+
+    // 6. Insert default profile
+    await db.insert(profiles).values({
+      userId: existingUser.id,
       role: "TRAVELER",
+      profileName: `${firstName} ${lastName}`,
+      bio: "",
       createdAt: new Date(),
+      updatedAt: new Date(),
     });
 
-    // // 4. Track referral
-    // if (validReferralCode) {
-    //   await db.insert(referrals).values({
-    //     referrerUserId,
-    //     referredEmail: email,
-    //     referralCode: validReferralCode,
-    //     signupId: signupId,
-    //     status: "SIGNED_UP",
-    //     createdAt: new Date(),
-    //   });
-    // }
-
-    // 5. Return success
+    // 7. Return success
     return NextResponse.json(
       {
         status: 1,
         message: "Signed up successfully",
-        registrationStatus: "PENDING",
       },
-      { status: 201 }
+      { status: 200 }
     );
   } catch (err) {
     console.error("Signup Error:", err);
