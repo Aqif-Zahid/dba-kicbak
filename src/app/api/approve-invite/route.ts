@@ -1,10 +1,11 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { users, userStatusEnum } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import crypto from 'crypto';
 import { sendEmail } from '@/lib/sendMail';
 import InviteTemplate from '@/components/emailTemplates/InviteTemplate';
+import { getUser } from '@/lib/auth';
 
 /**
  * Handles the POST request to approve a pending invite.
@@ -24,8 +25,13 @@ export async function GET() {
     return NextResponse.json({ message: 'Error approving invite' }, { status: 500 });
   }
 }
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
+    const user = await getUser(req);
+    if (! user) {
+      return NextResponse.json({ message: 'User Unauthorized!' }, { status: 401 });
+    } 
+    const username = user.username
     const { email } = await req.json();
 
     if (!email) {
@@ -40,19 +46,7 @@ export async function POST(req: Request) {
     if (!inviteRequest || inviteRequest.status !== 'PENDING') {
       return NextResponse.json({ message: 'Invite request not found or already approved' }, { status: 404 });
     }
-
-    // Generate a secure, temporary token for the signup link
-    const token = crypto.randomBytes(32).toString('hex');
-    const signupUrl = `https://your-app-url.com/signup?email=${encodeURIComponent(email)}&token=${token}`;
-
-    // Update the invite status to 'APPROVED' and store the token
-    // NOTE: Based on your provided schema, the 'users' table does not have 'token' or 'approvedAt' columns.
-    // This will cause a Drizzle error. You will need to add these columns to your schema for this to work correctly.
-    await db.update(users).set({
-      status: userStatusEnum.enumValues[1], // 'ACTIVE'
-      // token: token,
-      // approvedAt: new Date(),
-    }).where(eq(users.email, email));
+    const signupUrl = `${process.env.APP_URL}/invite/${username}`;
 
     // Generate the email HTML and send the email
     const emailHtml = InviteTemplate(signupUrl);
