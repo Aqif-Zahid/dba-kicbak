@@ -5,7 +5,7 @@ import { ProfileMain } from "@/components/admin/profile/profile-main";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../api/auth/[...nextauth]/route";
 import { getUserDetails } from "@/actions/user-actions";
-import { UserNotFound } from "@/components/users/user-not-found";
+import { UserNotFound } from "@/components/admin/users/user-not-found";
 
 interface PageProps {
   params: Promise<{ username: string }>;

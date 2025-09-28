@@ -1,7 +1,7 @@
 import Head from "next/head";
 import { Layout } from "@/components/layout/layout";
 import { getUserDetails } from "@/actions/user-actions";
-import { UserNotFound } from "@/components/users/user-not-found";
+import { UserNotFound } from "@/components/admin/users/user-not-found";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { redirect } from "next/navigation";

@@ -18,7 +18,7 @@ export const UserButton = () => {
 
   const handleLogout = () => {
     logout();
-    window.location.reload();
+    // window.location.reload();
   };
 
   if (loading) {
@@ -103,7 +103,7 @@ export const UserButton = () => {
           </Link>
 
           <DropdownMenuItem
-            onClick={handleLogout}
+            onClick={logout}
             className="flex items-center gap-2 px-4 py-2 rounded-md hover:bg-red-50 text-red-600 cursor-pointer"
           >
             <LogOut className="w-4 h-4" />

@@ -30,7 +30,10 @@ export async function POST(req: NextRequest) {
       where: eq(users.email, email),
     });
 
-    if (!inviteRequest || inviteRequest.status !== "PENDING") {
+    if (
+      !inviteRequest ||
+      !["PENDING", "WAITLISTED"].includes(inviteRequest.status)
+    ) {
       return NextResponse.json(
         { message: "Invite request not found or already approved" },
         { status: 404 }

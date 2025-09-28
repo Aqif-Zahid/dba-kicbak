@@ -36,7 +36,7 @@ export const Footer = () => {
                 </p>
                 <p className="mb-3">
                   <span className="font-semibold">Email: </span>
-                  info@kickback.com
+                  info@kicback.com
                 </p>
 
                 <h5 className="text-gray-400 font-semibold text-sm mb-3">
@@ -110,7 +110,7 @@ export const Footer = () => {
       <div className="pb-10">
         <p className="text-sm  mb-0 text-center">
           <strong className="text-primary">
-            Copyright © {new Date().getFullYear()} Kickback
+            Copyright © {new Date().getFullYear()} Kicback
           </strong>{" "}
           | All rights reserved
         </p>
