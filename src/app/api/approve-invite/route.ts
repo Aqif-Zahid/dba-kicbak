@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
         { status: 404 }
       );
     }
-    const signupUrl = `${process.env.APP_URL}/invite/${username}`;
+    const signupUrl = `${process.env.APP_URL}/invite/${username}?email=${email}`;
 
     // Generate the email HTML and send the email
     const emailHtml = InviteTemplate(signupUrl);

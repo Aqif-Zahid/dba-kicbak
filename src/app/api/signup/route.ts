@@ -2,8 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { profiles, users } from "@/db/schema";
-import { eq } from "drizzle-orm";
-import { sql } from "drizzle-orm";
+import { eq,sql } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 
 // === Zod validation ===
@@ -51,13 +50,18 @@ export async function POST(req: Request) {
   try {
     // 1. Find the existing user by email
     const existingUser = await db.query.users.findFirst({
-      where: eq(users.email, email),
+      where: (users, { eq, and }) =>
+        and(
+          eq(users.email, email),
+          eq(users.status, 'ACTIVE')
+        ),
+
     });
 
-    if (!existingUser) {
+    if (existingUser) {
       return NextResponse.json({
         status: 0,
-        message: "You haven't got any referral code yet",
+        message: "Email already registered!",
       });
     }
 
@@ -87,10 +91,11 @@ export async function POST(req: Request) {
     const passwordHash = await bcrypt.hash(password, 10);
 
     // 5. Update existing user (do NOT insert a new one)
-    await db
-      .update(users)
-      .set({
+    const [userRow] = await db
+      .insert(users)
+      .values({
         positionNumber,
+        email,
         displayName: `${firstName} ${lastName}`,
         usernameDesired,
         username: usernameDesired,
@@ -102,17 +107,41 @@ export async function POST(req: Request) {
         role: "TRAVELER",
         updatedAt: new Date(),
       })
-      .where(eq(users.email, email));
-
-    // 6. Insert default profile
-    await db.insert(profiles).values({
-      userId: existingUser.id,
-      role: "TRAVELER",
-      profileName: `${firstName} ${lastName}`,
-      bio: "",
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    });
+      .onConflictDoUpdate({
+        target: users.email, // The unique column(s) causing the conflict
+        set: {
+          positionNumber,
+          displayName: `${firstName} ${lastName}`,
+          usernameDesired,
+          username: usernameDesired,
+          personaSelected,
+          passwordHash,
+          source,
+          inviteRequired: true,
+          status: "ACTIVE",
+          role: "TRAVELER",
+          updatedAt: new Date(),
+        },
+      })
+      .returning({
+          // Specify the column you want to return, e.g., 'id'
+          insertId: users.id, 
+      });
+    
+      // 6. Insert default profile
+      if (userRow && userRow.insertId) {
+        await db.insert(profiles).values({
+            userId: userRow.insertId,
+            role: "TRAVELER",
+            profileName: `${firstName} ${lastName}`,
+            bio: "",
+            createdAt: new Date(),
+            updatedAt: new Date(),
+        });
+      } else {
+          // Handle the case where the insert/update didn't return an ID
+          console.error("Failed to retrieve user ID after insert/update.");
+      }
 
     // 7. Return success
     return NextResponse.json(
