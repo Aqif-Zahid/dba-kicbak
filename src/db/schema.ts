@@ -80,8 +80,8 @@ export const users = pgTable("users", {
   provider: authProviderEnum("auth_provider").default("LOCAL"),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true })
-    .defaultNow()
-    .$onUpdateFn(() => sql`NOW()`),
+    .default(sql.raw('now()'))
+    .notNull(), // Add .notNull() if it was there before
   usernameDesired: text("username_desired"),
   personaSelected: jsonb("persona_selected").default([]),
   profilePicture: text("profile_picture"),
@@ -103,8 +103,8 @@ export const profiles = pgTable("profiles", {
   bio: text("bio"),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true })
-    .defaultNow()
-    .$onUpdateFn(() => sql`NOW()`),
+    .default(sql.raw('now()'))
+    .notNull(), // Add .notNull() if it was there before
 });
 
 // Organizations
@@ -116,8 +116,8 @@ export const organizations = pgTable("organizations", {
   ownerId: integer("owner_id").references(() => users.id),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true })
-    .defaultNow()
-    .$onUpdateFn(() => sql`NOW()`),
+    .default(sql.raw('now()'))
+    .notNull(), // Add .notNull() if it was there before
 });
 
 // Groups
@@ -175,8 +175,8 @@ export const posts = pgTable("posts", {
   downvotes: integer("downvotes").default(0),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true })
-    .defaultNow()
-    .$onUpdateFn(() => sql`NOW()`),
+    .default(sql.raw('now()'))
+    .notNull(), // Add .notNull() if it was there before
 });
 
 // Forum Comments
@@ -194,8 +194,8 @@ export const comments = pgTable("comments", {
   parentId: integer("parent_id"),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true })
-    .defaultNow()
-    .$onUpdateFn(() => sql`NOW()`),
+    .default(sql.raw('now()'))
+    .notNull(), // Add .notNull() if it was there before
 });
 
 // Mentions
@@ -267,8 +267,8 @@ export const campaigns = pgTable("campaigns", {
   rewardAmount: integer("reward_amount").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true })
-    .defaultNow()
-    .$onUpdateFn(() => sql`NOW()`),
+    .default(sql.raw('now()'))
+    .notNull(), // Add .notNull() if it was there before
 });
 
 // Referrals
@@ -315,8 +315,8 @@ export const systemSettings = pgTable("system_settings", {
   key: text("key").notNull().unique(),
   value: text("value").notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true })
-    .defaultNow()
-    .$onUpdateFn(() => sql`NOW()`),
+    .default(sql.raw('now()'))
+    .notNull(), // Add .notNull() if it was there before
 });
 
 // System Log
