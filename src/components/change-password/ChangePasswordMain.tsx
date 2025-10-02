@@ -55,22 +55,25 @@ export const ChangePasswordMain = () => {
     },
   });
   const onSubmit = async (values: z.infer<typeof changePasswordSchema>) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const { status } = await axios.post("/api/change-password", values);
-      if (status === 200) {
-      }
-    } catch (err: unknown) {
-      if (err instanceof AxiosError && err.response) {
-        setError(err.response.data.message || "Invalid credentials");
-      } else {
-        setError("An unexpected error occurred");
-      }
-    } finally {
-      setLoading(false);
+  setLoading(true);
+  setError(null);
+  try {
+    const { status, data } = await axios.post("/api/change-password", values);
+
+    if (status === 200) {
+      alert(data.message || "Password changed successfully!");
+      form.reset();
     }
-  };
+  } catch (err: unknown) {
+    if (err instanceof AxiosError && err.response) {
+      setError(err.response.data.message || "Invalid credentials");
+    } else {
+      setError("An unexpected error occurred");
+    }
+  } finally {
+    setLoading(false);
+  }
+};
   return (
     <div className="flex flex-col items-center pb-16 w-full">
       <Card className="w-full md:w-[487px] border shadow-none">
