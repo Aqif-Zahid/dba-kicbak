@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { profiles, users } from "@/db/schema";
-import { eq,sql } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 
 // === Zod validation ===
@@ -40,114 +40,80 @@ export async function POST(req: Request) {
     firstName,
     lastName,
     email,
+    password,
     usernameDesired,
-    personaSelected = [],
+    personaSelected,
     referralCode,
     source,
-    password,
   } = parse.data;
 
   try {
-    // 1. Find the existing user by email
-    const existingUser = await db.query.users.findFirst({
-      where: (users, { eq, and }) =>
-        and(
-          eq(users.email, email),
-          eq(users.status, 'ACTIVE')
-        ),
+    const existingUser = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.email, email));
 
-    });
-
-    if (existingUser) {
-      return NextResponse.json({
-        status: 0,
-        message: "Email already registered!",
-      });
-    }
-
-    // 2. Validate referral code
-    const referralUser = await db.query.users.findFirst({
-      where: eq(users.username, referralCode),
-    });
-    if (!referralUser) {
+    if (existingUser.length > 0) {
       return NextResponse.json(
-        { status: 0, message: "Invalid or inactive referral code" },
-        { status: 400 }
+        { status: 0, message: "A user with this email already exists." },
+        { status: 409 }
       );
     }
 
-    // 3. Compute the latest positionNumber
-    //  Find the latest user with a positionNumber not null
-    const latestUser = await db.query.users.findFirst({
-      where: sql`${users.positionNumber} IS NOT NULL`,
-      orderBy: (u) => sql`CAST(${u.positionNumber} AS INT) DESC`,
-    });
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-    const positionNumber = latestUser
-      ? Number(latestUser.positionNumber) + 1
-      : 1001; // start at 1001 if no users have positionNumber
-
-    // 4. Hash password
-    const passwordHash = await bcrypt.hash(password, 10);
-
-    // 5. Update existing user (do NOT insert a new one)
-    const [userRow] = await db
-      .insert(users)
-      .values({
-        positionNumber,
+    // Scenario 1: User signed up with an invite code -> ACTIVE + Default Profile
+    const result = await db.transaction(async (tx) => {
+      // 1. Insert User with ACTIVE status
+      const [insertedUser] = await tx.insert(users).values({
         email,
-        displayName: `${firstName} ${lastName}`,
+        passwordHash: hashedPassword,
+        status: "ACTIVE", 
+        provider: "LOCAL",
         usernameDesired,
-        username: usernameDesired,
         personaSelected,
-        passwordHash,
         source,
+        referralCode,
         inviteRequired: true,
-        status: "ACTIVE",
+      }).returning({ id: users.id });
+
+      if (!insertedUser) {
+        throw new Error("Failed to create user.");
+      }
+      
+      const newUserId = insertedUser.id;
+
+      // 2. Insert Default Profile
+      const [insertedProfile] = await tx.insert(profiles).values({
+        userId: newUserId,
+        username: usernameDesired, 
+        displayName: `${firstName} ${lastName}`,
         role: "TRAVELER",
-        updatedAt: new Date(),
-      })
-      .onConflictDoUpdate({
-        target: users.email, // The unique column(s) causing the conflict
-        set: {
-          positionNumber,
-          displayName: `${firstName} ${lastName}`,
-          usernameDesired,
-          username: usernameDesired,
-          personaSelected,
-          passwordHash,
-          source,
-          inviteRequired: true,
-          status: "ACTIVE",
-          role: "TRAVELER",
-          updatedAt: new Date(),
-        },
-      })
-      .returning({
-          // Specify the column you want to return, e.g., 'id'
-          insertId: users.id, 
-      });
-    
-      // 6. Insert default profile
-      if (userRow && userRow.insertId) {
-        await db.insert(profiles).values({
-            userId: userRow.insertId,
-            role: "TRAVELER",
-            profileName: `${firstName} ${lastName}`,
-            bio: "",
-            createdAt: new Date(),
-            updatedAt: new Date(),
-        });
-      } else {
-          // Handle the case where the insert/update didn't return an ID
-          console.error("Failed to retrieve user ID after insert/update.");
+      }).returning({ id: profiles.id });
+
+      if (!insertedProfile) {
+        throw new Error("Failed to create default profile.");
       }
 
-    // 7. Return success
+      const newProfileId = insertedProfile.id;
+
+      // 3. Update User with defaultProfileId
+      await tx.update(users)
+        .set({
+          defaultProfileId: newProfileId,
+          updatedAt: sql.raw('now()'),
+        })
+        .where(eq(users.id, newUserId));
+
+      return { userId: newUserId, profileId: newProfileId };
+    });
+
+    // 4. Return success
     return NextResponse.json(
       {
         status: 1,
         message: "Signed up successfully",
+        userId: result.userId,
       },
       { status: 200 }
     );
@@ -159,3 +125,4 @@ export async function POST(req: Request) {
     );
   }
 }
+  

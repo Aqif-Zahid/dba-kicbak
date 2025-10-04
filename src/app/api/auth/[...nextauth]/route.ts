@@ -1,21 +1,45 @@
-import NextAuth, { AuthOptions } from "next-auth";
+import NextAuth, { AuthOptions, User } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
-// import AppleProvider from "next-auth/providers/apple";
 import bcrypt from "bcryptjs";
 import { drizzle } from "drizzle-orm/node-postgres";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { Pool } from "pg";
-import { authProviderEnum, users } from "@/db/schema";
+import { authProviderEnum, users, profiles, userStatusEnum } from "@/db/schema";
 
 // --- Drizzle ORM setup ---
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const db = drizzle(pool);
 
+// --- Extended User Type for Session ---
+// This interface now defines the full structure returned by authorize/profile,
+// which often conflicts with NextAuth's base User type (e.g., fields being nullable).
+// We define it explicitly instead of extending User.
+export interface ExtendedUser {
+  // Required core fields from NextAuth User (Email and ID)
+  id: string;
+  email: string;
+  
+  // Custom Drizzle/Session fields
+  status: string;
+  role: string | null;
+  displayName: string | null;
+  username: string | null;
+  phoneNumber: string | null;
+  profilePicture: string | null;
+  dateOfBirth: string | null;
+  allProfiles: {
+    id: number;
+    displayName: string;
+    profilePicture: string | null;
+    role: string;
+  }[];
+}
+
 // --- NextAuth configuration ---
 export const authOptions: AuthOptions = {
   providers: [
-    // Credentials login
+    // Credentials login (Scenario 1)
     CredentialsProvider({
       name: "Credentials",
       credentials: {
@@ -25,129 +49,218 @@ export const authOptions: AuthOptions = {
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
 
-        const user = await db
-          .select()
+        // 1. Fetch user data
+        const [userRecord] = await db
+          .select({
+            id: users.id,
+            email: users.email,
+            passwordHash: users.passwordHash,
+            status: users.status, 
+            phoneNumber: users.phoneNumber,
+            dateOfBirth: users.dateOfBirth,
+            defaultProfileId: users.defaultProfileId,
+          })
           .from(users)
           .where(eq(users.email, credentials.email))
           .limit(1);
 
-        if (!user[0] || !user[0].passwordHash || user[0].status !== "ACTIVE")
+        // Check if user exists, has a password hash, and is active
+        if (!userRecord || !userRecord.passwordHash || userRecord.status !== "ACTIVE")
           return null;
 
         const isValid = await bcrypt.compare(
           credentials.password,
-          user[0].passwordHash
+          userRecord.passwordHash
         );
 
         if (!isValid) return null;
 
+        // 2. Fetch the active default profile details
+        const [defaultProfile] = await db
+          .select({
+            role: profiles.role,
+            displayName: profiles.displayName,
+            username: profiles.username,
+            profilePicture: profiles.profilePicture,
+          })
+          .from(profiles)
+          .where(eq(profiles.id, userRecord.defaultProfileId!))
+          .limit(1);
+
+        if (!defaultProfile) {
+            console.error(`User ${userRecord.id} is ACTIVE but missing a default profile.`);
+            return null;
+        }
+
+        // 3. Fetch all profiles for the user
+        const allProfiles = await db
+            .select({
+                id: profiles.id,
+                displayName: profiles.displayName,
+                profilePicture: profiles.profilePicture,
+                role: profiles.role,
+            })
+            .from(profiles)
+            .where(eq(profiles.userId, userRecord.id));
+
+
+        // 4. Construct the ExtendedUser object
         return {
-          id: user[0].id.toString(),
-          email: user[0].email,
-          displayName: user[0].displayName,
-          role: user[0].role,
-          username: user[0].username,
-          phoneNumber: user[0].phoneNumber,
-          profilePicture: user[0].profilePicture,
-          dateOfBirth: user[0].dateOfBirth,
-        };
+          id: userRecord.id.toString(),
+          email: userRecord.email,
+          status: userRecord.status,
+          // Default Profile fields
+          role: defaultProfile.role,
+          displayName: defaultProfile.displayName,
+          username: defaultProfile.username,
+          profilePicture: defaultProfile.profilePicture,
+          // User fields
+          phoneNumber: userRecord.phoneNumber,
+          dateOfBirth: userRecord.dateOfBirth,
+          // All Profiles
+          allProfiles: allProfiles.map(p => ({
+            id: p.id,
+            displayName: p.displayName,
+            profilePicture: p.profilePicture,
+            role: p.role,
+          })),
+        } as ExtendedUser;
       },
     }),
 
-    // Google login
+    // Google Sign-in (Scenario 3)
     GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-    }),
+      clientId: process.env.GOOGLE_CLIENT_ID as string,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
+      async profile(profile) {
+        // 1. Check for existing user
+        const [existingUserRecord] = await db
+          .select({
+            id: users.id,
+            email: users.email,
+            status: users.status, 
+            phoneNumber: users.phoneNumber,
+            dateOfBirth: users.dateOfBirth,
+            defaultProfileId: users.defaultProfileId,
+          })
+          .from(users)
+          .where(eq(users.email, profile.email))
+          .limit(1);
 
-    // Apple login (optional)
-    // AppleProvider({
-    //   clientId: process.env.APPLE_CLIENT_ID!,
-    //   clientSecret: {
-    //     appleId: process.env.APPLE_CLIENT_ID!,
-    //     teamId: process.env.APPLE_TEAM_ID!,
-    //     privateKey: process.env.APPLE_PRIVATE_KEY!.replace(/\\n/g, "\n"),
-    //     keyId: process.env.APPLE_KEY_ID!,
-    //   },
-    // }),
+        // --- NEW USER (PENDING) ---
+        if (!existingUserRecord) {
+          // Scenario 3: New user via Google -> PENDING status, NO profile created
+          const [inserted] = await db
+            .insert(users)
+            .values({
+              email: profile.email,
+              provider: authProviderEnum.enumValues[1], // GOOGLE
+              status: userStatusEnum.enumValues[1], // PENDING
+              createdAt: sql.raw('now()'),
+              updatedAt: sql.raw('now()'),
+            })
+            .returning({ id: users.id, email: users.email, status: users.status });
+
+          return {
+            id: inserted[0].id.toString(),
+            email: inserted[0].email,
+            status: inserted[0].status,
+            // Profile fields are null/undefined as no profile was created
+            role: null,
+            displayName: null,
+            username: null,
+            phoneNumber: null,
+            profilePicture: profile.picture,
+            dateOfBirth: null,
+            allProfiles: [], // No profiles yet
+          } as ExtendedUser;
+        }
+
+        // --- EXISTING USER ---
+        
+        // 2. Fetch the active default profile details
+        let defaultProfile = null;
+        if (existingUserRecord.defaultProfileId) {
+            [defaultProfile] = await db
+                .select({
+                    role: profiles.role,
+                    displayName: profiles.displayName, // Mapping displayName to displayName for session
+                    username: profiles.username,
+                    profilePicture: profiles.profilePicture,
+                })
+                .from(profiles)
+                .where(eq(profiles.id, existingUserRecord.defaultProfileId))
+                .limit(1);
+        }
+
+        // 3. Fetch all profiles for the user
+        const allProfiles = await db
+            .select({
+                id: profiles.id,
+                displayName: profiles.displayName,
+                profilePicture: profiles.profilePicture,
+                role: profiles.role,
+            })
+            .from(profiles)
+            .where(eq(profiles.userId, existingUserRecord.id));
+
+        
+        // 4. Construct the ExtendedUser object
+        return {
+          id: existingUserRecord.id.toString(),
+          email: existingUserRecord.email,
+          status: existingUserRecord.status,
+          // Default Profile fields (may be null if PENDING)
+          role: defaultProfile?.role || null,
+          displayName: defaultProfile?.displayName || null,
+          username: defaultProfile?.username || null,
+          profilePicture: defaultProfile?.profilePicture || profile.picture, 
+          // User fields
+          phoneNumber: existingUserRecord.phoneNumber,
+          dateOfBirth: existingUserRecord.dateOfBirth,
+          // All Profiles
+          allProfiles: allProfiles.map(p => ({
+            id: p.id,
+            displayName: p.displayName,
+            profilePicture: p.profilePicture,
+            role: p.role,
+          })),
+        } as ExtendedUser;
+      },
+    }),
   ],
 
-  session: {
-    strategy: "jwt",
-  },
-
   callbacks: {
-    // Attach role to JWT
-    async jwt({ token, user, account }) {
+    async jwt({ token, user, profile }) {
       if (user) {
-        // Attach all relevant fields from user to token
-        token.id = user.id as string;
-        token.role = user.role as string;
-        token.displayName = user.displayName;
-        token.username = user.username;
-        token.phoneNumber = user.phoneNumber;
-        token.profilePicture = user.profilePicture;
-        token.dateOfBirth = user.dateOfBirth;
-        token.email = user.email;
+        // user object comes from authorize() or profile()
+        const extendedUser = user as ExtendedUser;
+        token.id = extendedUser.id;
+        token.email = extendedUser.email;
+        token.status = extendedUser.status; // Status is essential for profile completion check
+        token.role = extendedUser.role;
+        token.displayName = extendedUser.displayName;
+        token.username = extendedUser.username;
+        token.phoneNumber = extendedUser.phoneNumber;
+        token.profilePicture = extendedUser.profilePicture;
+        token.dateOfBirth = extendedUser.dateOfBirth;
+        token.allProfiles = extendedUser.allProfiles; // ADDED: All profiles
       }
-
-      // Auto-create social user
-      if (account && account.provider !== "credentials" && !user) {
-        const email = token.email;
-        if (email) {
-          const existing = await db
-            .select()
-            .from(users)
-            .where(eq(users.email, email))
-            .limit(1);
-
-          if (existing.length === 0) {
-            const inserted = await db
-              .insert(users)
-              .values({
-                email,
-                username: email.split("@")[0],
-                displayName: email.split("@")[0],
-                status: "ACTIVE",
-                role: "TRAVELER",
-                personaTags: [],
-                provider:
-                  account.provider.toUpperCase() as (typeof authProviderEnum.enumValues)[number],
-              })
-              .returning();
-
-            token.id = inserted[0].id.toString();
-            token.role = inserted[0].role;
-            token.displayName = inserted[0].displayName;
-            token.username = inserted[0].username;
-            token.phoneNumber = inserted[0].phoneNumber;
-            token.profilePicture = inserted[0].profilePicture;
-            token.dateOfBirth = inserted[0].dateOfBirth;
-          } else {
-            token.id = existing[0].id.toString();
-            token.role = existing[0].role;
-            token.displayName = existing[0].displayName;
-            token.username = existing[0].username;
-            token.phoneNumber = existing[0].phoneNumber;
-            token.profilePicture = existing[0].profilePicture;
-            token.dateOfBirth = existing[0].dateOfBirth;
-          }
-        }
-      }
-
       return token;
     },
     async session({ session, token }) {
       if (token) {
         session.user = {
           id: token.id as string,
+          email: token.email,
+          status: token.status as string, // Status is essential for profile completion check
           role: token.role as string,
           displayName: token.displayName as string,
           username: token.username as string,
           phoneNumber: token.phoneNumber as string,
           profilePicture: token.profilePicture as string,
           dateOfBirth: token.dateOfBirth as string,
-          email: token.email,
+          allProfiles: token.allProfiles as ExtendedUser["allProfiles"], // ADDED: All profiles
         };
       }
       return session;
