@@ -8,12 +8,10 @@ import {
   pgEnum,
   primaryKey,
   unique,
-  foreignKey,
   serial,
 } from "drizzle-orm/pg-core";
 import { sql, relations } from "drizzle-orm";
 
-// ===== Enums =====
 export const userStatusEnum = pgEnum("user_status", [
   "WAITLISTED",
   "PENDING",
@@ -29,7 +27,7 @@ export const profileRoleEnum = pgEnum("profile_role", [
 ]);
 export const referralCodeTypeEnum = pgEnum("referral_code_type", [
   "CAMPAIGN",
-  "USER", // Added a new type for user-specific codes
+  "USER",
 ]);
 export const referralStatusEnum = pgEnum("referral_status", [
   "CLICKED",
@@ -63,51 +61,44 @@ export const postStatusEnum = pgEnum("post_status", [
 export const groupTypeEnum = pgEnum("group_type", ["PUBLIC", "PRIVATE"]);
 export const voteTypeEnum = pgEnum("vote_type", ["UPVOTE", "DOWNVOTE"]);
 
-// ===== Tables =====
-
-// Users
 export const users = pgTable("users", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   email: text("email").notNull().unique(),
   phoneNumber: text("phone_number"),
-  status: userStatusEnum("status").notNull(),
-  username: text("username").unique(),
-  displayName: text("display_name"),
-  role: profileRoleEnum("role").notNull(),
-  personaTags: jsonb("persona_tags").default([]),
-  positionNumber: integer("position_number").unique(),
+  status: userStatusEnum("status").notNull().default('PENDING'),
   passwordHash: text("password_hash"),
   provider: authProviderEnum("auth_provider").default("LOCAL"),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .default(sql.raw('now()'))
-    .notNull(), // Add .notNull() if it was there before
-  usernameDesired: text("username_desired"),
+    .notNull(),
+  defaultProfileId: integer("default_profile_id"), 
+  positionNumber: integer("position_number").unique(),
   personaSelected: jsonb("persona_selected").default([]),
-  profilePicture: text("profile_picture"),
   dateOfBirth: text("date_of_birth"),
-  source: text("source"),
   referralCode: text("referral_code"),
   inviteRequired: boolean("invite_required").default(true),
   points: integer("points").default(0),
 });
 
-// User Profiles (for multiple user personas)
 export const profiles = pgTable("profiles", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   userId: integer("user_id")
     .notNull()
     .references(() => users.id),
-  role: profileRoleEnum("role").notNull(),
-  profileName: text("profile_name").notNull(),
+  username: text("username").notNull().unique(), 
+  displayName: text("display_name").notNull(),
+  profilePicture: text("profile_picture"),
   bio: text("bio"),
+  role: profileRoleEnum("role").notNull().default('TRAVELER'), 
+  personaTags: jsonb("persona_tags").default([]), 
+  
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .default(sql.raw('now()'))
-    .notNull(), // Add .notNull() if it was there before
+    .notNull(),
 });
 
-// Organizations
 export const organizations = pgTable("organizations", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   name: text("name").notNull().unique(),
@@ -117,10 +108,9 @@ export const organizations = pgTable("organizations", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .default(sql.raw('now()'))
-    .notNull(), // Add .notNull() if it was there before
+    .notNull(),
 });
 
-// Groups
 export const groups = pgTable("groups", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   name: text("name").notNull(),
@@ -129,7 +119,6 @@ export const groups = pgTable("groups", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
 });
 
-// Junction table for many-to-many relationship between groups and users
 export const groupsToUsers = pgTable(
   "groups_to_users",
   {
@@ -147,7 +136,6 @@ export const groupsToUsers = pgTable(
   }
 );
 
-// Communities (Subreddits)
 export const communities = pgTable("communities", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   name: text("name").notNull(),
@@ -159,12 +147,11 @@ export const communities = pgTable("communities", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
 });
 
-// Forum Posts
 export const posts = pgTable("posts", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
-  authorId: integer("author_id")
+  authorProfileId: integer("author_profile_id")
     .notNull()
-    .references(() => users.id),
+    .references(() => profiles.id), 
   communityId: integer("community_id")
     .notNull()
     .references(() => communities.id),
@@ -176,15 +163,14 @@ export const posts = pgTable("posts", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .default(sql.raw('now()'))
-    .notNull(), // Add .notNull() if it was there before
+    .notNull(),
 });
 
-// Forum Comments
 export const comments = pgTable("comments", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
-  authorId: integer("author_id")
+  authorProfileId: integer("author_profile_id")
     .notNull()
-    .references(() => users.id),
+    .references(() => profiles.id),
   postId: integer("post_id")
     .notNull()
     .references(() => posts.id),
@@ -195,10 +181,9 @@ export const comments = pgTable("comments", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .default(sql.raw('now()'))
-    .notNull(), // Add .notNull() if it was there before
+    .notNull(),
 });
 
-// Mentions
 export const mentions = pgTable("mentions", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   userId: integer("user_id")
@@ -209,7 +194,6 @@ export const mentions = pgTable("mentions", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
 });
 
-// Voting
 export const votes = pgTable("votes", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   userId: integer("user_id")
@@ -221,14 +205,12 @@ export const votes = pgTable("votes", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
 });
 
-// Categories for posts
 export const categories = pgTable("categories", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   name: text("name").notNull().unique(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
 });
 
-// Junction table for many-to-many relationship between posts and categories
 export const postsToCategories = pgTable(
   "posts_to_categories",
   {
@@ -246,7 +228,6 @@ export const postsToCategories = pgTable(
   }
 );
 
-// Referral Codes
 export const referralCodes = pgTable("referral_codes", {
   code: text("code").notNull().primaryKey(),
   type: referralCodeTypeEnum("type").notNull(),
@@ -255,10 +236,9 @@ export const referralCodes = pgTable("referral_codes", {
   campaignId: integer("campaign_id"),
   userId: integer("user_id")
     .unique()
-    .references(() => users.id), // Added to link codes to a specific user
+    .references(() => users.id),
 });
 
-// Campaigns
 export const campaigns = pgTable("campaigns", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   name: text("name").notNull(),
@@ -268,10 +248,9 @@ export const campaigns = pgTable("campaigns", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .default(sql.raw('now()'))
-    .notNull(), // Add .notNull() if it was there before
+    .notNull(),
 });
 
-// Referrals
 export const referrals = pgTable(
   "referrals",
   {
@@ -290,7 +269,6 @@ export const referrals = pgTable(
   })
 );
 
-// Rewards Ledger
 export const rewardsLedger = pgTable("rewards_ledger", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   userId: integer("user_id").references(() => users.id),
@@ -300,7 +278,6 @@ export const rewardsLedger = pgTable("rewards_ledger", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
 });
 
-// Email Events
 export const emailEvents = pgTable("email_events", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   email: text("email"),
@@ -309,17 +286,15 @@ export const emailEvents = pgTable("email_events", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
 });
 
-// System Settings (for dynamic currency amounts)
 export const systemSettings = pgTable("system_settings", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   key: text("key").notNull().unique(),
   value: text("value").notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .default(sql.raw('now()'))
-    .notNull(), // Add .notNull() if it was there before
+    .notNull(),
 });
 
-// System Log
 export const systemLog = pgTable("system_log", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   level: text("level").notNull(),
@@ -328,23 +303,30 @@ export const systemLog = pgTable("system_log", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
 });
 
-// Relations
 export const usersRelations = relations(users, ({ one, many }) => ({
   ownedCampaigns: many(campaigns),
-  posts: many(posts),
-  comments: many(comments),
   profiles: many(profiles),
   groupsToUsers: many(groupsToUsers),
   organizations: many(organizations),
   communities: many(communities),
   mentions: many(mentions),
   personalReferralCode: one(referralCodes),
+  defaultProfile: one(profiles, {
+    fields: [users.defaultProfileId],
+    references: [profiles.id],
+  }),
 }));
 
-export const profilesRelations = relations(profiles, ({ one }) => ({
+export const profilesRelations = relations(profiles, ({ one, many }) => ({
   user: one(users, {
     fields: [profiles.userId],
     references: [users.id],
+  }),
+  posts: many(posts),
+  comments: many(comments),
+  defaultForUser: one(users, {
+    fields: [profiles.id],
+    references: [users.defaultProfileId],
   }),
 }));
 
@@ -383,9 +365,9 @@ export const communitiesRelations = relations(communities, ({ one, many }) => ({
 }));
 
 export const postsRelations = relations(posts, ({ one, many }) => ({
-  author: one(users, {
-    fields: [posts.authorId],
-    references: [users.id],
+  authorProfile: one(profiles, {
+    fields: [posts.authorProfileId],
+    references: [profiles.id],
   }),
   community: one(communities, {
     fields: [posts.communityId],
@@ -402,9 +384,9 @@ export const commentsRelations = relations(comments, ({ one, many }) => ({
     fields: [comments.parentId],
     references: [comments.id],
   }),
-  author: one(users, {
-    fields: [comments.authorId],
-    references: [users.id],
+  authorProfile: one(profiles, {
+    fields: [comments.authorProfileId],
+    references: [profiles.id],
   }),
   post: one(posts, {
     fields: [comments.postId],
@@ -498,4 +480,11 @@ export const referralsRelations = relations(referrals, ({ one }) => ({
     fields: [referrals.referralCode],
     references: [referralCodes.code],
   }),
+}));
+
+export const rewardsLedgerRelations = relations(rewardsLedger, ({ one }) => ({
+    user: one(users, {
+        fields: [rewardsLedger.userId],
+        references: [users.id],
+    }),
 }));

@@ -54,7 +54,6 @@ export const SigninModal = () => {
       });
       if (res?.error) setError("Invalid credentials");
       setLoading(false);
-      close();
     } catch (error: unknown) {
       setLoading(false);
       if (error instanceof AxiosError && error.response) {
