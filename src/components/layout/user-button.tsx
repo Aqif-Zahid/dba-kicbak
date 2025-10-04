@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader, LogOut, Settings, Key, User, Hourglass } from "lucide-react";
+import { Loader, LogOut, Settings, Key, User, Hourglass, Edit3 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -15,11 +15,6 @@ import { FaUserGroup } from "react-icons/fa6";
 
 export const UserButton = () => {
   const { user, loading, logout } = useUser();
-
-  const handleLogout = () => {
-    logout();
-    // window.location.reload();
-  };
 
   if (loading) {
     return (
@@ -78,6 +73,15 @@ export const UserButton = () => {
               Profile
             </DropdownMenuItem>
           </Link>
+
+          {/* Create Post — visible for both Admin & Traveler */}
+          <Link href="/create-post">
+            <DropdownMenuItem className="flex items-center gap-2 px-4 py-2 rounded-md hover:bg-emerald-50 cursor-pointer">
+              <Edit3 className="w-4 h-4 text-primary" />
+              Create Post
+            </DropdownMenuItem>
+          </Link>
+
           {isAdmin && (
             <>
               <Link href="/admin/users">
