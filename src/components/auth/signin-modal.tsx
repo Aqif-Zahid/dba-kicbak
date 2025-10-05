@@ -52,8 +52,13 @@ export const SigninModal = () => {
         email: values.email,
         password: values.password,
       });
-      if (res?.error) setError("Invalid credentials");
-      setLoading(false);
+      if (res?.error) {
+        setLoading(false);
+        setError("Invalid credentials");
+      } else {
+        setLoading(false);
+        close();
+      }
     } catch (error: unknown) {
       setLoading(false);
       if (error instanceof AxiosError && error.response) {
