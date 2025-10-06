@@ -135,7 +135,6 @@ export const Sidebar = () => {
             />
           </Button>
         </DropdownMenuTrigger>
-
         <DropdownMenuContent className="w-[280px] p-2" align="start">
           <DropdownMenuLabel className="flex items-center text-sm font-semibold text-gray-700">
             <Users size={16} className="mr-2" /> Switch Profile

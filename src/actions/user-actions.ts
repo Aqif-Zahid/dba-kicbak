@@ -1,18 +1,22 @@
-import { users } from "@/db/schema";
+import { profiles } from "@/db/schema";
 import { db } from "@/lib/db";
 import { eq } from "drizzle-orm";
+export type ProfileDetails = typeof profiles.$inferSelect;
 
-export const getUserDetails = async (username: string) => {
+export const getUserDetails = async (username: string): Promise<ProfileDetails | null> => {
   try {
     const result = await db
       .select()
-      .from(users)
-      .where(eq(users.username, username))
+      .from(profiles)
+      .where(eq(profiles.username, username))
       .limit(1);
-    const user = result[0];
-    return user;
+      
+    const profile = result[0];
+
+    return profile ?? null;
+
   } catch (e) {
-    console.log(e);
+    console.error("Error fetching user details by username:", e);
     return null;
   }
 };

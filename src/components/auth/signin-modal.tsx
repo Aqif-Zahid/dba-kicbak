@@ -64,7 +64,6 @@ export const SigninModal = () => {
       if (res?.error) {
         setError("Invalid credentials");
       } else {
-        // 🔹 Close modal on success
         close();
       }
     } catch (error: unknown) {

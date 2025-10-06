@@ -86,22 +86,26 @@ export const authOptions: AuthOptions = {
           .from(profiles)
           .where(eq(profiles.id, userRecord.defaultProfileId!))
           .limit(1);
-
-        if (!defaultProfile) {
-            console.error(`User ${userRecord.id} is ACTIVE but missing a default profile.`);
-            return null;
+        let allProfiles;
+        let profileMap;
+        if (defaultProfile) {
+          // 3. Fetch all profiles for the user
+          allProfiles = await db
+              .select({
+                  id: profiles.id,
+                  displayName: profiles.displayName,
+                  profilePicture: profiles.profilePicture,
+                  role: profiles.role,
+              })
+              .from(profiles)
+              .where(eq(profiles.userId, userRecord.id));
+          profileMap = allProfiles.map(p => ({
+            id: p.id,
+            displayName: p.displayName,
+            profilePicture: p.profilePicture,
+            role: p.role}));
         }
 
-        // 3. Fetch all profiles for the user
-        const allProfiles = await db
-            .select({
-                id: profiles.id,
-                displayName: profiles.displayName,
-                profilePicture: profiles.profilePicture,
-                role: profiles.role,
-            })
-            .from(profiles)
-            .where(eq(profiles.userId, userRecord.id));
 
 
         // 4. Construct the ExtendedUser object
@@ -110,7 +114,7 @@ export const authOptions: AuthOptions = {
           email: userRecord.email,
           status: userRecord.status,
           // Default Profile fields
-          role: defaultProfile.role,
+          role: defaultProfile.role ?? '',
           displayName: defaultProfile.displayName,
           username: defaultProfile.username,
           profilePicture: defaultProfile.profilePicture,
@@ -184,7 +188,7 @@ export const authOptions: AuthOptions = {
             [defaultProfile] = await db
                 .select({
                     role: profiles.role,
-                    displayName: profiles.displayName, // Mapping displayName to displayName for session
+                    displayName: profiles.displayName,
                     username: profiles.username,
                     profilePicture: profiles.profilePicture,
                 })
