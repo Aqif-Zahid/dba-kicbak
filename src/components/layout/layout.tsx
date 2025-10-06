@@ -4,31 +4,38 @@ import { FiChevronUp } from "react-icons/fi";
 import { motion } from "framer-motion";
 import { Header } from "./header";
 import { Footer } from "./footer";
+import { SigninModal } from "@/components/auth/signin-modal";
+import { useSigninModal } from "@/hooks/use-signin-modal";
 
 interface LayoutProps {
   children: React.ReactNode;
 }
 
 export const Layout = ({ children }: LayoutProps) => {
-  const [showScrollToTop, setShowScrollToTop] = useState<boolean>(false);
+  const [showScrollToTop, setShowScrollToTop] = useState(false);
+  const { open } = useSigninModal();
 
-  // Show "Go to Top" button after scrolling down 300px
+  // Handle "scroll to top" button visibility
   useEffect(() => {
-    const handleScroll = () => {
-      setShowScrollToTop(window.scrollY > 300);
-    };
-
+    const handleScroll = () => setShowScrollToTop(window.scrollY > 300);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
+  const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
+
+  // 🔹 Listen for "open-signin-modal" event globally
+  useEffect(() => {
+    const openHandler = () => open();
+    window.addEventListener("open-signin-modal", openHandler);
+    return () => window.removeEventListener("open-signin-modal", openHandler);
+  }, [open]);
+
   return (
     <main className="min-h-screen flex flex-col justify-between bg-background scroll-smooth">
       <Header />
       {children}
+
       {showScrollToTop && (
         <motion.button
           onClick={scrollToTop}
@@ -44,6 +51,9 @@ export const Layout = ({ children }: LayoutProps) => {
       )}
 
       <Footer />
+
+      {/* ✅ Include existing SigninModal (controlled by useSigninModal) */}
+      <SigninModal />
     </main>
   );
 };

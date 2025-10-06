@@ -1,83 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { comments, profiles } from "@/db/schema";
-import { eq, desc } from "drizzle-orm";
+import { comments, profiles, votes } from "@/db/schema";
+import { eq, and, count, isNull, inArray } from "drizzle-orm";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]/route";
 
-// ===============================
-// 🟢 CREATE COMMENT (reply)
-// ===============================
-export async function POST(req: NextRequest) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const { postId, content, parentId } = await req.json();
-
-    if (!postId || !content) {
-      return NextResponse.json(
-        { error: "Post ID and content are required" },
-        { status: 400 }
-      );
-    }
-
-    // ✅ Get the user's profile
-    const profile = await db
-      .select()
-      .from(profiles)
-      .where(eq(profiles.userId, Number(session.user.id)))
-      .limit(1);
-
-    if (!profile || profile.length === 0) {
-      return NextResponse.json(
-        { error: "Profile not found" },
-        { status: 404 }
-      );
-    }
-
-    // ✅ Insert the comment
-    const newComment = await db
-      .insert(comments)
-      .values({
-        authorProfileId: profile[0].id,
-        postId,
-        content,
-        parentId: parentId || null,
-        upvotes: 0,
-        downvotes: 0,
-      })
-      .returning();
-
-    return NextResponse.json({ success: true, comment: newComment[0] });
-  } catch (err) {
-    console.error("Create comment error:", err);
-    return NextResponse.json(
-      { error: "Something went wrong while creating the comment" },
-      { status: 500 }
-    );
-  }
-}
-
-// ===============================
-// 🔵 GET COMMENTS FOR A POST
-// ===============================
 export async function GET(req: NextRequest) {
   try {
-    const { searchParams } = new URL(req.url);
-    const postId = searchParams.get("postId");
+    const url = new URL(req.url);
+    const postId = Number(url.searchParams.get("postId"));
+    if (!postId)
+      return NextResponse.json({ error: "postId is required" }, { status: 400 });
 
-    if (!postId) {
-      return NextResponse.json(
-        { error: "Post ID is required" },
-        { status: 400 }
-      );
-    }
+    const session = await getServerSession(authOptions);
+    const userId = session?.user?.id ? Number(session.user.id) : null;
 
-    // ✅ Fetch all comments for the given post, with author display names
-    const postComments = await db
+    // ✅ Get comments with author display names
+    const rows = await db
       .select({
         id: comments.id,
         content: comments.content,
@@ -87,15 +26,106 @@ export async function GET(req: NextRequest) {
       })
       .from(comments)
       .leftJoin(profiles, eq(comments.authorProfileId, profiles.id))
-      .where(eq(comments.postId, Number(postId)))
-      .orderBy(desc(comments.createdAt));
+      .where(eq(comments.postId, postId))
+      .orderBy(comments.createdAt);
 
-    return NextResponse.json({ comments: postComments });
-  } catch (err) {
-    console.error("Error fetching comments:", err);
-    return NextResponse.json(
-      { error: "Failed to load comments" },
-      { status: 500 }
-    );
+    const commentIds = rows.map((r) => r.id);
+
+    // ✅ Fetch upvote/downvote counts
+    const voteCounts =
+      commentIds.length > 0
+        ? await db
+            .select({
+              commentId: votes.commentId,
+              voteType: votes.voteType,
+              c: count(),
+            })
+            .from(votes)
+            .where(inArray(votes.commentId, commentIds))
+            .groupBy(votes.commentId, votes.voteType)
+        : [];
+
+    // ✅ Fetch this user’s own votes
+    const userVotes =
+      userId && commentIds.length > 0
+        ? await db
+            .select({
+              commentId: votes.commentId,
+              voteType: votes.voteType,
+            })
+            .from(votes)
+            .where(and(inArray(votes.commentId, commentIds), eq(votes.userId, userId)))
+        : [];
+
+    // ✅ Build comment map
+    const byId: Record<number, any> = {};
+    rows.forEach((c) => {
+      const ups = voteCounts.filter(
+        (v) => v.commentId === c.id && v.voteType === "UPVOTE"
+      );
+      const downs = voteCounts.filter(
+        (v) => v.commentId === c.id && v.voteType === "DOWNVOTE"
+      );
+      const uv = userVotes.find((v) => v.commentId === c.id);
+
+      byId[c.id] = {
+        ...c,
+        upvotes: ups.length > 0 ? Number(ups[0].c) : 0,
+        downvotes: downs.length > 0 ? Number(downs[0].c) : 0,
+        userVote: uv?.voteType ?? null,
+        replies: [],
+      };
+    });
+
+    // ✅ Build nested structure
+    const roots: any[] = [];
+    Object.values(byId).forEach((c: any) => {
+      if (c.parentId && byId[c.parentId]) {
+        byId[c.parentId].replies.push(c);
+      } else {
+        roots.push(c);
+      }
+    });
+
+    return NextResponse.json({ comments: roots });
+  } catch (error) {
+    console.error("Comments GET error:", error);
+    return NextResponse.json({ error: "Failed to fetch comments" }, { status: 500 });
+  }
+}
+
+export async function POST(req: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user)
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    const userId = Number(session.user.id);
+    const { postId, content, parentId } = await req.json();
+
+    if (!postId || !content)
+      return NextResponse.json({ error: "Invalid data" }, { status: 400 });
+
+    const profile = await db.query.profiles.findFirst({
+      where: eq(profiles.userId, userId),
+    });
+
+    if (!profile)
+      return NextResponse.json({ error: "Profile not found" }, { status: 404 });
+
+    const inserted = await db
+      .insert(comments)
+      .values({
+        postId,
+        content,
+        authorProfileId: profile.id,
+        parentId: parentId ?? null,
+      })
+      .returning();
+
+    return NextResponse.json({ success: true, comment: inserted[0] });
+  } catch (error) {
+    console.error("Comment POST error:", error);
+    return NextResponse.json({ error: "Failed to create comment" }, { status: 500 });
   }
 }

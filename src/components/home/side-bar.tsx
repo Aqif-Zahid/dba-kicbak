@@ -1,5 +1,3 @@
-// components/home/Sidebar.tsx
-
 "use client";
 
 import { useSession } from "next-auth/react";
@@ -18,11 +16,10 @@ import { cn } from "@/lib/utils";
 import axios from "axios";
 import { useState } from "react";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
+import { useSigninModal } from "@/hooks/use-signin-modal";
 
 // === Profile Switch Functionality ===
-
-// This function calls the custom API to initiate the profile switch
-// and then forces a session refresh to update the client state.
 const switchProfile = async (newProfileId: string) => {
   try {
     const res = await axios.post("/api/auth/switch-profile", {
@@ -30,13 +27,9 @@ const switchProfile = async (newProfileId: string) => {
     });
 
     if (res.data.status === 1) {
-      // The API returns the new activeProfileId.
-      // We must now trigger NextAuth to refresh the session.
-      // We pass the new profile ID as a query param to the refresh
-      // trigger so NextAuth can pick it up in the 'jwt' and 'session' callbacks.
       await signIn("refresh", {
         redirect: false,
-        activeProfileId: newProfileId, // Custom param read by nextauth:route.ts
+        activeProfileId: newProfileId,
       });
       toast.success("Profile switched successfully!");
     }
@@ -47,32 +40,60 @@ const switchProfile = async (newProfileId: string) => {
 };
 
 export const Sidebar = () => {
-  // Access the session data, including the custom 'allProfiles' array
   const { data: session } = useSession();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const router = useRouter();
+  const { open: openSigninModal } = useSigninModal();
 
   const user = session?.user;
-  const currentProfile = user; // Current session user object has active profile data
+  const currentProfile = user;
   const allProfiles = (session?.user as any)?.allProfiles || [];
 
-  if (!user) return null; // Should not happen if rendering only for signed-in users
+  // --- For non-logged-in users ---
+  if (!user) {
+    return (
+      <div className="flex flex-col h-full p-4 space-y-4 bg-white shadow-sm border-r border-gray-200">
+        <h2 className="text-lg font-bold text-gray-800 mb-2">Welcome!</h2>
 
+        <Button
+          onClick={openSigninModal}
+          className="w-full bg-pink-600 hover:bg-pink-700 text-white font-semibold rounded-xl"
+        >
+          Sign In
+        </Button>
+
+        <Button
+          onClick={() => router.push("/posts")}
+          variant="outline"
+          className="w-full border-pink-600 text-pink-600 hover:bg-pink-50 font-semibold rounded-xl"
+        >
+          View Posts
+        </Button>
+      </div>
+    );
+  }
+
+  // --- For signed-in users ---
   const otherProfiles = allProfiles.filter(
     (p: any) => p.profileId !== currentProfile?.id
   );
-  
-  // Combine all profiles (active first, then others) for display
+
   const profilesForMenu = [
-    // Include the active profile in the list
-    ...(currentProfile ? [{
-      profileId: currentProfile.id,
-      username: currentProfile.username,
-      profilePicture: currentProfile.profilePicture,
-      profileName: currentProfile.displayName,
-      role: currentProfile.role
-    }] : []),
-    ...otherProfiles
-  ].filter((v, i, a) => a.findIndex(t => (t.profileId === v.profileId)) === i); // Deduplicate
+    ...(currentProfile
+      ? [
+          {
+            profileId: currentProfile.id,
+            username: currentProfile.username,
+            profilePicture: currentProfile.profilePicture,
+            profileName: currentProfile.displayName,
+            role: currentProfile.role,
+          },
+        ]
+      : []),
+    ...otherProfiles,
+  ].filter(
+    (v, i, a) => a.findIndex((t) => t.profileId === v.profileId) === i
+  );
 
   const handleSwitch = (profileId: string) => {
     setIsMenuOpen(false);
@@ -80,11 +101,10 @@ export const Sidebar = () => {
       switchProfile(profileId);
     }
   };
-  
+
   return (
     <div className="flex flex-col h-full p-4 space-y-4 bg-white shadow-sm">
-      
-      {/* --- Profile Switcher (Dropdown) --- */}
+      {/* --- Profile Switcher --- */}
       <DropdownMenu open={isMenuOpen} onOpenChange={setIsMenuOpen}>
         <DropdownMenuTrigger asChild>
           <Button
@@ -93,7 +113,9 @@ export const Sidebar = () => {
           >
             <div className="flex items-center space-x-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-white">
-                {currentProfile?.username ? currentProfile.username[0].toUpperCase() : <User size={18} />}
+                {currentProfile?.username
+                  ? currentProfile.username[0].toUpperCase()
+                  : <User size={18} />}
               </div>
               <div className="flex flex-col items-start truncate">
                 <span className="font-semibold text-sm truncate max-w-[120px]">
@@ -113,12 +135,13 @@ export const Sidebar = () => {
             />
           </Button>
         </DropdownMenuTrigger>
+
         <DropdownMenuContent className="w-[280px] p-2" align="start">
           <DropdownMenuLabel className="flex items-center text-sm font-semibold text-gray-700">
             <Users size={16} className="mr-2" /> Switch Profile
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
-          
+
           {profilesForMenu.map((profile: any) => (
             <DropdownMenuItem
               key={profile.profileId}
@@ -137,7 +160,9 @@ export const Sidebar = () => {
                     : "bg-gray-400"
                 )}
               >
-                {profile.username ? profile.username[0].toUpperCase() : <User size={16} />}
+                {profile.username
+                  ? profile.username[0].toUpperCase()
+                  : <User size={16} />}
               </div>
               <div className="flex flex-col items-start truncate flex-1">
                 <span className="text-sm font-medium truncate max-w-[150px]">
@@ -152,20 +177,35 @@ export const Sidebar = () => {
               )}
             </DropdownMenuItem>
           ))}
-          
         </DropdownMenuContent>
       </DropdownMenu>
 
       {/* --- Main Navigation Links --- */}
       <nav className="flex-1 space-y-1">
-        {/* Placeholder for future navigation items */}
-        <Button variant="ghost" className="w-full justify-start text-base rounded-xl">
+        <Button
+          variant="ghost"
+          className="w-full justify-start text-base rounded-xl"
+          onClick={() => router.push("/")}
+        >
           Home
         </Button>
-        <Button variant="ghost" className="w-full justify-start text-base rounded-xl">
+        <Button
+          variant="ghost"
+          className="w-full justify-start text-base rounded-xl"
+          onClick={() => router.push("/posts")}
+        >
+          View Posts
+        </Button>
+        <Button
+          variant="ghost"
+          className="w-full justify-start text-base rounded-xl"
+        >
           Rewards Ledger
         </Button>
-        <Button variant="ghost" className="w-full justify-start text-base rounded-xl">
+        <Button
+          variant="ghost"
+          className="w-full justify-start text-base rounded-xl"
+        >
           Settings
         </Button>
       </nav>
