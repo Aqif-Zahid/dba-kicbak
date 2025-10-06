@@ -65,7 +65,7 @@ export const authOptions: AuthOptions = {
           .limit(1);
 
         // Check if user exists, has a password hash, and is active
-        if (!userRecord || !userRecord.passwordHash || userRecord.status == "BLOCKED")
+        if (!userRecord || !userRecord.passwordHash || userRecord.status !== "ACTIVE")
           return null;
 
         const isValid = await bcrypt.compare(
@@ -122,7 +122,12 @@ export const authOptions: AuthOptions = {
           phoneNumber: userRecord.phoneNumber,
           dateOfBirth: userRecord.dateOfBirth,
           // All Profiles
-          allProfiles: profileMap,
+          allProfiles: allProfiles.map(p => ({
+            id: p.id,
+            displayName: p.displayName,
+            profilePicture: p.profilePicture,
+            role: p.role,
+          })),
         } as ExtendedUser;
       },
     }),

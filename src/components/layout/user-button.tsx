@@ -1,6 +1,15 @@
 "use client";
 
-import { Loader, LogOut, Settings, Key, User, Hourglass } from "lucide-react";
+import {
+  Loader,
+  LogOut,
+  Settings,
+  Key,
+  User,
+  Hourglass,
+  Pencil,
+  MessageSquare,
+} from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -16,11 +25,6 @@ import { FaUserGroup } from "react-icons/fa6";
 export const UserButton = () => {
   const { user, loading, logout } = useUser();
 
-  const handleLogout = () => {
-    logout();
-    // window.location.reload();
-  };
-
   if (loading) {
     return (
       <div className="w-10 h-10 rounded-full flex items-center justify-center bg-neutral-200 border border-neutral-300">
@@ -32,11 +36,12 @@ export const UserButton = () => {
   if (!user) return null;
 
   const { displayName, email, role, username } = user;
-  const avatarFallback = displayName
-    ? displayName.charAt(0).toUpperCase()
-    : email.charAt(0).toUpperCase() ?? "U";
+  const avatarFallback =
+    displayName?.charAt(0).toUpperCase() ||
+    email?.charAt(0).toUpperCase() ||
+    "U";
 
-  const isAdmin = user && role === "ADMIN";
+  const isAdmin = role === "ADMIN";
 
   return (
     <DropdownMenu modal={false}>
@@ -56,7 +61,7 @@ export const UserButton = () => {
           transition={{ type: "spring", stiffness: 300, damping: 20 }}
           className="w-60 rounded-xl shadow-lg border border-neutral-200 bg-white p-2"
         >
-          {/* User Info */}
+          {/* --- User Info --- */}
           <div className="flex flex-col items-center justify-center py-4 border-b border-neutral-100 mb-2">
             <Avatar className="w-14 h-14 border border-neutral-300 mb-2">
               <AvatarFallback className="bg-neutral-200 text-xl font-medium text-neutral-500 flex justify-center items-center">
@@ -71,13 +76,31 @@ export const UserButton = () => {
             </p>
           </div>
 
-          {/* Dropdown Items */}
+          {/* --- Shared Options --- */}
           <Link href={isAdmin ? "/admin" : `/${username}`}>
             <DropdownMenuItem className="flex items-center gap-2 px-4 py-2 rounded-md hover:bg-emerald-50 cursor-pointer">
               <User className="w-4 h-4 text-primary" />
               Profile
             </DropdownMenuItem>
           </Link>
+
+          {/* --- Create Post (visible to all signed-in users) --- */}
+          <Link href="/create-post">
+            <DropdownMenuItem className="flex items-center gap-2 px-4 py-2 rounded-md hover:bg-emerald-50 cursor-pointer">
+              <Pencil className="w-4 h-4 text-primary" />
+              Create Post
+            </DropdownMenuItem>
+          </Link>
+
+          {/* --- View Posts (visible to all users) --- */}
+          <Link href="/posts">
+            <DropdownMenuItem className="flex items-center gap-2 px-4 py-2 rounded-md hover:bg-emerald-50 cursor-pointer">
+              <MessageSquare className="w-4 h-4 text-primary" />
+              View Posts
+            </DropdownMenuItem>
+          </Link>
+
+          {/* --- Admin Only Options --- */}
           {isAdmin && (
             <>
               <Link href="/admin/users">
@@ -95,6 +118,7 @@ export const UserButton = () => {
             </>
           )}
 
+          {/* --- Change Password --- */}
           <Link href="/change-password">
             <DropdownMenuItem className="flex items-center gap-2 px-4 py-2 rounded-md hover:bg-emerald-50 cursor-pointer">
               <Key className="w-4 h-4 text-primary" />
@@ -102,6 +126,7 @@ export const UserButton = () => {
             </DropdownMenuItem>
           </Link>
 
+          {/* --- Logout --- */}
           <DropdownMenuItem
             onClick={logout}
             className="flex items-center gap-2 px-4 py-2 rounded-md hover:bg-red-50 text-red-600 cursor-pointer"
