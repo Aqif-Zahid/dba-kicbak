@@ -12,19 +12,20 @@ import {
   FormMessage,
 } from "../ui/form";
 import { getErrorMessage } from "@/lib/utils";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { AxiosError } from "axios";
 import { Input } from "../ui/input";
-import { AlertTriangle, Eye, EyeOff, LogIn } from "lucide-react";
+import { AlertTriangle, Eye, EyeOff } from "lucide-react";
 import { Button } from "../ui/button";
 import { Checkbox } from "../ui/checkbox";
-import { signIn } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
 import { useRequestInviteModal } from "@/hooks/use-request-invite-modal";
 
 export const SigninModal = () => {
   const { isOpen, close } = useSigninModal();
   const { open: openInviteCodeModal } = useRequestInviteModal();
+  const { data: session } = useSession();
 
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -43,6 +44,13 @@ export const SigninModal = () => {
     defaultValues: { email: "", password: "" },
   });
 
+  // 🔹 Close modal if session becomes available (e.g. Google login)
+  useEffect(() => {
+  if (session && isOpen) {
+    close();
+    }
+  }, [session, close]);
+
   const onSubmit = async (values: z.infer<typeof loginSchema>) => {
     try {
       setLoading(true);
@@ -52,20 +60,20 @@ export const SigninModal = () => {
         email: values.email,
         password: values.password,
       });
+
       if (res?.error) {
-        setLoading(false);
         setError("Invalid credentials");
       } else {
-        setLoading(false);
         close();
       }
     } catch (error: unknown) {
-      setLoading(false);
       if (error instanceof AxiosError && error.response) {
         setError(getErrorMessage(error.response.data));
       } else {
         setError("An unexpected error occurred");
       }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -95,7 +103,7 @@ export const SigninModal = () => {
           onClick={handleGoogleLogin}
           size="sm"
           variant="outline"
-          className="w-15 flex justify-center items-center  py-4"
+          className="w-15 flex justify-center items-center py-4"
         >
           <img
             src="https://img.clerk.com/static/google.svg?width=160"
@@ -121,8 +129,7 @@ export const SigninModal = () => {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>
-                  Email address or username{" "}
-                  <span className="text-red-900">*</span>
+                  Email address or username <span className="text-red-900">*</span>
                 </FormLabel>
                 <FormControl>
                   <Input

@@ -2,13 +2,13 @@
 
 import Link from "next/link";
 import { CircleUser, UserRoundCog } from "lucide-react";
-import { RiCalendarScheduleFill, RiLockPasswordLine } from "react-icons/ri";
+import { RiLockPasswordLine } from "react-icons/ri";
 import { SiSamsclub } from "react-icons/si";
 import { Button } from "../ui/button";
 import { useRouter } from "next/navigation";
 import { TbLogs } from "react-icons/tb";
 import { BsNewspaper } from "react-icons/bs";
-import { FaUserGroup } from "react-icons/fa6";
+import { FaUserGroup, FaPenFancy } from "react-icons/fa6"; // ✍️ New icon for Create Post
 import LogOutButton from "./log-out-button";
 import { usePathname } from "next/navigation";
 import { useUser } from "@/providers/auth-provider";
@@ -27,6 +27,7 @@ export const Sidebar = ({ className }: SidebarProps) => {
 
   return (
     <div className={className}>
+      {/* --- Profile --- */}
       {isAdmin ? (
         <Button
           variant={pathname === "/admin" ? "default" : "ghost"}
@@ -53,6 +54,20 @@ export const Sidebar = ({ className }: SidebarProps) => {
         </Button>
       )}
 
+      {/* --- ✍️ Create Post (for all signed-in users) --- */}
+      <Button
+        variant={pathname === "/create-post" ? "default" : "ghost"}
+        className="flex items-center justify-start gap-3 mb-2 hover:bg-primary hover:text-white"
+        title="Create Post"
+        asChild
+      >
+        <Link href="/create-post">
+          <FaPenFancy />
+          <span className="hidden lg:inline">Create Post</span>
+        </Link>
+      </Button>
+
+      {/* --- Admin-specific options --- */}
       {isAdmin && (
         <>
           <Button
@@ -81,17 +96,23 @@ export const Sidebar = ({ className }: SidebarProps) => {
           </Button>
         </>
       )}
-      <Button
-        variant={pathname === "/change-password" ? "default" : "ghost"}
-        className="flex items-center justify-start gap-3 hover:bg-primary hover:text-white mb-2"
-        title="Change Password"
-        asChild
-      >
-        <Link href="/change-password">
-          <RiLockPasswordLine />
-          <span className="hidden lg:inline">Change Password</span>
-        </Link>
-      </Button>
+
+      {/* --- Change Password (non-admin users) --- */}
+      {!isAdmin && (
+        <Button
+          variant={pathname === "/change-password" ? "default" : "ghost"}
+          className="flex items-center justify-start gap-3 hover:bg-primary hover:text-white mb-2"
+          title="Change Password"
+          asChild
+        >
+          <Link href="/change-password">
+            <RiLockPasswordLine />
+            <span className="hidden lg:inline">Change Password</span>
+          </Link>
+        </Button>
+      )}
+
+      {/* --- Logout --- */}
       <LogOutButton />
     </div>
   );
