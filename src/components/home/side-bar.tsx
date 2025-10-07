@@ -113,9 +113,11 @@ export const Sidebar = () => {
           >
             <div className="flex items-center space-x-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-white">
-                {currentProfile?.username
-                  ? currentProfile.username[0].toUpperCase()
-                  : <User size={18} />}
+                {currentProfile?.username ? (
+                  currentProfile.username[0].toUpperCase()
+                ) : (
+                  <User size={18} />
+                )}
               </div>
               <div className="flex flex-col items-start truncate">
                 <span className="font-semibold text-sm truncate max-w-[120px]">
@@ -143,7 +145,7 @@ export const Sidebar = () => {
 
           {profilesForMenu.map((profile: any) => (
             <DropdownMenuItem
-              key={profile.profileId}
+              key={`${profile.profileId || "no-id"}-${profile.username || "anon"}`}
               onClick={() => handleSwitch(profile.profileId)}
               className={cn(
                 "flex items-center space-x-3 cursor-pointer p-2 rounded-lg",
@@ -159,9 +161,11 @@ export const Sidebar = () => {
                     : "bg-gray-400"
                 )}
               >
-                {profile.username
-                  ? profile.username[0].toUpperCase()
-                  : <User size={16} />}
+                {profile.username ? (
+                  profile.username[0].toUpperCase()
+                ) : (
+                  <User size={16} />
+                )}
               </div>
               <div className="flex flex-col items-start truncate flex-1">
                 <span className="text-sm font-medium truncate max-w-[150px]">
@@ -180,7 +184,7 @@ export const Sidebar = () => {
       </DropdownMenu>
 
       {/* --- Main Navigation Links --- */}
-      <nav className="flex-1 space-y-1">
+      <nav className="space-y-1">
         <Button
           variant="ghost"
           className="w-full justify-start text-base rounded-xl"
@@ -209,8 +213,8 @@ export const Sidebar = () => {
         </Button>
       </nav>
 
-      {/* --- Logout Section --- */}
-      <div className="mt-auto pt-4 border-t border-gray-200">
+      {/* --- Logout Section (Moved Up) --- */}
+      <div className="pt-4 border-t border-gray-200">
         <div className="flex items-center space-x-3 text-sm p-3 rounded-lg bg-gray-50">
           <span className="text-xs font-mono text-muted-foreground break-all">
             User ID: {user.id}

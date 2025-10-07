@@ -1,37 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { posts, profiles, communities } from "@/db/schema";
-import { eq, desc } from "drizzle-orm";
+import { posts, profiles, comments, communities } from "@/db/schema";
+import { desc, eq, isNull } from "drizzle-orm";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]/route";
 
-// Helper: ensure a default "general" community exists and return its id
-async function ensureDefaultCommunity(ownerUserId: number): Promise<number> {
-  // Try to find an existing "general" community
-  const existing = await db
-    .select({ id: communities.id })
-    .from(communities)
-    .where(eq(communities.slug, "general"))
-    .limit(1);
-
-  if (existing.length > 0) return existing[0].id;
-
-  // Create it if missing
-  const inserted = await db
-    .insert(communities)
-    .values({
-      name: "General",
-      slug: "general",
-      description: "Default community for general discussions",
-      ownerId: ownerUserId,
-    })
-    .returning({ id: communities.id });
-
-  return inserted[0].id;
-}
-
 // ===============================
-// 🟢 CREATE POST
+//  CREATE POST
 // ===============================
 export async function POST(req: NextRequest) {
   try {
@@ -40,109 +15,121 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { title, content, communityId: incomingCommunityId } = await req.json();
+    const { title, content, communityId } = await req.json();
 
     if (!title || !content) {
       return NextResponse.json(
-        { error: "Title and content are required" },
+        { error: "Title and content required" },
         { status: 400 }
       );
     }
 
-    const userId = Number((session.user as any)?.id);
-    const activeProfileId = Number((session.user as any)?.activeProfileId) || null;
+    //  Find the author's profile
+    const [profile] = await db
+      .select()
+      .from(profiles)
+      .where(eq(profiles.userId, Number((session.user as any).id)))
+      .limit(1);
 
-    // Resolve author profile id
-    let authorProfileId: number | null = null;
-
-    if (activeProfileId) {
-      // Trust activeProfileId if present
-      const p = await db
-        .select({ id: profiles.id })
-        .from(profiles)
-        .where(eq(profiles.id, activeProfileId))
-        .limit(1);
-
-      if (p.length === 0) {
-        return NextResponse.json(
-          { error: "Active profile not found" },
-          { status: 404 }
-        );
-      }
-      authorProfileId = p[0].id;
-    } else {
-      // Fall back to the first profile for this user
-      const p = await db
-        .select({ id: profiles.id })
-        .from(profiles)
-        .where(eq(profiles.userId, userId))
-        .limit(1);
-
-      if (p.length === 0) {
-        return NextResponse.json(
-          { error: "Profile not found for this user" },
-          { status: 404 }
-        );
-      }
-      authorProfileId = p[0].id;
+    if (!profile) {
+      return NextResponse.json({ error: "Profile not found" }, { status: 404 });
     }
 
-    // Resolve community id: use provided or ensure "general"
-    const communityId = incomingCommunityId
-      ? Number(incomingCommunityId)
-      : await ensureDefaultCommunity(userId);
+    const authorProfileId = profile.id;
 
-    const newPost = await db
+    //  Find or create a default "General" community if none is provided
+    let selectedCommunityId: number;
+    if (communityId) {
+      selectedCommunityId = Number(communityId);
+    } else {
+      const existing = await db
+        .select()
+        .from(communities)
+        .where(eq(communities.slug, "general"))
+        .limit(1);
+
+      if (existing.length > 0) {
+        selectedCommunityId = existing[0].id;
+      } else {
+        const [createdCommunity] = await db
+          .insert(communities)
+          .values({
+            name: "General",
+            slug: "general",
+            description: "Default community for general discussions",
+            ownerId: Number((session.user as any).id),
+          })
+          .returning();
+        selectedCommunityId = createdCommunity.id;
+      }
+    }
+
+    //  Insert new post
+    const inserted = await db
       .insert(posts)
       .values({
-        authorProfileId: authorProfileId!,
-        communityId,
+        authorProfileId,
+        communityId: selectedCommunityId,
         title,
         content,
         status: "PUBLISHED",
       })
       .returning();
 
-    return NextResponse.json({ success: true, post: newPost[0] });
-  } catch (err: any) {
-    console.error("❌ Create post error:", err);
+    return NextResponse.json({ success: true, post: inserted[0] });
+  } catch (err) {
+    console.error("Create post error:", err);
     return NextResponse.json(
-      { error: err?.message || "Something went wrong while creating the post" },
+      { error: "Something went wrong while creating the post" },
       { status: 500 }
     );
   }
 }
 
 // ===============================
-// 🔵 GET ALL POSTS (optional ?limit=10)
+//  GET ALL POSTS (with relations)
 // ===============================
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
-    const limitParam = searchParams.get("limit");
-    const limit = limitParam ? Math.max(1, Math.min(100, Number(limitParam))) : 50;
+    const limit = Number(searchParams.get("limit") ?? 0);
 
-    const rows = await db
-      .select({
-        id: posts.id,
-        title: posts.title,
-        content: posts.content,
-        createdAt: posts.createdAt,
-        authorDisplayName: profiles.displayName,
-        upvotes: posts.upvotes,
-        downvotes: posts.downvotes,
-      })
-      .from(posts)
-      .leftJoin(profiles, eq(posts.authorProfileId, profiles.id))
-      .orderBy(desc(posts.createdAt))
-      .limit(limit);
+    //  Relation-based fetch with author, votes, and top-level comment counts
+    const rows = await db.query.posts.findMany({
+      orderBy: [desc(posts.createdAt)],
+      limit: limit && !Number.isNaN(limit) ? limit : undefined,
+      with: {
+        authorProfile: true,
+        votes: true,
+        comments: {
+          where: isNull(comments.parentId),
+          columns: { id: true },
+        },
+      },
+    });
 
-    return NextResponse.json({ posts: rows });
-  } catch (err: any) {
-    console.error("❌ Error fetching posts:", err);
-    return NextResponse.json(
-      { error: "Failed to load posts" },
-      { status: 500 }
-    );
+    //  Format and return (mask deleted posts)
+    const formatted = rows.map((p) => {
+      const isDeleted = p.status === "DELETED";
+
+      return {
+        id: p.id,
+        title: isDeleted ? "[deleted]" : p.title,
+        content: isDeleted ? "[deleted]" : p.content,
+        createdAt: p.createdAt,
+        authorDisplayName: isDeleted
+          ? "[deleted user]"
+          : p.authorProfile?.displayName ?? "User",
+        upvotes: p.votes.filter((v) => v.voteType === "UPVOTE").length,
+        downvotes: p.votes.filter((v) => v.voteType === "DOWNVOTE").length,
+        commentCount: p.comments.length,
+        status: p.status, //  include status so frontend knows if deleted
+      };
+    });
+
+    return NextResponse.json({ posts: formatted });
+  } catch (err) {
+    console.error("Posts GET error:", err);
+    return NextResponse.json({ error: "Failed to load posts" }, { status: 500 });
   }
 }
