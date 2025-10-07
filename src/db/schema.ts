@@ -57,7 +57,14 @@ export const postStatusEnum = pgEnum("post_status", [
   "DRAFT",
   "PUBLISHED",
   "ARCHIVED",
+  "DELETED",
 ]);
+export const commentStatusEnum = pgEnum("comment_status", [
+  "VISIBLE",
+  "EDITED",
+  "DELETED",
+]);
+
 export const groupTypeEnum = pgEnum("group_type", ["PUBLIC", "PRIVATE"]);
 export const voteTypeEnum = pgEnum("vote_type", ["UPVOTE", "DOWNVOTE"]);
 
@@ -178,11 +185,13 @@ export const comments = pgTable("comments", {
   upvotes: integer("upvotes").default(0),
   downvotes: integer("downvotes").default(0),
   parentId: integer("parent_id"),
+  status: commentStatusEnum("status").notNull().default("VISIBLE"),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true })
-    .default(sql.raw('now()'))
+    .default(sql.raw("now()"))
     .notNull(),
 });
+
 
 export const mentions = pgTable("mentions", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),

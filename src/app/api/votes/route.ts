@@ -5,7 +5,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]/route";
 import { and, eq, inArray } from "drizzle-orm";
 
-// ✅ Added this type definition
+// ✅ Type definition
 type VoteType = "UPVOTE" | "DOWNVOTE" | null;
 
 /**
@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Check existing vote
+    // 🔍 Check existing vote
     const existing = await db.query.votes.findFirst({
       where: and(
         eq(votes.userId, userId),
@@ -39,6 +39,7 @@ export async function POST(req: NextRequest) {
       ),
     });
 
+    // 🧩 Handle vote logic
     if (existing) {
       if (existing.voteType === voteType) {
         // Toggle off
@@ -51,7 +52,7 @@ export async function POST(req: NextRequest) {
           .where(eq(votes.id, existing.id));
       }
     } else {
-      // New vote
+      // Insert new vote
       await db.insert(votes).values({
         userId,
         postId: postId ? Number(postId) : null,
@@ -60,10 +61,11 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // Refresh counts
+    // ✅ Refresh counts and persist updates
     let upCount = 0;
     let downCount = 0;
 
+    // --- Handle post votes ---
     if (postId) {
       const all = await db.query.votes.findMany({
         where: eq(votes.postId, Number(postId)),
@@ -77,6 +79,7 @@ export async function POST(req: NextRequest) {
         .where(eq(posts.id, Number(postId)));
     }
 
+    // --- Handle comment votes ---
     if (commentId) {
       const all = await db.query.votes.findMany({
         where: eq(votes.commentId, Number(commentId)),
@@ -84,6 +87,7 @@ export async function POST(req: NextRequest) {
       upCount = all.filter((v) => v.voteType === "UPVOTE").length;
       downCount = all.filter((v) => v.voteType === "DOWNVOTE").length;
 
+      // ✅ Persist counts to comments table too
       await db
         .update(comments)
         .set({ upvotes: upCount, downvotes: downCount })
@@ -118,7 +122,7 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const postId = searchParams.get("postId");
     const commentId = searchParams.get("commentId");
-    const postIdsParam = searchParams.get("postIds"); // ✅ supports ?postIds=1,2,3,4
+    const postIdsParam = searchParams.get("postIds");
 
     const session = await getServerSession(authOptions);
     const userId = session?.user?.id ? Number(session.user.id) : null;
@@ -148,7 +152,7 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    // ✅ Bulk mode for multiple posts
+    // Bulk mode
     if (postIdsParam) {
       const ids = postIdsParam
         .split(",")
@@ -166,8 +170,11 @@ export async function GET(req: NextRequest) {
         where: inArray(votes.postId, ids),
       });
 
-      // Group by postId
-      const result: Record<number, { upvotes: number; downvotes: number; userVote?: VoteType | null }> = {};
+      const result: Record<
+        number,
+        { upvotes: number; downvotes: number; userVote?: VoteType | null }
+      > = {};
+
       for (const id of ids) {
         const subset = allVotes.filter((v) => v.postId === id);
         result[id] = {
