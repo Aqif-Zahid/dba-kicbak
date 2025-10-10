@@ -1,13 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
-import { posts, profiles, comments, communities } from "@/db/schema";
-import { desc, eq, isNull } from "drizzle-orm";
+import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]/route";
 
-// ===============================
-//  CREATE POST
-// ===============================
 export async function POST(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -19,68 +14,65 @@ export async function POST(req: NextRequest) {
 
     if (!title || !content) {
       return NextResponse.json(
-        { error: "Title and content required" },
-        { status: 400 }
+        { status: 0, message: "Title and content required" },
+        { status: 422 }
       );
     }
 
-    //  Find the author's profile
-    const [profile] = await db
-      .select()
-      .from(profiles)
-      .where(eq(profiles.userId, Number((session.user as any).id)))
-      .limit(1);
+    // Find the author's default profile
+    const profile = await prisma.profiles.findFirst({
+      where: { user: { email: session.user.email ?? undefined } },
+      include: { user: true },
+    });
 
     if (!profile) {
-      return NextResponse.json({ error: "Profile not found" }, { status: 404 });
+      return NextResponse.json(
+        { status: 0, message: "Profile not found" },
+        { status: 422 }
+      );
     }
 
     const authorProfileId = profile.id;
 
-    //  Find or create a default "General" community if none is provided
+    // Find or create "General" community
     let selectedCommunityId: number;
     if (communityId) {
       selectedCommunityId = Number(communityId);
     } else {
-      const existing = await db
-        .select()
-        .from(communities)
-        .where(eq(communities.slug, "general"))
-        .limit(1);
+      let generalCommunity = await prisma.community.findFirst({
+        where: { slug: "general" },
+      });
 
-      if (existing.length > 0) {
-        selectedCommunityId = existing[0].id;
-      } else {
-        const [createdCommunity] = await db
-          .insert(communities)
-          .values({
+      if (!generalCommunity) {
+        generalCommunity = await prisma.community.create({
+          data: {
             name: "General",
             slug: "general",
             description: "Default community for general discussions",
-            ownerId: Number((session.user as any).id),
-          })
-          .returning();
-        selectedCommunityId = createdCommunity.id;
+            ownerId: Number(profile.userId),
+          },
+        });
       }
+
+      selectedCommunityId = generalCommunity.id;
     }
 
-    //  Insert new post
-    const inserted = await db
-      .insert(posts)
-      .values({
+    // Create new post
+    const newPost = await prisma.post.create({
+      data: {
         authorProfileId,
         communityId: selectedCommunityId,
         title,
         content,
         status: "PUBLISHED",
-      })
-      .returning();
+      },
+    });
 
-    return NextResponse.json({ success: true, post: inserted[0] });
+    return NextResponse.json({ success: true, post: newPost });
   } catch (err) {
     console.error("Create post error:", err);
     return NextResponse.json(
-      { error: "Something went wrong while creating the post" },
+      { status: 0, message: "Something went wrong while creating the post" },
       { status: 500 }
     );
   }
@@ -94,22 +86,22 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const limit = Number(searchParams.get("limit") ?? 0);
 
-    //  Relation-based fetch with author, votes, and top-level comment counts
-    const rows = await db.query.posts.findMany({
-      orderBy: [desc(posts.createdAt)],
-      limit: limit && !Number.isNaN(limit) ? limit : undefined,
-      with: {
+    // Fetch posts with author, votes, and top-level comment count
+    const posts = await prisma.post.findMany({
+      orderBy: { createdAt: "desc" },
+      take: limit && !Number.isNaN(limit) ? limit : undefined,
+      include: {
         authorProfile: true,
         votes: true,
         comments: {
-          where: isNull(comments.parentId),
-          columns: { id: true },
+          where: { parentId: null },
+          select: { id: true },
         },
       },
     });
 
-    //  Format and return (mask deleted posts)
-    const formatted = rows.map((p) => {
+    // Format response
+    const formatted = posts.map((p) => {
       const isDeleted = p.status === "DELETED";
 
       return {
@@ -123,13 +115,16 @@ export async function GET(req: NextRequest) {
         upvotes: p.votes.filter((v) => v.voteType === "UPVOTE").length,
         downvotes: p.votes.filter((v) => v.voteType === "DOWNVOTE").length,
         commentCount: p.comments.length,
-        status: p.status, //  include status so frontend knows if deleted
+        status: p.status,
       };
     });
 
     return NextResponse.json({ posts: formatted });
   } catch (err) {
     console.error("Posts GET error:", err);
-    return NextResponse.json({ error: "Failed to load posts" }, { status: 500 });
+    return NextResponse.json(
+      { status: 0, message: "Failed to load posts" },
+      { status: 500 }
+    );
   }
 }

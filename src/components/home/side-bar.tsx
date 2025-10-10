@@ -17,7 +17,6 @@ import axios from "axios";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { useSigninModal } from "@/hooks/use-signin-modal";
 
 // === Profile Switch Functionality ===
 const switchProfile = async (newProfileId: string) => {
@@ -43,35 +42,10 @@ export const Sidebar = () => {
   const { data: session } = useSession();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const router = useRouter();
-  const { open: openSigninModal } = useSigninModal();
 
   const user = session?.user;
   const currentProfile = user;
   const allProfiles = (session?.user as any)?.allProfiles || [];
-
-  // --- For non-logged-in users ---
-  if (!user) {
-    return (
-      <div className="flex flex-col h-full p-4 space-y-4 bg-white shadow-sm border-r border-gray-200">
-        <h2 className="text-lg font-bold text-gray-800 mb-2">Welcome!</h2>
-
-        <Button
-          onClick={openSigninModal}
-          className="w-full bg-pink-600 hover:bg-pink-700 text-white font-semibold rounded-xl"
-        >
-          Sign In
-        </Button>
-
-        <Button
-          onClick={() => router.push("/posts")}
-          variant="outline"
-          className="w-full border-pink-600 text-pink-600 hover:bg-pink-50 font-semibold rounded-xl"
-        >
-          View Posts
-        </Button>
-      </div>
-    );
-  }
 
   // --- For signed-in users ---
   const otherProfiles = allProfiles.filter(
@@ -91,9 +65,7 @@ export const Sidebar = () => {
         ]
       : []),
     ...otherProfiles,
-  ].filter(
-    (v, i, a) => a.findIndex((t) => t.profileId === v.profileId) === i
-  );
+  ].filter((v, i, a) => a.findIndex((t) => t.profileId === v.profileId) === i);
 
   const handleSwitch = (profileId: string) => {
     setIsMenuOpen(false);
@@ -145,7 +117,7 @@ export const Sidebar = () => {
 
           {profilesForMenu.map((profile: any) => (
             <DropdownMenuItem
-              key={`${profile.profileId || "no-id"}-${profile.username || "anon"}`}
+              key={`${profile.profileId || "no-id"}-${profile.username || ""}`}
               onClick={() => handleSwitch(profile.profileId)}
               className={cn(
                 "flex items-center space-x-3 cursor-pointer p-2 rounded-lg",
@@ -217,7 +189,7 @@ export const Sidebar = () => {
       <div className="pt-4 border-t border-gray-200">
         <div className="flex items-center space-x-3 text-sm p-3 rounded-lg bg-gray-50">
           <span className="text-xs font-mono text-muted-foreground break-all">
-            User ID: {user.id}
+            User ID: {user?.id}
           </span>
         </div>
         <Button

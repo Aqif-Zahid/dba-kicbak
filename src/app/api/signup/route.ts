@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { db } from "@/lib/db";
-import { profiles, users } from "@/db/schema";
-import { eq, sql } from "drizzle-orm";
+import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 
 // === Zod validation ===
@@ -12,7 +10,7 @@ const signupSchema = z.object({
   email: z.string().email(),
   usernameDesired: z.string().min(3).max(20),
   personaSelected: z.array(z.string()).optional(),
-  referralCode: z.string(),
+  referralCode: z.string().optional(),
   source: z.string().optional(),
   password: z
     .string()
@@ -31,7 +29,7 @@ export async function POST(req: Request) {
 
   if (!parse.success) {
     return NextResponse.json(
-      { status: 0, message: parse.error.flatten() },
+      { status: 0, message: "Validation error", errors: parse.error.flatten() },
       { status: 400 }
     );
   }
@@ -48,73 +46,63 @@ export async function POST(req: Request) {
   } = parse.data;
 
   try {
-    const existingUser = await db
-      .select({ id: users.id })
-      .from(users)
-      .where(eq(users.email, email));
+    // 1️⃣ Check if email already exists
+    const existingUser = await prisma.users.findUnique({
+      where: { email },
+    });
 
-    if (existingUser.length > 0) {
+    if (existingUser) {
       return NextResponse.json(
         { status: 0, message: "A user with this email already exists." },
         { status: 409 }
       );
     }
 
+    // 2️⃣ Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Scenario 1: User signed up with an invite code -> ACTIVE + Default Profile
-    const result = await db.transaction(async (tx) => {
-      // 1. Insert User with ACTIVE status
-      const [insertedUser] = await tx.insert(users).values({
-        email,
-        passwordHash: hashedPassword,
-        status: "ACTIVE", 
-        provider: "LOCAL",
-        usernameDesired,
-        personaSelected,
-        source,
-        referralCode,
-        inviteRequired: true,
-      }).returning({ id: users.id });
+    // 3️⃣ Transaction: Create user + default profile
+    const result = await prisma.$transaction(async (tx: any) => {
+      // 3a. Create User
+      const newUser = await tx.users.create({
+        data: {
+          email,
+          passwordHash: hashedPassword,
+          status: "ACTIVE",
+          authProvider: "LOCAL",
+          personaSelected: personaSelected ?? [],
+          source,
+          referralCode,
+          inviteRequired: true,
+        },
+      });
 
-      if (!insertedUser) {
-        throw new Error("Failed to create user.");
-      }
-      
-      const newUserId = insertedUser.id;
+      if (!newUser) throw new Error("Failed to create user.");
 
-      // 2. Insert Default Profile
-      const [insertedProfile] = await tx.insert(profiles).values({
-        userId: newUserId,
-        username: usernameDesired, 
-        displayName: `${firstName} ${lastName}`,
-        role: "TRAVELER",
-      }).returning({ id: profiles.id });
+      // 3b. Create Default Profile
+      const newProfile = await tx.profiles.create({
+        data: {
+          userId: newUser.id,
+          username: usernameDesired,
+          displayName: `${firstName} ${lastName}`,
+          role: "TRAVELER",
+        },
+      });
 
-      if (!insertedProfile) {
-        throw new Error("Failed to create default profile.");
-      }
+      if (!newProfile) throw new Error("Failed to create default profile.");
 
-      const newProfileId = insertedProfile.id;
+      // 3c. Update User with defaultProfileId
+      await tx.users.update({
+        where: { id: newUser.id },
+        data: { defaultProfileId: newProfile.id },
+      });
 
-      // 3. Update User with defaultProfileId
-      await tx.update(users)
-        .set({
-          defaultProfileId: newProfileId,
-          updatedAt: sql.raw('now()'),
-        })
-        .where(eq(users.id, newUserId));
-
-      return { userId: newUserId, profileId: newProfileId };
+      return { userId: newUser.id, profileId: newProfile.id };
     });
 
-    // 4. Return success
+    // 4️⃣ Return success
     return NextResponse.json(
-      {
-        status: 1,
-        message: "Signed up successfully",
-        userId: result.userId,
-      },
+      { status: 1, message: "Signed up successfully", userId: result.userId },
       { status: 200 }
     );
   } catch (err) {
@@ -125,4 +113,3 @@ export async function POST(req: Request) {
     );
   }
 }
-  

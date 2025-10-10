@@ -16,22 +16,8 @@ export const Header = () => {
     <header className="border-b border-border">
       <SigninModal />
       <RequestInviteCodeModal />
-
-      {user ? (
-        <div className="container mx-auto px-4 py-6 flex justify-between items-center">
-          <Link href="/">
-            <Image
-              src="/kicbak-logo.png"
-              alt="Kicbak"
-              width={200}
-              height={60}
-              className="h-12 w-auto"
-            />
-          </Link>
-          <UserButton />
-        </div>
-      ) : (
-        <div className="container mx-auto px-4 py-6 flex justify-between items-center">
+      <div className="container mx-auto px-4 py-6 flex justify-between items-center">
+        <Link href="/">
           <Image
             src="/kicbak-logo.png"
             alt="Kicbak"
@@ -39,6 +25,10 @@ export const Header = () => {
             height={60}
             className="h-12 w-auto"
           />
+        </Link>
+        {user ? (
+          <UserButton />
+        ) : (
           <div className="flex gap-4">
             <button
               onClick={open}
@@ -47,8 +37,8 @@ export const Header = () => {
               Sign in
             </button>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </header>
   );
 };

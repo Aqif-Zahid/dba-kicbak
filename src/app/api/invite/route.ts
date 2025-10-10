@@ -1,14 +1,6 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
-import { users, userStatusEnum, profileRoleEnum } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import prisma from "@/lib/prisma";
 
-/**
- * Handles the POST request to submit an invite request.
- * Saves the email to the PostgreSQL database with a 'PENDING' status.
- * @param {Request} req The incoming request object.
- * @returns {Promise<NextResponse>} The JSON response.
- */
 export async function POST(req: Request) {
   try {
     const { email } = await req.json();
@@ -20,9 +12,9 @@ export async function POST(req: Request) {
       );
     }
 
-    // Check if the email already exists in the users table
-    const existingUser = await db.query.users.findFirst({
-      where: eq(users.email, email),
+    // Check if the email already exists
+    const existingUser = await prisma.users.findUnique({
+      where: { email },
     });
 
     if (existingUser) {
@@ -35,15 +27,42 @@ export async function POST(req: Request) {
       );
     }
 
-    // Insert the new email into the users table with a 'PENDING' status and a default role
-    await db.insert(users).values({
-      email: email,
-      status: userStatusEnum.enumValues[0], // 'PENDING'
-      role: profileRoleEnum.enumValues[0], // 'TRAVELER' as a default
+    // Create user with profile inside a transaction
+    const result = await prisma.$transaction(async (tx) => {
+      // 1️⃣ Create the user
+      const user = await tx.users.create({
+        data: {
+          email,
+          status: "PENDING",
+        },
+      });
+
+      // 2️⃣ Create the default profile
+      const profile = await tx.profiles.create({
+        data: {
+          role: "TRAVELER",
+          displayName: email.split("@")[0],
+          username: email.split("@")[0],
+          user: { connect: { id: user.id } },
+        },
+      });
+
+      // 3️⃣ Update user.defaultProfileId
+      const updatedUser = await tx.users.update({
+        where: { id: user.id },
+        data: { defaultProfileId: profile.id },
+      });
+
+      return { user: updatedUser, profile };
     });
 
     return NextResponse.json(
-      { status: 1, message: "Invite request submitted successfully" },
+      {
+        status: 1,
+        message: "Invite request submitted successfully",
+        user: result.user,
+        profile: result.profile,
+      },
       { status: 200 }
     );
   } catch (error) {

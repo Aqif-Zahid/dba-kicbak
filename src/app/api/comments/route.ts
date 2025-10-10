@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
-import { comments } from "@/db/schema";
-import { asc, eq } from "drizzle-orm";
+import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]/route";
 
+// Helper: build nested comment tree
 function buildCommentTree(all: any[]) {
   const byId = new Map<number, any>();
   const roots: any[] = [];
@@ -35,23 +34,26 @@ function buildCommentTree(all: any[]) {
 }
 
 // ===============================
-//  GET comments
+// GET comments
 // ===============================
 export async function GET(req: NextRequest) {
   try {
     const url = new URL(req.url);
     const postId = Number(url.searchParams.get("postId"));
     if (!postId) {
-      return NextResponse.json({ error: "postId is required" }, { status: 400 });
+      return NextResponse.json(
+        { status: 0, message: "postId is required" },
+        { status: 400 }
+      );
     }
 
     const session = await getServerSession(authOptions);
     const currentUserId = session?.user?.id ? Number(session.user.id) : null;
 
-    const rows = await db.query.comments.findMany({
-      where: eq(comments.postId, postId),
-      orderBy: [asc(comments.createdAt)],
-      with: {
+    const rows = await prisma.comment.findMany({
+      where: { postId },
+      orderBy: { createdAt: "asc" },
+      include: {
         authorProfile: true,
         votes: true,
       },
@@ -63,7 +65,8 @@ export async function GET(req: NextRequest) {
       const downvotes = c.votes.filter((v) => v.voteType === "DOWNVOTE").length;
       const userVote =
         currentUserId != null
-          ? c.votes.find((v) => Number(v.userId) === currentUserId)?.voteType ?? null
+          ? c.votes.find((v) => Number(v.userId) === currentUserId)?.voteType ??
+            null
           : null;
 
       return {
@@ -84,164 +87,203 @@ export async function GET(req: NextRequest) {
     });
 
     const nested = buildCommentTree(flat);
-
-    return NextResponse.json({ comments: nested });
+    return NextResponse.json({ status: 1, comments: nested });
   } catch (error) {
     console.error("Comments GET error:", error);
-    return NextResponse.json({ error: "Failed to fetch comments" }, { status: 500 });
+    return NextResponse.json(
+      { status: 0, message: "Failed to fetch comments" },
+      { status: 500 }
+    );
   }
 }
 
 // ===============================
-//  POST comment
+// POST comment
 // ===============================
 export async function POST(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user)
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json(
+        { status: 0, message: "Unauthorized" },
+        { status: 401 }
+      );
 
     const userId = Number(session.user.id);
-    const body = await req.json();
-    const { postId, content, parentId } = body || {};
+    const { postId, content, parentId } = await req.json();
 
     if (!postId || !content) {
       return NextResponse.json(
-        { error: "Invalid data (postId and content required)" },
+        { status: 0, message: "Invalid data (postId and content required)" },
         { status: 400 }
       );
     }
 
-    const profile = await db.query.profiles.findFirst({
-      where: (p, { eq }) => eq(p.userId, userId),
+    const profile = await prisma.profiles.findFirst({
+      where: { userId },
     });
 
     if (!profile) {
-      return NextResponse.json({ error: "Profile not found" }, { status: 404 });
+      return NextResponse.json(
+        { status: 0, message: "Profile not found" },
+        { status: 404 }
+      );
     }
 
-    const inserted = await db
-      .insert(comments)
-      .values({
-        postId: Number(postId),
-        content: String(content),
+    const inserted = await prisma.comment.create({
+      data: {
+        postId,
+        content,
         authorProfileId: profile.id,
         parentId: parentId ?? null,
         status: "VISIBLE",
-      })
-      .returning();
+      },
+    });
 
-    return NextResponse.json({ success: true, comment: inserted[0] });
+    return NextResponse.json({ success: true, comment: inserted });
   } catch (error) {
     console.error("Comment POST error:", error);
-    return NextResponse.json({ error: "Failed to create comment" }, { status: 500 });
+    return NextResponse.json(
+      { status: 0, message: "Failed to create comment" },
+      { status: 500 }
+    );
   }
 }
 
 // ===============================
-//  PATCH (edit OR soft-delete comment)
-//  - If `content` provided: author can edit; status becomes "EDITED"
-//  - If `status: "DELETED"` provided: author or admin can soft-delete; content masked
+// PATCH comment (edit or soft-delete)
 // ===============================
 export async function PATCH(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user)
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json(
+        { status: 0, message: "Unauthorized" },
+        { status: 401 }
+      );
 
-    const body = await req.json();
-    const { commentId, content, status } = body || {};
+    const { commentId, content, status } = await req.json();
     if (!commentId) {
-      return NextResponse.json({ error: "Invalid data" }, { status: 400 });
+      return NextResponse.json(
+        { status: 0, message: "Invalid data" },
+        { status: 400 }
+      );
     }
 
-    const existing = await db.query.comments.findFirst({
-      where: eq(comments.id, Number(commentId)),
-      with: { authorProfile: true },
+    const existing = await prisma.comment.findUnique({
+      where: { id: commentId },
+      include: { authorProfile: true },
     });
 
     if (!existing)
-      return NextResponse.json({ error: "Comment not found" }, { status: 404 });
+      return NextResponse.json(
+        { status: 0, message: "Comment not found" },
+        { status: 404 }
+      );
 
     const currentUserId = Number(session.user.id);
-    const isAuthor = Number(existing.authorProfile?.userId) === currentUserId;
+    const isAuthor = existing.authorProfile?.userId === currentUserId;
     const isAdmin =
-      ((session.user as any)?.role ?? "").toString().toUpperCase() === "ADMIN";
+      (session.user as any)?.role?.toString().toUpperCase() === "ADMIN";
 
-    // Handle delete via PATCH
     if (status === "DELETED") {
       if (!isAuthor && !isAdmin) {
-        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+        return NextResponse.json(
+          { status: 0, message: "Forbidden" },
+          { status: 403 }
+        );
       }
 
-      await db
-        .update(comments)
-        .set({ status: "DELETED", content: "[deleted]" })
-        .where(eq(comments.id, Number(commentId)));
+      await prisma.comment.update({
+        where: { id: commentId },
+        data: { status: "DELETED", content: "[deleted]" },
+      });
 
-      return NextResponse.json({ success: true });
+      return NextResponse.json({ status: 1, message: "Deleted Successfully" });
     }
 
-    // Handle edit via PATCH
     if (!content) {
-      return NextResponse.json({ error: "Content required for edit" }, { status: 400 });
+      return NextResponse.json(
+        { status: 0, message: "Content required for edit" },
+        { status: 400 }
+      );
     }
 
     if (!isAuthor) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return NextResponse.json(
+        { status: 0, message: "Forbidden" },
+        { status: 403 }
+      );
     }
 
-    await db
-      .update(comments)
-      .set({ content, status: "EDITED" })
-      .where(eq(comments.id, Number(commentId)));
+    await prisma.comment.update({
+      where: { id: commentId },
+      data: { content, status: "EDITED" },
+    });
 
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Comment PATCH error:", error);
-    return NextResponse.json({ error: "Failed to update comment" }, { status: 500 });
+    return NextResponse.json(
+      { status: 0, message: "Failed to update comment" },
+      { status: 500 }
+    );
   }
 }
 
 // ===============================
-//  DELETE (soft delete comment) — author or admin
-//  (kept as-is; supports ?id= param)
+// DELETE comment (soft delete)
 // ===============================
 export async function DELETE(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user)
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json(
+        { status: 0, message: "Unauthorized" },
+        { status: 401 }
+      );
 
     const url = new URL(req.url);
     const commentId = Number(url.searchParams.get("id"));
     if (!commentId)
-      return NextResponse.json({ error: "Missing id" }, { status: 400 });
+      return NextResponse.json(
+        { status: 0, message: "Missing id" },
+        { status: 400 }
+      );
 
-    const existing = await db.query.comments.findFirst({
-      where: eq(comments.id, commentId),
-      with: { authorProfile: true },
+    const existing = await prisma.comment.findUnique({
+      where: { id: commentId },
+      include: { authorProfile: true },
     });
 
     if (!existing)
-      return NextResponse.json({ error: "Comment not found" }, { status: 404 });
+      return NextResponse.json(
+        { status: 0, message: "Comment not found" },
+        { status: 404 }
+      );
 
     const currentUserId = Number(session.user.id);
-    const isAuthor = Number(existing.authorProfile?.userId) === currentUserId;
+    const isAuthor = existing.authorProfile?.userId === currentUserId;
     const isAdmin =
-      ((session.user as any)?.role ?? "").toString().toUpperCase() === "ADMIN";
+      (session.user as any)?.role?.toString().toUpperCase() === "ADMIN";
 
     if (!isAuthor && !isAdmin)
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return NextResponse.json(
+        { status: 0, message: "Forbidden" },
+        { status: 403 }
+      );
 
-    await db
-      .update(comments)
-      .set({ status: "DELETED", content: "[deleted]" })
-      .where(eq(comments.id, commentId));
+    await prisma.comment.update({
+      where: { id: commentId },
+      data: { status: "DELETED", content: "[deleted]" },
+    });
 
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Comment DELETE error:", error);
-    return NextResponse.json({ error: "Failed to delete comment" }, { status: 500 });
+    return NextResponse.json(
+      { status: 0, message: "Failed to delete comment" },
+      { status: 500 }
+    );
   }
 }

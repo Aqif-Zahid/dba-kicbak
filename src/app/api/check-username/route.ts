@@ -1,7 +1,5 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
-import { users } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import prisma from "@/lib/prisma";
 
 export async function GET(req: Request) {
   try {
@@ -16,16 +14,13 @@ export async function GET(req: Request) {
     }
 
     // Check if the username already exists in the users table
-    const existingUser = await db.query.users.findFirst({
-      where: eq(users.username, username),
+    const existingUser = await prisma.profiles.findFirst({
+      where: { username },
     });
 
     if (existingUser) {
       return NextResponse.json(
-        {
-          status: 0,
-          message: "This username is already in use",
-        },
+        { status: 0, message: "This username is already in use" },
         { status: 200 }
       );
     }

@@ -1,13 +1,12 @@
-// /api/auth/switch-profile/route.ts
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route"; // Assuming this path
 
 // This API route signals NextAuth to switch the active profile
-// by setting a specific cookie or session parameter, forcing the 
+// by setting a specific cookie or session parameter, forcing the
 // session to refresh and update the active profile ID.
 
-// Note: The client-side (Sidebar.tsx) will call this route 
+// Note: The client-side (Sidebar.tsx) will call this route
 // then call signIn('refresh', { redirect: false }) to update the session.
 
 export async function POST(req: Request) {
@@ -44,17 +43,17 @@ export async function POST(req: Request) {
       );
     }
 
-    // Set the new profile ID in a response header or body to be consumed 
+    // Set the new profile ID in a response header or body to be consumed
     // by the client-side refresh trigger.
-    // In this specific implementation, we will use a JSON response to pass 
+    // In this specific implementation, we will use a JSON response to pass
     // the ID back, and the client-side code will use it to trigger the
     // NextAuth refresh mechanism (e.g., using a custom query parameter).
 
     return NextResponse.json(
-      { 
-        status: 1, 
+      {
+        status: 1,
         message: "Profile switch initiated",
-        activeProfileId: newProfileId
+        activeProfileId: newProfileId,
       },
       { status: 200 }
     );

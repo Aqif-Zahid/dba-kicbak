@@ -1,0 +1,387 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["fullTextSearchPostgres"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+//////////////////////////
+// USER & PROFILE MODELS
+//////////////////////////
+
+model Users {
+  id               Int           @id @default(autoincrement()) @map("id")
+  email            String        @unique(map: "users_email_unique") @map("email")
+  status           UserStatus    @default(PENDING) @map("status")
+  positionNumber   Int?          @unique(map: "users_position_number_unique") @map("position_number")
+  passwordHash     String?       @map("password_hash")
+  authProvider     AuthProvider? @default(LOCAL) @map("auth_provider")
+  createdAt        DateTime?     @default(now()) @map("created_at")
+  updatedAt        DateTime      @default(now()) @map("updated_at")
+  personaSelected  Json?         @default("[]") @map("persona_selected")
+  inviteRequired   Boolean?      @default(true) @map("invite_required")
+  points           Int?          @default(0) @map("points")
+  phoneNumber      String?       @map("phone_number")
+  dateOfBirth      String?       @map("date_of_birth")
+  referralCode     String?       @map("referral_code")
+  defaultProfileId Int?          @map("default_profile_id")
+  profiles         Profiles[]    @relation("UserProfiles") // all profiles for the user
+  defaultProfile   Profiles?     @relation("DefaultProfile", fields: [defaultProfileId], references: [id])
+
+  communities   Community[]
+  groups        Group[]
+  groupsToUsers GroupsToUser[]
+  mentions      Mention[]
+  organizations Organization[]
+
+  referralCodes                           ReferralCodes?
+  referralsReferralsReferredUserIdToUsers Referrals?      @relation("referrals_referred_user_idTousers")
+  referralsReferralsReferrerUserIdToUsers Referrals?      @relation("referrals_referrer_user_idTousers")
+  rewardsLedger                           RewardsLedger[]
+  votes                                   Vote[]
+
+  @@map("users")
+}
+
+model Profiles {
+  id             Int         @id @default(autoincrement()) @map("id")
+  userId         Int         @map("user_id")
+  user           Users       @relation("UserProfiles", fields: [userId], references: [id]) // all profiles
+  defaultFor     Users[]     @relation("DefaultProfile") // reverse relation for defaultProfile
+  role           ProfileRole @default(TRAVELER)
+  bio            String?     @map("bio")
+  createdAt      DateTime?   @default(now()) @map("created_at")
+  updatedAt      DateTime    @default(now()) @map("updated_at")
+  username       String      @unique(map: "profiles_username_unique") @map("username")
+  displayName    String      @map("display_name")
+  profilePicture String?     @map("profile_picture")
+  personaTags    Json?       @default("[]") @map("persona_tags")
+  comments       Comment[]
+  posts          Post[]
+
+  @@map("profiles")
+}
+
+model Organization {
+  id        Int       @id @default(autoincrement()) @map("id")
+  name      String    @unique(map: "organizations_name_unique") @map("name")
+  location  String?   @map("location")
+  type      String?   @map("type")
+  ownerId   Int?      @map("owner_id")
+  createdAt DateTime? @default(now()) @map("created_at")
+  updatedAt DateTime  @default(now()) @map("updated_at")
+
+  users Users? @relation(fields: [ownerId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "organizations_owner_id_users_id_fk")
+
+  @@map("organizations")
+}
+
+//////////////////////////
+// COMMUNITY & CONTENT MODELS
+//////////////////////////
+
+model Community {
+  id          Int       @id @default(autoincrement()) @map("id")
+  name        String    @map("name")
+  slug        String    @unique(map: "communities_slug_unique") @map("slug")
+  description String?   @map("description")
+  ownerId     Int       @map("owner_id")
+  createdAt   DateTime? @default(now()) @map("created_at")
+
+  users Users  @relation(fields: [ownerId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "communities_owner_id_users_id_fk")
+  posts Post[]
+
+  @@map("communities")
+}
+
+model Group {
+  id        Int       @id @default(autoincrement()) @map("id")
+  name      String    @map("name")
+  type      GroupType @map("type")
+  ownerId   Int?      @map("owner_id")
+  createdAt DateTime? @default(now()) @map("created_at")
+
+  users         Users?         @relation(fields: [ownerId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "groups_owner_id_users_id_fk")
+  groupsToUsers GroupsToUser[]
+
+  @@map("groups")
+}
+
+model Post {
+  id              Int        @id @default(autoincrement()) @map("id")
+  communityId     Int        @map("community_id")
+  title           String     @map("title")
+  content         String     @map("content")
+  status          PostStatus @default(DRAFT)
+  upvotes         Int?       @default(0)
+  downvotes       Int?       @default(0)
+  createdAt       DateTime?  @default(now()) @map("created_at")
+  updatedAt       DateTime   @default(now()) @map("updated_at")
+  authorProfileId Int        @map("author_profile_id")
+
+  comments          Comment[]
+  mentions          Mention[]
+  authorProfile     Profiles          @relation(fields: [authorProfileId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "posts_author_profile_id_profiles_id_fk")
+  communities       Community         @relation(fields: [communityId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "posts_community_id_communities_id_fk")
+  postsToCategories PostsToCategory[]
+  votes             Vote[]
+
+  @@map("posts")
+}
+
+model Category {
+  id                Int               @id @default(autoincrement()) @map("id")
+  name              String            @unique(map: "categories_name_unique") @map("name")
+  createdAt         DateTime?         @default(now()) @map("created_at")
+  postsToCategories PostsToCategory[]
+
+  @@map("categories")
+}
+
+model Comment {
+  id              Int           @id @default(autoincrement()) @map("id")
+  postId          Int           @map("post_id")
+  content         String        @map("content")
+  upvotes         Int?          @default(0) @map("upvotes")
+  downvotes       Int?          @default(0) @map("downvotes")
+  parentId        Int?          @map("parent_id")
+  createdAt       DateTime?     @default(now()) @map("created_at")
+  updatedAt       DateTime      @default(now()) @map("updated_at")
+  status          CommentStatus @default(VISIBLE)
+  authorProfileId Int           @map("author_profile_id")
+  authorProfile         Profiles  @relation(fields: [authorProfileId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "comments_author_profile_id_profiles_id_fk")
+  posts    Post      @relation(fields: [postId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "comments_post_id_posts_id_fk")
+  mentions Mention[]
+  votes    Vote[]
+
+  @@map("comments")
+}
+
+model Mention {
+  id        Int       @id @default(autoincrement()) @map("id")
+  userId    Int       @map("user_id")
+  postId    Int?      @map("post_id")
+  commentId Int?      @map("comment_id")
+  createdAt DateTime? @default(now()) @map("created_at")
+
+  comments Comment? @relation(fields: [commentId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "mentions_comment_id_comments_id_fk")
+  posts    Post?    @relation(fields: [postId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "mentions_post_id_posts_id_fk")
+  users    Users    @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "mentions_user_id_users_id_fk")
+
+  @@map("mentions")
+}
+
+//////////////////////////
+// JOIN TABLES
+//////////////////////////
+
+model PostsToCategory {
+  postId     Int
+  categoryId Int
+
+  categories Category @relation(fields: [categoryId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "posts_to_categories_category_id_categories_id_fk")
+  posts      Post     @relation(fields: [postId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "posts_to_categories_post_id_posts_id_fk")
+
+  @@id([postId, categoryId], map: "posts_to_categories_post_id_category_id_pk")
+  @@map("posts_to_categories")
+}
+
+model GroupsToUser {
+  groupId Int
+  userId  Int
+
+  group Group @relation(fields: [groupId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "groups_to_users_group_id_groups_id_fk")
+  users Users @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "groups_to_users_user_id_users_id_fk")
+
+  @@id([groupId, userId], map: "groups_to_users_group_id_user_id_pk")
+  @@map("groups_to_users")
+}
+
+//////////////////////////
+// CAMPAIGNS & REFERRALS
+//////////////////////////
+
+model Campaign {
+  id           Int       @id @default(autoincrement()) @map("id")
+  name         String    @map("name")
+  ownerId      Int       @map("owner_id")
+  isActive     Boolean?  @default(true) @map("is_active")
+  rewardAmount Int       @map("reward_amount")
+  createdAt    DateTime? @default(now()) @map("created_at")
+  updatedAt    DateTime  @default(now()) @map("updated_at")
+
+  @@map("campaigns")
+}
+
+model ReferralCodes {
+  code       String           @id @map("code")
+  type       ReferralCodeType @map("type")
+  active     Boolean?         @default(true) @map("active")
+  createdAt  DateTime?        @default(now()) @map("created_at")
+  campaignId Int?             @map("campaign_id")
+  userId     Int?             @unique(map: "referral_codes_user_id_unique") @map("user_id")
+
+  users     Users?      @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "referral_codes_user_id_users_id_fk")
+  referrals Referrals[]
+
+  @@map("referral_codes")
+}
+
+model Referrals {
+  id             Int            @id @default(autoincrement()) @map("id")
+  referrerUserId Int?           @unique(map: "referrals_referrer_user_id_unique") @map("referrer_user_id")
+  referredEmail  String?        @map("referred_email")
+  referredUserId Int?           @unique(map: "referrals_referred_user_id_unique") @map("referred_user_id")
+  referralCode   String?        @map("referral_code")
+  status         ReferralStatus @map("status")
+  createdAt      DateTime?      @default(now()) @map("created_at")
+  lastEventAt    DateTime?      @map("last_event_at")
+
+  referralCodes ReferralCodes? @relation(fields: [referralCode], references: [code], onDelete: NoAction, onUpdate: NoAction, map: "referrals_referral_code_referral_codes_code_fk")
+  usersReferred Users?         @relation("referrals_referred_user_idTousers", fields: [referredUserId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "referrals_referred_user_id_users_id_fk")
+  usersReferrer Users?         @relation("referrals_referrer_user_idTousers", fields: [referrerUserId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "referrals_referrer_user_id_users_id_fk")
+
+  @@map("referrals")
+}
+
+model RewardsLedger {
+  id          Int           @id @default(autoincrement()) @map("id")
+  userId      Int?          @map("user_id")
+  deltaPoints Int           @map("delta_points")
+  reason      RewardsReason @map("reason")
+  refId       Int?          @map("ref_id")
+  createdAt   DateTime?     @default(now()) @map("created_at")
+
+  users Users? @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "rewards_ledger_user_id_users_id_fk")
+
+  @@map("rewards_ledger")
+}
+
+//////////////////////////
+// SYSTEM & LOG MODELS
+//////////////////////////
+
+model SystemLog {
+  id        Int       @id @default(autoincrement()) @map("id")
+  level     String    @map("level")
+  message   String    @map("message")
+  details   Json?     @map("details")
+  createdAt DateTime? @default(now()) @map("created_at")
+
+  @@map("system_log")
+}
+
+model SystemSettings {
+  id        Int      @id @default(autoincrement()) @map("id")
+  key       String   @unique(map: "system_settings_key_unique") @map("key")
+  value     String   @map("value")
+  updatedAt DateTime @default(now()) @map("updated_at")
+
+  @@map("system_settings")
+}
+
+//////////////////////////
+// VOTES & EMAIL EVENTS
+//////////////////////////
+
+model Vote {
+  id        Int       @id @default(autoincrement()) @map("id")
+  userId    Int       @map("user_id")
+  postId    Int?      @map("post_id")
+  commentId Int?      @map("comment_id")
+  voteType  VoteType  @map("vote_type")
+  createdAt DateTime? @default(now()) @map("created_at")
+
+  comments Comment? @relation(fields: [commentId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "votes_comment_id_comments_id_fk")
+  posts    Post?    @relation(fields: [postId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "votes_post_id_posts_id_fk")
+  users    Users    @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "votes_user_id_users_id_fk")
+
+  @@map("votes")
+}
+
+model EmailEvent {
+  id         Int            @id @default(autoincrement()) @map("id")
+  email      String?        @map("email")
+  event      EmailEventType @map("event")
+  providerId String?        @map("provider_id")
+  createdAt  DateTime?      @default(now()) @map("created_at")
+
+  @@map("email_events")
+}
+
+//////////////////////////
+// ENUMS
+//////////////////////////
+
+enum AuthProvider {
+  LOCAL
+  GOOGLE
+  FACEBOOK
+  APPLE
+}
+
+enum CommentStatus {
+  VISIBLE
+  EDITED
+  DELETED
+}
+
+enum EmailEventType {
+  SEND_CONFIRM
+  CONFIRM_CLICKED
+  WELCOME_SENT
+}
+
+enum GroupType {
+  PUBLIC
+  PRIVATE
+}
+
+enum PostStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+  DELETED
+}
+
+enum ProfileRole {
+  TRAVELER
+  OPERATOR
+  CREATOR
+  AGENT
+  ADMIN
+}
+
+enum ReferralCodeType {
+  CAMPAIGN
+  USER
+}
+
+enum ReferralStatus {
+  CLICKED
+  SIGNED_UP
+  CONFIRMED
+  ACTIVATED
+}
+
+enum RewardsReason {
+  REFERRAL_SIGNUP
+  REFERRAL_ACTIVATION
+  INVITE_BOUNTY
+  MANUAL_ADJUST
+}
+
+enum UserStatus {
+  WAITLISTED
+  PENDING
+  ACTIVE
+  BLOCKED
+}
+
+enum VoteType {
+  UPVOTE
+  DOWNVOTE
+}

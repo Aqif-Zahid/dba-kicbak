@@ -13,3 +13,15 @@ export type User = {
   status: string;
   createdAt: string;
 };
+
+export type Profile = {
+  id: number;
+  userId: number;
+  role: string;
+  createdAt?: Date | null;
+  updatedAt: Date;
+  username: string;
+  displayName: string;
+  profilePicture?: string | null;
+  personaTags?: any;
+};

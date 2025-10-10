@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
-import { users } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { getUser } from "@/lib/auth";
@@ -28,6 +26,7 @@ const changePasswordSchema = z
 
 export async function POST(req: NextRequest) {
   try {
+    // 🔹 Get logged-in user
     const currentUser = await getUser(req);
     if (!currentUser) {
       return NextResponse.json(
@@ -36,20 +35,17 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 🔹 Get user from DB
     if (!currentUser.email) {
       return NextResponse.json(
         { status: 0, message: "User email not found" },
         { status: 400 }
       );
     }
-    const userResult = await db
-      .select()
-      .from(users)
-      .where(eq(users.email, currentUser.email as string))
-      .limit(1);
 
-    const user = userResult[0];
+    // 🔹 Find user in database
+    const user = await prisma.users.findUnique({
+      where: { email: currentUser.email },
+    });
 
     if (!user) {
       return NextResponse.json(
@@ -61,7 +57,6 @@ export async function POST(req: NextRequest) {
     // 🔹 Parse request body
     const body = await req.json();
     const parsed = changePasswordSchema.safeParse(body);
-
     if (!parsed.success) {
       const flattened = parsed.error.flatten();
       return NextResponse.json(
@@ -85,10 +80,7 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
-    const isValid = await bcrypt.compare(
-      currentPassword,
-      user.passwordHash as string
-    );
+    const isValid = await bcrypt.compare(currentPassword, user.passwordHash);
     if (!isValid) {
       return NextResponse.json(
         { status: 0, message: "Current password is incorrect" },
@@ -100,17 +92,17 @@ export async function POST(req: NextRequest) {
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
     // 🔹 Update user password
-    await db
-      .update(users)
-      .set({ passwordHash: hashedPassword })
-      .where(eq(users.id, user.id));
+    await prisma.users.update({
+      where: { id: user.id },
+      data: { passwordHash: hashedPassword },
+    });
 
     return NextResponse.json({
       status: 1,
       message: "Password changed successfully",
     });
   } catch (err) {
-    console.error(err);
+    console.error("Change password error:", err);
     return NextResponse.json(
       { status: 0, message: "Something went wrong" },
       { status: 500 }

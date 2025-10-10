@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
-import { users } from "@/db/schema";
-import { eq, like, and, or, sql } from "drizzle-orm";
+import prisma from "@/lib/prisma";
 import { getUser } from "@/lib/auth";
 
 export async function GET(req: NextRequest) {
@@ -9,7 +7,7 @@ export async function GET(req: NextRequest) {
     const user = await getUser(req);
     if (!user) {
       return NextResponse.json(
-        { message: "User Unauthorized!" },
+        { status: 0, message: "User Unauthorized!" },
         { status: 401 }
       );
     }
@@ -20,22 +18,21 @@ export async function GET(req: NextRequest) {
     const limit = parseInt(searchParams.get("limit") || "10", 10);
     const skip = (page - 1) * limit;
 
-    const search = searchParams.get("search");
-    const role = searchParams.get("role");
-    const status = searchParams.get("status");
+    const search = searchParams.get("search") || undefined;
+    const role = searchParams.get("role") || undefined;
+    const status = searchParams.get("status") || undefined;
 
-    // 🔹 Build filters
-    const conditions = [];
+    // 🔹 Build where filters
+    const where: any = {};
 
     if (search) {
-      conditions.push(
-        or(
-          like(users.displayName, `%${search}%`),
-          like(users.email, `%${search}%`),
-          like(users.phoneNumber, `%${search}%`)
-        )
-      );
+      where.OR = [
+        { displayName: { contains: search, mode: "insensitive" } },
+        { email: { contains: search, mode: "insensitive" } },
+        { phoneNumber: { contains: search, mode: "insensitive" } },
+      ];
     }
+
     if (role) {
       const allowedRoles = [
         "TRAVELER",
@@ -43,52 +40,37 @@ export async function GET(req: NextRequest) {
         "CREATOR",
         "AGENT",
         "ADMIN",
-      ] as const;
-      if (allowedRoles.includes(role as any)) {
-        conditions.push(eq(users.role, role as (typeof allowedRoles)[number]));
+      ];
+      if (allowedRoles.includes(role)) {
+        where.role = role;
       }
     }
 
     if (status) {
-      // Cast status to the correct enum type
-      const allowedStatuses = [
-        "WAITLISTED",
-        "PENDING",
-        "ACTIVE",
-        "BLOCKED",
-      ] as const;
-      if (allowedStatuses.includes(status as any)) {
-        conditions.push(
-          eq(users.status, status as (typeof allowedStatuses)[number])
-        );
+      const allowedStatuses = ["WAITLISTED", "PENDING", "ACTIVE", "BLOCKED"];
+      if (allowedStatuses.includes(status)) {
+        where.status = status;
       }
     }
 
     // 🔹 Main query
-    const userList = await db
-      .select({
-        id: users.id,
-        displayName: users.displayName,
-        email: users.email,
-        phoneNumber: users.phoneNumber,
-        role: users.role,
-        status: users.status,
-        createdAt: users.createdAt,
-        profilePicture: users.profilePicture,
-      })
-      .from(users)
-      .where(and(...conditions))
-      .orderBy(sql`${users.createdAt} DESC`)
-      .offset(skip)
-      .limit(limit);
-
-    // 🔹 Count total
-    const totalResult = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(users)
-      .where(and(...conditions));
-
-    const total = totalResult[0]?.count || 0;
+    const [userList, total] = await prisma.$transaction([
+      prisma.users.findMany({
+        where,
+        orderBy: { createdAt: "desc" },
+        skip,
+        take: limit,
+        select: {
+          id: true,
+          email: true,
+          phoneNumber: true,
+          status: true,
+          createdAt: true,
+          defaultProfile: true,
+        },
+      }),
+      prisma.users.count({ where }),
+    ]);
 
     return NextResponse.json({
       status: 1,
@@ -104,7 +86,7 @@ export async function GET(req: NextRequest) {
   } catch (error) {
     console.error("Error fetching users:", error);
     return NextResponse.json(
-      { message: "Error fetching users" },
+      { status: 0, message: "Error fetching users" },
       { status: 500 }
     );
   }
@@ -116,12 +98,11 @@ export async function DELETE(req: NextRequest) {
 
     if (!user || user.role !== "ADMIN") {
       return NextResponse.json(
-        { message: "User Unauthorized!" },
+        { status: 0, message: "User Unauthorized!" },
         { status: 401 }
       );
     }
 
-    // 🔹 Get user ID from query params
     const searchParams = req.nextUrl.searchParams;
     const userId = searchParams.get("id");
 
@@ -132,7 +113,6 @@ export async function DELETE(req: NextRequest) {
       );
     }
 
-    // 🔹 Delete user
     const numericUserId = Number(userId);
     if (isNaN(numericUserId)) {
       return NextResponse.json(
@@ -140,11 +120,15 @@ export async function DELETE(req: NextRequest) {
         { status: 400 }
       );
     }
-    const result = await db.delete(users).where(eq(users.id, numericUserId));
+
+    const deletedUser = await prisma.users.deleteMany({
+      where: { id: numericUserId },
+    });
+
     return NextResponse.json({
       status: 1,
       message: "User deleted successfully",
-      deleted: result.rowCount || 0,
+      deleted: deletedUser.count,
     });
   } catch (error) {
     console.error("Error deleting user:", error);

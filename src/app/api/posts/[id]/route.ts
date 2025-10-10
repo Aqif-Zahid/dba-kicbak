@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
-import { posts, comments, profiles, votes } from "@/db/schema";
-import { eq, asc, and, inArray } from "drizzle-orm"; // ✅ Added inArray
+import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../../auth/[...nextauth]/route";
+import { getCurrentUserId } from "@/helpers/get-current-user-id";
 
 // === Helper: Build nested comment tree ===
 function buildCommentTree(all: any[]) {
@@ -23,7 +22,8 @@ function buildCommentTree(all: any[]) {
 
   const sortRecursively = (arr: any[]) => {
     arr.sort(
-      (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+      (a, b) =>
+        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
     );
     arr.forEach((n) => sortRecursively(n.replies));
   };
@@ -32,71 +32,56 @@ function buildCommentTree(all: any[]) {
 }
 
 // ======================
-//  GET Single Post (with comments and userVote)
+//  GET Single Post
 // ======================
 export async function GET(
   _req: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await context.params; // ✅ Must await params in Next.js 14+
+  const { id } = await context.params;
+  const postId = Number(id);
+  if (Number.isNaN(postId))
+    return NextResponse.json(
+      { status: 0, message: "Invalid post id" },
+      { status: 400 }
+    );
+
   try {
     const session = await getServerSession(authOptions);
-    const currentUserId = session?.user?.id ? Number(session.user.id) : null;
+    const currentUserId = getCurrentUserId(session);
 
-    const postId = Number(id);
-    if (Number.isNaN(postId))
-      return NextResponse.json({ error: "Invalid post id" }, { status: 400 });
+    const post = await prisma.post.findUnique({
+      where: { id: postId },
+      include: {
+        authorProfile: true,
+        votes: true,
+        comments: {
+          include: {
+            authorProfile: true,
+            votes: true,
+          },
+          orderBy: { createdAt: "asc" },
+        },
+      },
+    });
 
-    const [postRow] = await db
-      .select()
-      .from(posts)
-      .where(eq(posts.id, postId))
-      .limit(1);
+    if (!post)
+      return NextResponse.json(
+        { status: 0, message: "Post not found" },
+        { status: 404 }
+      );
 
-    if (!postRow)
-      return NextResponse.json({ error: "Post not found" }, { status: 404 });
+    const isDeleted = post.status === "DELETED";
 
-    const isDeleted = postRow.status === "DELETED";
-
-    const [authorProfile] = await db
-      .select()
-      .from(profiles)
-      .where(eq(profiles.id, postRow.authorProfileId))
-      .limit(1);
-
-    const postVotes = await db.select().from(votes).where(eq(votes.postId, postId));
-
-    const postUpvotes = postVotes.filter((v) => v.voteType === "UPVOTE").length;
-    const postDownvotes = postVotes.filter((v) => v.voteType === "DOWNVOTE").length;
-    const postUserVote =
-      currentUserId != null
-        ? postVotes.find((v) => Number(v.userId) === currentUserId)?.voteType ?? null
-        : null;
-
-    const allComments = await db
-      .select()
-      .from(comments)
-      .where(eq(comments.postId, postId))
-      .orderBy(asc(comments.createdAt));
-
-    const commentIds = allComments.map((c) => c.id);
-    const allVotes = commentIds.length
-      ? await db.select().from(votes).where(inArray(votes.commentId, commentIds)) // ✅ FIXED: was eq(votes.postId, postId)
-      : [];
-
-    const allProfiles = await db.select().from(profiles);
-
-    const mapped = allComments.map((c) => {
+    // Map comments
+    const mappedComments = post.comments.map((c) => {
       const deleted = c.status === "DELETED";
-      const commentVotes = allVotes.filter((v) => v.commentId === c.id);
-      const upvotes = commentVotes.filter((v) => v.voteType === "UPVOTE").length;
-      const downvotes = commentVotes.filter((v) => v.voteType === "DOWNVOTE").length;
+      const upvotes = c.votes.filter((v) => v.voteType === "UPVOTE").length;
+      const downvotes = c.votes.filter((v) => v.voteType === "DOWNVOTE").length;
       const userVote =
         currentUserId != null
-          ? commentVotes.find((v) => Number(v.userId) === currentUserId)?.voteType ?? null
+          ? c.votes.find((v) => v.userId === currentUserId)?.voteType ?? null
           : null;
-
-      const author = allProfiles.find((p) => p.id === c.authorProfileId);
 
       return {
         id: c.id,
@@ -105,8 +90,8 @@ export async function GET(
         parentId: c.parentId,
         authorDisplayName: deleted
           ? "[deleted user]"
-          : author?.displayName ?? "User",
-        authorUserId: author?.userId ?? null,
+          : c.authorProfile?.displayName ?? "User",
+        authorUserId: c.authorProfile?.userId ?? null,
         upvotes,
         downvotes,
         userVote,
@@ -114,85 +99,104 @@ export async function GET(
       };
     });
 
-    const nested = buildCommentTree(mapped);
+    const nestedComments = buildCommentTree(mappedComments);
 
-    const hydrated = {
-      id: postRow.id,
-      title: isDeleted ? "[deleted]" : postRow.title,
-      content: isDeleted ? "[deleted]" : postRow.content,
-      createdAt: postRow.createdAt,
-      authorDisplayName: isDeleted
-        ? "[deleted user]"
-        : authorProfile?.displayName ?? "User",
-      authorProfileId: postRow.authorProfileId,
-      upvotes: postUpvotes,
-      downvotes: postDownvotes,
-      userVote: postUserVote,
-      status: postRow.status,
-      comments: nested,
-      isDeleted,
-    };
+    const postUpvotes = post.votes.filter(
+      (v) => v.voteType === "UPVOTE"
+    ).length;
+    const postDownvotes = post.votes.filter(
+      (v) => v.voteType === "DOWNVOTE"
+    ).length;
+    const postUserVote =
+      currentUserId != null
+        ? post.votes.find((v) => v.userId === currentUserId)?.voteType ?? null
+        : null;
 
-    return NextResponse.json({ post: hydrated });
+    return NextResponse.json({
+      post: {
+        id: post.id,
+        title: isDeleted ? "[deleted]" : post.title,
+        content: isDeleted ? "[deleted]" : post.content,
+        createdAt: post.createdAt,
+        authorDisplayName: isDeleted
+          ? "[deleted user]"
+          : post.authorProfile?.displayName ?? "User",
+        authorProfileId: post.authorProfileId,
+        upvotes: postUpvotes,
+        downvotes: postDownvotes,
+        userVote: postUserVote,
+        status: post.status,
+        comments: nestedComments,
+        isDeleted,
+      },
+    });
   } catch (error: any) {
-    console.error("Post [id] GET error:", error);
-    return NextResponse.json({ error: "Failed to fetch post" }, { status: 500 });
+    console.error("Post GET error:", error);
+    return NextResponse.json(
+      { status: 0, message: "Failed to fetch post" },
+      { status: 500 }
+    );
   }
 }
 
 // ======================
-//  PATCH (Edit)
+//  PATCH (Edit post)
 // ======================
 export async function PATCH(
   req: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
   const { id } = await context.params;
+  const postId = Number(id);
+
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user)
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json(
+        { status: 0, message: "Unauthorized" },
+        { status: 401 }
+      );
 
-    const postId = Number(id);
     const body = await req.json();
     const { title, content, status } = body;
 
-    const [existing] = await db
-      .select()
-      .from(posts)
-      .where(eq(posts.id, postId))
-      .limit(1);
+    const post = await prisma.post.findUnique({
+      where: { id: postId },
+      include: { authorProfile: true },
+    });
 
-    if (!existing)
-      return NextResponse.json({ error: "Post not found" }, { status: 404 });
+    if (!post)
+      return NextResponse.json(
+        { status: 0, message: "Post not found" },
+        { status: 404 }
+      );
 
-    const [authorProfile] = await db
-      .select()
-      .from(profiles)
-      .where(eq(profiles.id, existing.authorProfileId))
-      .limit(1);
-
-    const currentUserId = Number(session.user.id);
-    const isAuthor = Number(authorProfile?.userId) === currentUserId;
-    const isAdmin =
-      ((session.user as any)?.role ?? "").toString().toUpperCase() === "ADMIN";
+    const currentUserId = getCurrentUserId(session);
+    const isAuthor = post.authorProfile?.userId === currentUserId;
+    const isAdmin = (session.user as any)?.role?.toUpperCase() === "ADMIN";
 
     if (!isAuthor && !isAdmin)
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return NextResponse.json(
+        { status: 0, message: "Forbidden" },
+        { status: 403 }
+      );
 
-    await db
-      .update(posts)
-      .set({
+    await prisma.post.update({
+      where: { id: postId },
+      data: {
         ...(title ? { title } : {}),
         ...(content ? { content } : {}),
         ...(status ? { status } : {}),
-      })
-      .where(eq(posts.id, postId));
+      },
+    });
 
     return NextResponse.json({ success: true });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Post PATCH error:", error);
-    return NextResponse.json({ error: "Failed to update post" }, { status: 500 });
+    return NextResponse.json(
+      { status: 0, message: "Failed to update post" },
+      { status: 500 }
+    );
   }
 }
 
@@ -204,44 +208,48 @@ export async function DELETE(
   context: { params: Promise<{ id: string }> }
 ) {
   const { id } = await context.params;
+  const postId = Number(id);
+
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user)
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json(
+        { status: 0, message: "Unauthorized" },
+        { status: 401 }
+      );
 
-    const postId = Number(id);
+    const post = await prisma.post.findUnique({
+      where: { id: postId },
+      include: { authorProfile: true },
+    });
 
-    const [existing] = await db
-      .select()
-      .from(posts)
-      .where(eq(posts.id, postId))
-      .limit(1);
+    if (!post)
+      return NextResponse.json(
+        { status: 0, message: "Post not found" },
+        { status: 404 }
+      );
 
-    if (!existing)
-      return NextResponse.json({ error: "Post not found" }, { status: 404 });
-
-    const [authorProfile] = await db
-      .select()
-      .from(profiles)
-      .where(eq(profiles.id, existing.authorProfileId))
-      .limit(1);
-
-    const currentUserId = Number(session.user.id);
-    const isAuthor = Number(authorProfile?.userId) === currentUserId;
-    const isAdmin =
-      ((session.user as any)?.role ?? "").toString().toUpperCase() === "ADMIN";
+    const currentUserId = getCurrentUserId(session);
+    const isAuthor = post.authorProfile?.userId === currentUserId;
+    const isAdmin = (session.user as any)?.role?.toUpperCase() === "ADMIN";
 
     if (!isAuthor && !isAdmin)
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return NextResponse.json(
+        { status: 0, message: "Forbidden" },
+        { status: 403 }
+      );
 
-    await db
-      .update(posts)
-      .set({ status: "DELETED" })
-      .where(eq(posts.id, postId));
+    await prisma.post.update({
+      where: { id: postId },
+      data: { status: "DELETED" },
+    });
 
     return NextResponse.json({ success: true });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Post DELETE error:", error);
-    return NextResponse.json({ error: "Failed to delete post" }, { status: 500 });
+    return NextResponse.json(
+      { status: 0, message: "Failed to delete post" },
+      { status: 500 }
+    );
   }
 }
