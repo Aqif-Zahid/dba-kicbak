@@ -2,16 +2,9 @@
 import React, { useEffect, useState } from "react";
 import { FiChevronUp } from "react-icons/fi";
 import { motion } from "framer-motion";
-import { Header } from "./header";
-import { Footer } from "./footer";
-import { SigninModal } from "@/components/auth/signin-modal";
 import { useSigninModal } from "@/hooks/use-signin-modal";
 
-interface LayoutProps {
-  children: React.ReactNode;
-}
-
-export const Layout = ({ children }: LayoutProps) => {
+export const ScrollToTopButton = () => {
   const [showScrollToTop, setShowScrollToTop] = useState(false);
   const { open } = useSigninModal();
 
@@ -32,10 +25,7 @@ export const Layout = ({ children }: LayoutProps) => {
   }, [open]);
 
   return (
-    <main className="min-h-screen flex flex-col justify-between bg-background scroll-smooth">
-      <Header />
-      {children}
-
+    <>
       {showScrollToTop && (
         <motion.button
           onClick={scrollToTop}
@@ -49,10 +39,6 @@ export const Layout = ({ children }: LayoutProps) => {
           <FiChevronUp />
         </motion.button>
       )}
-
-      <Footer />
-
-      <SigninModal />
-    </main>
+    </>
   );
 };

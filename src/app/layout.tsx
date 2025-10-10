@@ -1,5 +1,6 @@
 import type React from "react";
 import type { Metadata } from "next";
+import { ThemeProvider } from "next-themes";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import { Suspense } from "react";
@@ -28,12 +29,22 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${GeistSans.variable} ${GeistMono.variable} antialiased`}
+      suppressHydrationWarning
     >
       <body className="font-sans">
         <AuthWrapper>
           <NuqsAdapter>
             <Suspense fallback={<PageLoader />}>
-              <QueryProvider> {children}</QueryProvider>
+              <QueryProvider>
+                <ThemeProvider
+                  attribute="class"
+                  defaultTheme="system"
+                  enableSystem
+                  disableTransitionOnChange
+                >
+                  {children}
+                </ThemeProvider>
+              </QueryProvider>
             </Suspense>
           </NuqsAdapter>
         </AuthWrapper>

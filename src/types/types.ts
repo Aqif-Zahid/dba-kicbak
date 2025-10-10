@@ -25,3 +25,11 @@ export type Profile = {
   profilePicture?: string | null;
   personaTags?: any;
 };
+
+export interface NotificationCountInfo {
+  unreadCount: number;
+}
+
+export interface MessageCountInfo {
+  unreadCount: number;
+}

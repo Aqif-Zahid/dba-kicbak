@@ -1,19 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
-import { comments } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../../auth/[...nextauth]/route";
+import { getCurrentUserId } from "@/helpers/get-current-user-id";
 
-// Helper: fetch comment with its author's userId
-async function getCommentWithAuthorUserId(commentId: number) {
-  const row = await db.query.comments.findFirst({
-    where: (c, { eq }) => eq(c.id, commentId),
-    with: {
-      authorProfile: true, // includes authorProfile.userId
-    },
+// ======================
+// Helper: fetch session & comment
+// ======================
+async function getSessionAndComment(commentId: number) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user) {
+    return { error: { message: "Unauthorized", status: 0 } };
+  }
+
+  const comment = await prisma.comment.findUnique({
+    where: { id: commentId },
+    include: { authorProfile: true },
   });
-  return row;
+
+  if (!comment) {
+    return { error: { message: "Comment not found", status: 0 } };
+  }
+
+  return { session, comment };
 }
 
 // ======================
@@ -24,39 +33,45 @@ export async function PATCH(
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user)
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
     const commentId = Number(params.id);
     if (Number.isNaN(commentId)) {
-      return NextResponse.json({ error: "Invalid comment id" }, { status: 400 });
+      return NextResponse.json(
+        { message: "Invalid comment id", status: 0 },
+        { status: 400 }
+      );
     }
 
     const { content } = await req.json();
     if (!content) {
-      return NextResponse.json({ error: "Content required" }, { status: 400 });
+      return NextResponse.json(
+        { message: "Content required", status: 0 },
+        { status: 400 }
+      );
     }
 
-    const existing = await getCommentWithAuthorUserId(commentId);
-    if (!existing) {
-      return NextResponse.json({ error: "Comment not found" }, { status: 404 });
-    }
+    const { session, comment, error } = await getSessionAndComment(commentId);
+    if (error) return NextResponse.json(error, { status: 401 });
 
-    const currentUserId = Number(session.user.id);
-    const isAuthor = Number(existing.authorProfile?.userId) === currentUserId;
+    const currentUserId = getCurrentUserId(session);
+    const isAuthor = Number(comment.authorProfile?.userId) === currentUserId;
 
     if (!isAuthor) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return NextResponse.json(
+        { message: "Forbidden", status: 0 },
+        { status: 403 }
+      );
     }
 
-    await db.update(comments).set({ content, status: "EDITED" }).where(eq(comments.id, commentId));
+    await prisma.comment.update({
+      where: { id: commentId },
+      data: { content, status: "EDITED" },
+    });
 
     return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error("Comment PATCH error:", error);
+  } catch (err) {
+    console.error("Comment PATCH error:", err);
     return NextResponse.json(
-      { error: "Failed to update comment" },
+      { message: "Failed to update comment", status: 0 },
       { status: 500 }
     );
   }
@@ -70,40 +85,39 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user)
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
     const commentId = Number(params.id);
     if (Number.isNaN(commentId)) {
-      return NextResponse.json({ error: "Invalid comment id" }, { status: 400 });
+      return NextResponse.json(
+        { message: "Invalid comment id", status: 0 },
+        { status: 400 }
+      );
     }
 
-    const existing = await getCommentWithAuthorUserId(commentId);
-    if (!existing) {
-      return NextResponse.json({ error: "Comment not found" }, { status: 404 });
-    }
+    const { session, comment, error } = await getSessionAndComment(commentId);
+    if (error) return NextResponse.json(error, { status: 401 });
 
-    const currentUserId = Number(session.user.id);
-    const isAuthor = Number(existing.authorProfile?.userId) === currentUserId;
+    const currentUserId = getCurrentUserId(session);
+    const isAuthor = Number(comment.authorProfile?.userId) === currentUserId;
     const isAdmin =
       ((session.user as any)?.role ?? "").toString().toUpperCase() === "ADMIN";
 
     if (!isAuthor && !isAdmin) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return NextResponse.json(
+        { message: "Forbidden", status: 0 },
+        { status: 403 }
+      );
     }
 
-    // Soft delete: mask content and set status
-    await db
-      .update(comments)
-      .set({ content: "[deleted]", status: "DELETED" })
-      .where(eq(comments.id, commentId));
+    await prisma.comment.update({
+      where: { id: commentId },
+      data: { content: "[deleted]", status: "DELETED" },
+    });
 
     return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error("Comment DELETE error:", error);
+  } catch (err) {
+    console.error("Comment DELETE error:", err);
     return NextResponse.json(
-      { error: "Failed to delete comment" },
+      { message: "Failed to delete comment", status: 0 },
       { status: 500 }
     );
   }

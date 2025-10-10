@@ -9,21 +9,43 @@ import {
   Hourglass,
   Pencil,
   MessageSquare,
+  UserIcon,
+  Monitor,
+  Sun,
+  Moon,
+  Check,
+  LogOutIcon,
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuPortal,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useUser } from "@/providers/auth-provider";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { FaUserGroup } from "react-icons/fa6";
+import { UserAvatar } from "../common/user-avatar";
+import { cn } from "@/lib/utils";
+import { useTheme } from "next-themes";
+import { useQueryClient } from "@tanstack/react-query";
 
-export const UserButton = () => {
+interface UserButtonProps {
+  className?: string;
+}
+
+export const UserButton = ({ className }: UserButtonProps) => {
   const { user, loading, logout } = useUser();
+  const { theme, setTheme } = useTheme();
+  const queryClient = useQueryClient();
 
   if (loading) {
     return (
@@ -35,106 +57,67 @@ export const UserButton = () => {
 
   if (!user) return null;
 
-  const { displayName, email, role, username } = user;
+  const { displayName, email, role, image } = user;
   const avatarFallback =
     displayName?.charAt(0).toUpperCase() ||
     email?.charAt(0).toUpperCase() ||
     "U";
 
-  const isAdmin = role === "ADMIN";
-
   return (
-    <DropdownMenu modal={false}>
-      <DropdownMenuTrigger className="outline-none relative">
-        <Avatar className="w-10 h-10 border border-neutral-300 hover:opacity-80 transition">
-          <AvatarFallback className="bg-neutral-200 text-neutral-500 font-medium flex items-center justify-center">
-            {avatarFallback}
-          </AvatarFallback>
-        </Avatar>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button className={cn("flex-none rounded-full", className)}>
+          <UserAvatar
+            avatarFallback={avatarFallback}
+            avatarUrl={image}
+            size={40}
+          />
+        </button>
       </DropdownMenuTrigger>
-
-      <DropdownMenuContent asChild sideOffset={10} align="end">
-        <motion.div
-          initial={{ opacity: 0, y: -10, scale: 0.95 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: -10, scale: 0.95 }}
-          transition={{ type: "spring", stiffness: 300, damping: 20 }}
-          className="w-60 rounded-xl shadow-lg border border-neutral-200 bg-white p-2"
-        >
-          {/* --- User Info --- */}
-          <div className="flex flex-col items-center justify-center py-4 border-b border-neutral-100 mb-2">
-            <Avatar className="w-14 h-14 border border-neutral-300 mb-2">
-              <AvatarFallback className="bg-neutral-200 text-xl font-medium text-neutral-500 flex justify-center items-center">
-                {avatarFallback}
-              </AvatarFallback>
-            </Avatar>
-            <p className="text-sm font-semibold text-neutral-900">
-              {displayName || "User"}
-            </p>
-            <p className="text-xs text-neutral-500 truncate max-w-full">
-              {email}
-            </p>
-          </div>
-
-          {/* --- Shared Options --- */}
-          <Link href={isAdmin ? "/admin" : `/${username}`}>
-            <DropdownMenuItem className="flex items-center gap-2 px-4 py-2 rounded-md hover:bg-emerald-50 cursor-pointer">
-              <User className="w-4 h-4 text-primary" />
-              Profile
-            </DropdownMenuItem>
-          </Link>
-
-          {/* --- Create Post (visible to all signed-in users) --- */}
-          <Link href="/create-post">
-            <DropdownMenuItem className="flex items-center gap-2 px-4 py-2 rounded-md hover:bg-emerald-50 cursor-pointer">
-              <Pencil className="w-4 h-4 text-primary" />
-              Create Post
-            </DropdownMenuItem>
-          </Link>
-
-          {/* --- View Posts (visible to all users) --- */}
-          <Link href="/posts">
-            <DropdownMenuItem className="flex items-center gap-2 px-4 py-2 rounded-md hover:bg-emerald-50 cursor-pointer">
-              <MessageSquare className="w-4 h-4 text-primary" />
-              View Posts
-            </DropdownMenuItem>
-          </Link>
-
-          {/* --- Admin Only Options --- */}
-          {isAdmin && (
-            <>
-              <Link href="/admin/users">
-                <DropdownMenuItem className="flex items-center gap-2 px-4 py-2 rounded-md hover:bg-emerald-50 cursor-pointer">
-                  <FaUserGroup className="w-4 h-4 text-primary" />
-                  Manage Users
-                </DropdownMenuItem>
-              </Link>
-              <Link href="/admin/pending-invites">
-                <DropdownMenuItem className="flex items-center gap-2 px-4 py-2 rounded-md hover:bg-emerald-50 cursor-pointer">
-                  <Hourglass className="w-4 h-4 text-primary" />
-                  Pending Invites
-                </DropdownMenuItem>
-              </Link>
-            </>
-          )}
-
-          {/* --- Change Password --- */}
-          <Link href="/change-password">
-            <DropdownMenuItem className="flex items-center gap-2 px-4 py-2 rounded-md hover:bg-emerald-50 cursor-pointer">
-              <Key className="w-4 h-4 text-primary" />
-              Change Password
-            </DropdownMenuItem>
-          </Link>
-
-          {/* --- Logout --- */}
-          <DropdownMenuItem
-            onClick={logout}
-            className="flex items-center gap-2 px-4 py-2 rounded-md hover:bg-red-50 text-red-600 cursor-pointer"
-          >
-            <LogOut className="w-4 h-4" />
-            Logout
+      <DropdownMenuContent>
+        <DropdownMenuLabel>{role}</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <Link href={`/${user.username}`}>
+          <DropdownMenuItem>
+            <UserIcon className="mr-2 size-4" />
+            Profile
           </DropdownMenuItem>
-        </motion.div>
+        </Link>
+        <DropdownMenuSub>
+          <DropdownMenuSubTrigger>
+            <Monitor className="mr-2 size-4" />
+            Theme
+          </DropdownMenuSubTrigger>
+          <DropdownMenuPortal>
+            <DropdownMenuSubContent>
+              <DropdownMenuItem onClick={() => setTheme("system")}>
+                <Monitor className="mr-2 size-4" />
+                System Default
+                {theme == "system" && <Check className="ms-2 size-4" />}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setTheme("light")}>
+                <Sun className="mr-2 size-4" />
+                Light
+                {theme == "light" && <Check className="ms-2 size-4" />}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setTheme("dark")}>
+                <Moon className="mr-2 size-4" />
+                Dark
+                {theme == "dark" && <Check className="ms-2 size-4" />}
+              </DropdownMenuItem>
+            </DropdownMenuSubContent>
+          </DropdownMenuPortal>
+        </DropdownMenuSub>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          onClick={() => {
+            logout();
+            queryClient.clear(); // Clear all queries and invalidate all cached data
+          }}
+        >
+          <LogOutIcon className="mr-2 size-4" />
+          Log out
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
