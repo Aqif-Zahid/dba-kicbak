@@ -5,14 +5,11 @@ import { CircleUser, UserRoundCog } from "lucide-react";
 import { RiLockPasswordLine } from "react-icons/ri";
 import { SiSamsclub } from "react-icons/si";
 import { Button } from "../ui/button";
-import { useRouter } from "next/navigation";
-import { TbLogs } from "react-icons/tb";
-import { BsNewspaper } from "react-icons/bs";
-import { FaUserGroup, FaPenFancy } from "react-icons/fa6"; // ✍️ New icon for Create Post
-import LogOutButton from "./log-out-button";
+import { FaPenFancy } from "react-icons/fa6";
 import { usePathname } from "next/navigation";
 import { useUser } from "@/providers/auth-provider";
 import { useParams } from "next/navigation";
+import LogOutButton from "../layout/log-out-button";
 
 interface SidebarProps {
   className?: string;

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]/route";
+import { getCurrentUserId } from "@/helpers/get-current-user-id";
+import { getUser } from "@/lib/auth";
 
 // Helper: build nested comment tree
 function buildCommentTree(all: any[]) {
@@ -48,7 +50,7 @@ export async function GET(req: NextRequest) {
     }
 
     const session = await getServerSession(authOptions);
-    const currentUserId = session?.user?.id ? Number(session.user.id) : null;
+    const currentUserId = getCurrentUserId(session);
 
     const rows = await prisma.comment.findMany({
       where: { postId },
@@ -155,12 +157,13 @@ export async function POST(req: NextRequest) {
 // ===============================
 export async function PATCH(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user)
+    const user = await getUser(req);
+    if (!user) {
       return NextResponse.json(
-        { status: 0, message: "Unauthorized" },
+        { status: 0, message: "User Unauthorized!" },
         { status: 401 }
       );
+    }
 
     const { commentId, content, status } = await req.json();
     if (!commentId) {
@@ -181,10 +184,9 @@ export async function PATCH(req: NextRequest) {
         { status: 404 }
       );
 
-    const currentUserId = Number(session.user.id);
+    const currentUserId = user.id;
     const isAuthor = existing.authorProfile?.userId === currentUserId;
-    const isAdmin =
-      (session.user as any)?.role?.toString().toUpperCase() === "ADMIN";
+    const isAdmin = user.role?.toString().toUpperCase() === "ADMIN";
 
     if (status === "DELETED") {
       if (!isAuthor && !isAdmin) {
@@ -236,13 +238,13 @@ export async function PATCH(req: NextRequest) {
 // ===============================
 export async function DELETE(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user)
+    const user = await getUser(req);
+    if (!user) {
       return NextResponse.json(
-        { status: 0, message: "Unauthorized" },
+        { status: 0, message: "User Unauthorized!" },
         { status: 401 }
       );
-
+    }
     const url = new URL(req.url);
     const commentId = Number(url.searchParams.get("id"));
     if (!commentId)
@@ -262,10 +264,9 @@ export async function DELETE(req: NextRequest) {
         { status: 404 }
       );
 
-    const currentUserId = Number(session.user.id);
+    const currentUserId = user.id;
     const isAuthor = existing.authorProfile?.userId === currentUserId;
-    const isAdmin =
-      (session.user as any)?.role?.toString().toUpperCase() === "ADMIN";
+    const isAdmin = user.role?.toString().toUpperCase() === "ADMIN";
 
     if (!isAuthor && !isAdmin)
       return NextResponse.json(

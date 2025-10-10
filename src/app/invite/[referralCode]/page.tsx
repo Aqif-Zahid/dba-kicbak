@@ -1,5 +1,4 @@
 import Head from "next/head";
-import { Layout } from "@/components/layout/layout";
 import { getUserDetails } from "@/actions/user-actions";
 import { UserNotFound } from "@/components/admin/users/user-not-found";
 import { getServerSession } from "next-auth";
@@ -22,11 +21,7 @@ const UserPage = async ({ params }: PageProps) => {
 
   //Check if the user is valid or not
   if (!user) {
-    return (
-      <Layout>
-        <UserNotFound />
-      </Layout>
-    );
+    return <UserNotFound />;
   }
   //Redirect already logged in user
   if (currentUser) {
@@ -38,9 +33,8 @@ const UserPage = async ({ params }: PageProps) => {
       <Head>
         <title>{user.displayName} Invitation </title>
       </Head>
-      <Layout>
-        <InvitationMain referralCode={resolvedParams.referralCode} />
-      </Layout>
+
+      <InvitationMain referralCode={resolvedParams.referralCode} />
     </>
   );
 };

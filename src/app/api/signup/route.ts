@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
+import streamServerClient from "@/lib/stream";
 
 // === Zod validation ===
 const signupSchema = z.object({
@@ -97,6 +98,11 @@ export async function POST(req: Request) {
         data: { defaultProfileId: newProfile.id },
       });
 
+      await streamServerClient.upsertUser({
+        id: newProfile.id,
+        username: usernameDesired,
+        name: `${firstName} ${lastName}`,
+      });
       return { userId: newUser.id, profileId: newProfile.id };
     });
 

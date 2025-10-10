@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useUser } from "@/providers/auth-provider";
 import { useSigninModal } from "@/hooks/use-signin-modal";
-import { Sidebar } from "@/components/home/side-bar";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { useState } from "react";
@@ -16,14 +15,20 @@ import { toast } from "sonner";
 
 export default function PostPage() {
   const params = useParams();
-  const postId = Array.isArray(params?.id) ? params.id[0] : (params?.id as string);
+  const postId = Array.isArray(params?.id)
+    ? params.id[0]
+    : (params?.id as string);
   const router = useRouter();
   const { user } = useUser();
   const { open: openSigninModal } = useSigninModal();
   const queryClient = useQueryClient();
 
   // --- Query ---
-  const { data: post, isLoading, isError } = useQuery({
+  const {
+    data: post,
+    isLoading,
+    isError,
+  } = useQuery({
     queryKey: ["post", postId],
     queryFn: async () => {
       const res = await axios.get(`/api/posts/${postId}`);
@@ -71,10 +76,12 @@ export default function PostPage() {
       return { prev };
     },
     onError: (_err, _vars, context) => {
-      if (context?.prev) queryClient.setQueryData(["post", postId], context.prev);
+      if (context?.prev)
+        queryClient.setQueryData(["post", postId], context.prev);
       toast.error("Vote failed");
     },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: ["post", postId] }),
+    onSettled: () =>
+      queryClient.invalidateQueries({ queryKey: ["post", postId] }),
   });
 
   // ✅ Optimistic comment vote mutation
@@ -118,14 +125,17 @@ export default function PostPage() {
       return { prev };
     },
     onError: (_err, _vars, context) => {
-      if (context?.prev) queryClient.setQueryData(["post", postId], context.prev);
+      if (context?.prev)
+        queryClient.setQueryData(["post", postId], context.prev);
       toast.error("Vote failed");
     },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: ["post", postId] }),
+    onSettled: () =>
+      queryClient.invalidateQueries({ queryKey: ["post", postId] }),
   });
 
   const deletePostMutation = useMutation({
-    mutationFn: async () => axios.patch(`/api/posts/${postId}`, { status: "DELETED" }),
+    mutationFn: async () =>
+      axios.patch(`/api/posts/${postId}`, { status: "DELETED" }),
     onSuccess: () => {
       toast.success("Post deleted");
       router.push("/posts");
@@ -134,7 +144,10 @@ export default function PostPage() {
 
   const editPostMutation = useMutation({
     mutationFn: async () =>
-      axios.patch(`/api/posts/${postId}`, { title: editTitle, content: editContent }),
+      axios.patch(`/api/posts/${postId}`, {
+        title: editTitle,
+        content: editContent,
+      }),
     onSuccess: () => {
       setIsEditing(false);
       toast.success("Post updated");
@@ -155,7 +168,8 @@ export default function PostPage() {
   const deleteCommentMutation = useMutation({
     mutationFn: async (commentId: number) =>
       axios.patch(`/api/comments`, { commentId, status: "DELETED" }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["post", postId] }),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ["post", postId] }),
   });
 
   const editCommentMutation = useMutation({
@@ -197,7 +211,10 @@ export default function PostPage() {
     voteMutation.mutate(voteType);
   };
 
-  const handleCommentVote = (commentId: number, voteType: "UPVOTE" | "DOWNVOTE") => {
+  const handleCommentVote = (
+    commentId: number,
+    voteType: "UPVOTE" | "DOWNVOTE"
+  ) => {
     if (!user) return openSigninModal();
     commentVoteMutation.mutate({ commentId, voteType });
   };
@@ -217,7 +234,11 @@ export default function PostPage() {
   const handleReplySubmit = (parentId: number) => {
     if (!user) return openSigninModal();
     if (!replyContent.trim()) return;
-    commentMutation.mutate({ postId: post.id, content: replyContent, parentId });
+    commentMutation.mutate({
+      postId: post.id,
+      content: replyContent,
+      parentId,
+    });
   };
   const handleCommentDelete = (id: number) => {
     if (!user) return openSigninModal();
@@ -232,7 +253,8 @@ export default function PostPage() {
   const renderComments = (comments: any[], depth = 0) => (
     <div className={`${depth > 0 ? "pl-4 border-l border-gray-200" : ""}`}>
       {comments.map((c) => {
-        const isCommentAuthor = user && Number(user.id) === Number(c.authorUserId);
+        const isCommentAuthor =
+          user && Number(user.id) === Number(c.authorUserId);
         const canEdit = isCommentAuthor;
         const canDelete = isCommentAuthor || isAdmin;
         const isEditingThis = editingComment === c.id;
@@ -240,11 +262,16 @@ export default function PostPage() {
         const isDeleted = c.isDeleted; // ✅ fixed check
 
         return (
-          <Card key={c.id} className="mt-3 border border-gray-200 bg-gray-50 rounded-lg">
+          <Card
+            key={c.id}
+            className="mt-3 border border-gray-200 bg-gray-50 rounded-lg"
+          >
             <CardContent className="pt-4">
               {!isEditingThis ? (
                 <>
-                  <p className="text-gray-800">{isDeleted ? "[deleted]" : c.content}</p>
+                  <p className="text-gray-800">
+                    {isDeleted ? "[deleted]" : c.content}
+                  </p>
                   <p className="text-xs text-gray-500 mt-1">
                     — {isDeleted ? "[deleted user]" : c.authorDisplayName} on{" "}
                     {new Date(c.createdAt).toLocaleDateString("en-US")}
@@ -328,7 +355,9 @@ export default function PostPage() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => setReplyingTo(replyingTo === c.id ? null : c.id)}
+                    onClick={() =>
+                      setReplyingTo(replyingTo === c.id ? null : c.id)
+                    }
                   >
                     💬 Reply
                   </Button>
@@ -350,7 +379,11 @@ export default function PostPage() {
                     >
                       Post Reply
                     </Button>
-                    <Button size="sm" variant="outline" onClick={() => setReplyingTo(null)}>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setReplyingTo(null)}
+                    >
                       Cancel
                     </Button>
                   </div>
@@ -369,11 +402,13 @@ export default function PostPage() {
     <div className="min-h-screen bg-gray-50 text-gray-800 flex flex-col">
       <Header />
       <div className="flex flex-1 container mx-auto px-4 py-6 gap-6">
-        <div className="hidden lg:block w-[260px] flex-shrink-0 border border-gray-200 rounded-xl bg-white shadow-sm">
-          <Sidebar />
-        </div>
+        <div className="hidden lg:block w-[260px] flex-shrink-0 border border-gray-200 rounded-xl bg-white shadow-sm"></div>
         <div className="flex-1 flex flex-col">
-          <Button variant="outline" onClick={() => router.back()} className="mb-2">
+          <Button
+            variant="outline"
+            onClick={() => router.back()}
+            className="mb-2"
+          >
             ← Back
           </Button>
 

@@ -61,8 +61,24 @@ model Profiles {
   personaTags    Json?       @default("[]") @map("persona_tags")
   comments       Comment[]
   posts          Post[]
+  bookmarks               Bookmark[]
+  receivedNotifications   Notification[] @relation("Recipient")
+  issuedNotifications     Notification[] @relation("Issuer")
+  followers               Follow[] @relation("Followers")
+  following               Follow[] @relation("Following")
 
   @@map("profiles")
+}
+
+model Follow {
+  
+  followerId    Int
+  follower      Profiles     @relation("Following", fields: [followerId] , references: [id] , onDelete:  Cascade)
+  followingId   Int
+  following     Profiles     @relation("Followers", fields: [followingId] , references: [id] , onDelete:  Cascade)
+  
+  @@unique([followerId , followingId])
+  @@map("follows")
 }
 
 model Organization {
@@ -121,6 +137,7 @@ model Post {
   createdAt       DateTime?  @default(now()) @map("created_at")
   updatedAt       DateTime   @default(now()) @map("updated_at")
   authorProfileId Int        @map("author_profile_id")
+  attachment                 Media[]
 
   comments          Comment[]
   mentions          Mention[]
@@ -128,8 +145,24 @@ model Post {
   communities       Community         @relation(fields: [communityId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "posts_community_id_communities_id_fk")
   postsToCategories PostsToCategory[]
   votes             Vote[]
+  linkedNotifications    Notification[]
+  bookmarks              Bookmark[]
 
   @@map("posts")
+}
+
+
+model Media {
+  id             String       @id  @default(cuid())
+  postId         Int?
+  post           Post?         @relation(fields: [postId] , references: [id] , onDelete:  SetNull)
+  type           MediaType
+  url            String
+
+  createdAt      DateTime @default(now())
+
+  @@map("post_media")
+
 }
 
 model Category {
@@ -312,6 +345,34 @@ model EmailEvent {
   @@map("email_events")
 }
 
+model Bookmark {
+  id         String     @id @default(cuid()) @map("id")
+  profileId  Int        @map("profile_id")
+  userProfile    Profiles   @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  postId     Int        @map("post_id")
+  post       Post       @relation(fields: [postId], references: [id], onDelete: Cascade)
+  createdAt  DateTime   @default(now()) @map("created_at")
+
+  @@unique([profileId, postId])
+  @@map("bookmarks")
+}
+
+
+model Notification {
+  id          String       @id @default(cuid()) @map("id")
+  recipientId Int          @map("recipient_id")
+  recipient   Profiles     @relation("Recipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  issuerId    Int          @map("issuer_id")
+  issuer      Profiles     @relation("Issuer", fields: [issuerId], references: [id], onDelete: Cascade)
+  postId      Int?         @map("post_id")
+  post        Post?        @relation(fields: [postId], references: [id], onDelete: Cascade)
+  type        NotificationType @map("type")
+  read        Boolean      @default(false) @map("read")
+  createdAt   DateTime     @default(now()) @map("created_at")
+
+  @@map("notifications")
+}
+
 //////////////////////////
 // ENUMS
 //////////////////////////
@@ -384,4 +445,16 @@ enum UserStatus {
 enum VoteType {
   UPVOTE
   DOWNVOTE
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+
+}
+
+enum NotificationType {
+  LIKE
+  FOLLOW
+  COMMENT
 }

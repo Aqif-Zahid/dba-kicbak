@@ -1,9 +1,10 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "../api/auth/[...nextauth]/route";
 import { Header } from "@/components/layout/header";
-import { Sidebar } from "@/components/home/side-bar";
+import { Sidebar } from "@/components/layout/side-bar";
 import { Footer } from "@/components/layout/footer";
 import { ScrollToTopButton } from "@/components/layout/scroll-to-top-button";
+import { SigninModal } from "@/components/auth/signin-modal";
 
 const MainLayout = async ({ children }: { children: React.ReactNode }) => {
   const session = await getServerSession(authOptions);
@@ -25,6 +26,7 @@ const MainLayout = async ({ children }: { children: React.ReactNode }) => {
         />
         <ScrollToTopButton />
         <Footer />
+        <SigninModal />
       </main>
     </div>
   );

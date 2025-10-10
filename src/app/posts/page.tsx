@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { useUser } from "@/providers/auth-provider";
 import { useSigninModal } from "@/hooks/use-signin-modal";
-import { Sidebar } from "@/components/home/side-bar";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { CreatePostModal } from "@/components/modals/create-post-modal";
@@ -34,13 +33,11 @@ export default function PostsPage() {
       <Header />
 
       <div className="flex flex-1 container mx-auto px-4 py-6 gap-6">
-        <div className="hidden lg:block w-[260px] flex-shrink-0 border border-gray-200 rounded-xl bg-white shadow-sm">
-          <Sidebar />
-        </div>
-
         <div className="flex-1 flex flex-col space-y-6">
           <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-bold text-gray-900">Community Discussions</h1>
+            <h1 className="text-2xl font-bold text-gray-900">
+              Community Discussions
+            </h1>
 
             {user ? (
               <Button
@@ -60,9 +57,13 @@ export default function PostsPage() {
           </div>
 
           {isLoading ? (
-            <div className="text-center py-8 text-gray-500">Loading discussions...</div>
+            <div className="text-center py-8 text-gray-500">
+              Loading discussions...
+            </div>
           ) : isError ? (
-            <div className="text-center py-8 text-red-500">Failed to load posts.</div>
+            <div className="text-center py-8 text-red-500">
+              Failed to load posts.
+            </div>
           ) : posts.length === 0 ? (
             <p className="text-gray-500 text-center py-8">
               No posts yet. Be the first to share something!

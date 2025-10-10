@@ -26,7 +26,7 @@ export const MessagesButton = ({ initialState }: MessagesButtonProps) => {
   return (
     <Button
       variant="ghost"
-      className="flex items-center justify-start gap-3"
+      className="flex items-center justify-start gap-3 mb-2 hover:bg-primary hover:text-white"
       title="Messages"
       asChild
     >
