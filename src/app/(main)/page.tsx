@@ -30,7 +30,7 @@ export default async function HomePage() {
               </TabsContent>
             </Tabs>
           </div>
-          <TrendsSidebar />
+          {/* <TrendsSidebar /> */}
         </main>
       ) : (
         <div className="w-full">

@@ -45,7 +45,7 @@ export const Sidebar = async ({ className, user }: MenubarProps) => {
 
   return (
     <div className={className}>
-      {user && <SwitchProfile />}
+      {user && <SwitchProfile user={user} />}
       <Button
         variant="ghost"
         className="flex items-center justify-start gap-3 mb-2 hover:bg-primary hover:text-white"

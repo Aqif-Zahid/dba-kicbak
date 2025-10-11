@@ -46,8 +46,8 @@ export const SigninModal = () => {
 
   // 🔹 Close modal if session becomes available (e.g. Google login)
   useEffect(() => {
-  if (session && isOpen) {
-    close();
+    if (session && isOpen) {
+      close();
     }
   }, [session, close]);
 
@@ -64,6 +64,7 @@ export const SigninModal = () => {
       if (res?.error) {
         setError("Invalid credentials");
       } else {
+        window.location.reload();
         close();
       }
     } catch (error: unknown) {
@@ -129,7 +130,8 @@ export const SigninModal = () => {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>
-                  Email address or username <span className="text-red-900">*</span>
+                  Email address or username{" "}
+                  <span className="text-red-900">*</span>
                 </FormLabel>
                 <FormControl>
                   <Input

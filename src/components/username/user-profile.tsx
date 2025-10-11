@@ -36,7 +36,7 @@ export const UserProfile = async ({
             <span>
               Posts :{" "}
               <span className="font-semibold">
-                {formatNumber(user._count.posts)}
+                {/* {formatNumber(user._count.posts)} */}
               </span>
             </span>
             {/* <FollowerCount userId={user.id} initialState={followerInfo} /> */}

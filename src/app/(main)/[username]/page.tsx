@@ -1,4 +1,5 @@
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { TrendsSidebar } from "@/components/common/trends-sidebar";
 import { UserPosts } from "@/components/posts/user-posts";
 import { UserProfile } from "@/components/username/user-profile";
 import prisma from "@/lib/prisma";
@@ -52,9 +53,9 @@ export default async function UserNamePage({ params }: PageProps) {
             {user.displayName}&apos; posts
           </h2>
         </div>
-        <UserPosts userId={user.id} />
+        {/* <UserPosts userId={user.id} /> */}
       </div>
-      <TrendsSidebar />
+      {/* <TrendsSidebar /> */}
     </main>
   );
 }

@@ -16,6 +16,7 @@ interface User {
   role?: string;
   username?: string;
   image?: string;
+  defaultProfileId: number;
 }
 
 interface UserContextType {
@@ -39,6 +40,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         role: (session.user as any).role,
         username: (session.user as any).username ?? "",
         image: session.user.image ?? "",
+        defaultProfileId: (session.user as any).defaultProfileId ?? 0,
       });
     } else {
       setUser(null);

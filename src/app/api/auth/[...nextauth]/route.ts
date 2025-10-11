@@ -1,4 +1,4 @@
-import NextAuth, { AuthOptions } from "next-auth";
+import NextAuth, { AuthOptions, User as NextAuthUser } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
@@ -7,6 +7,13 @@ import type {
   Users as UserType,
   Profiles as ProfileType,
 } from "@prisma/client";
+
+// Extend the NextAuth User type to include defaultProfileId
+declare module "next-auth" {
+  interface User {
+    defaultProfileId?: string | number | null;
+  }
+}
 
 type UserWithRelations = UserType & {
   profiles: ProfileType[];
@@ -42,7 +49,6 @@ export const authOptions: AuthOptions = {
           userRecord.passwordHash
         );
         if (!isValid) return null;
-
         return {
           id: userRecord.id.toString(),
           email: userRecord.email,
@@ -53,12 +59,7 @@ export const authOptions: AuthOptions = {
           profilePicture: userRecord.defaultProfile?.profilePicture ?? null,
           phoneNumber: userRecord.phoneNumber,
           dateOfBirth: userRecord.dateOfBirth,
-          allProfiles: userRecord.profiles.map((p) => ({
-            id: p.id,
-            displayName: p.displayName,
-            profilePicture: p.profilePicture,
-            role: p.role,
-          })),
+          defaultProfileId: userRecord.defaultProfileId,
         };
       },
     }),
@@ -94,7 +95,7 @@ export const authOptions: AuthOptions = {
             profilePicture: profile.picture ?? null,
             phoneNumber: null,
             dateOfBirth: null,
-            allProfiles: [],
+            defaultProfileId: existingUser.defaultProfileId,
           };
         }
 
@@ -112,24 +113,39 @@ export const authOptions: AuthOptions = {
             null,
           phoneNumber: existingUser.phoneNumber,
           dateOfBirth: existingUser.dateOfBirth,
-          allProfiles: existingUser.profiles.map((p) => ({
-            id: p.id,
-            displayName: p.displayName,
-            profilePicture: p.profilePicture,
-            role: p.role,
-          })),
+          defaultProfileId: existingUser.defaultProfileId,
         };
       },
     }),
   ],
 
   callbacks: {
-    async jwt({ token, user }) {
-      if (user) Object.assign(token, user);
+    async jwt({ token, user, trigger, session }) {
+      // When the user logs in for the first time or the token is refreshed
+      if (user) {
+        token.id = user.id;
+        token.email = user.email;
+        token.name = user.name;
+        token.defaultProfileId = user.defaultProfileId;
+      }
+      // When session is manually updated (e.g., after switching profiles)
+      if (trigger === "update" && session?.user?.defaultProfileId) {
+        token.defaultProfileId = session.user.defaultProfileId;
+      }
+
       return token;
     },
+
     async session({ session, token }) {
-      if (token) session.user = token as any;
+      if (token) {
+        session.user = {
+          id: token.id,
+          name: token.name,
+          email: token.email,
+          defaultProfileId: token.defaultProfileId,
+        } as any;
+      }
+
       return session;
     },
   },

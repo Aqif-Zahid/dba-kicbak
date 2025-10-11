@@ -7,13 +7,8 @@ interface Session {
     phoneNumber?: string | null;
     profilePicture?: string | null;
     dateOfBirth?: string | null;
+    defaultProfileId: number;
     email?: string | null;
-    allProfiles?: {
-      id: number;
-      displayName: string;
-      profilePicture: string | null;
-      role: string;
-    }[];
   };
 }
 
@@ -25,12 +20,7 @@ interface User {
   phoneNumber?: string | null;
   profilePicture?: string | null;
   dateOfBirth?: string | null;
-  allProfiles?: {
-    id: number;
-    displayName: string;
-    profilePicture: string | null;
-    role: string;
-  }[];
+  defaultProfileId: number;
 }
 
 interface JWT {
@@ -42,10 +32,5 @@ interface JWT {
   profilePicture?: string | null;
   dateOfBirth?: string | null;
   email?: string | null;
-  allProfiles?: {
-    id: number;
-    displayName: string;
-    profilePicture: string | null;
-    role: string;
-  }[];
+  defaultProfileId: number;
 }

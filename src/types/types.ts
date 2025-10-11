@@ -11,6 +11,7 @@ export type User = {
   dateOfBirth?: string | null;
   positionNumber?: number;
   profilePicture?: string | null;
+  defaultProfileId: number;
   points?: number;
   status: string;
   bio?: string;

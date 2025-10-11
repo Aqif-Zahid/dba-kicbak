@@ -1,19 +1,12 @@
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route"; // Assuming this path
+import { NextRequest, NextResponse } from "next/server";
+import { getUser } from "@/lib/auth";
+import prisma from "@/lib/prisma";
+import { revalidatePath, revalidateTag } from "next/cache";
 
-// This API route signals NextAuth to switch the active profile
-// by setting a specific cookie or session parameter, forcing the
-// session to refresh and update the active profile ID.
-
-// Note: The client-side (Sidebar.tsx) will call this route
-// then call signIn('refresh', { redirect: false }) to update the session.
-
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session || !session.user) {
+    const currentUser = await getUser(req);
+    if (!currentUser) {
       return NextResponse.json(
         { status: 0, message: "Unauthorized" },
         { status: 401 }
@@ -25,34 +18,39 @@ export async function POST(req: Request) {
 
     if (!newProfileId) {
       return NextResponse.json(
-        { status: 0, message: "Missing newProfileId" },
+        { status: 0, message: "Missing new Profile Id" },
         { status: 400 }
       );
     }
 
-    // Ensure the newProfileId belongs to the current user
-    const userProfiles = (session as any).allProfiles || [];
-    const isValidProfile = userProfiles.some(
-      (p: { profileId: string }) => p.profileId === newProfileId
-    );
+    // ✅ Check in DB that the profile belongs to the current user
+    const profile = await prisma.profiles.findFirst({
+      where: {
+        id: Number(newProfileId),
+        userId: Number(currentUser.id),
+      },
+    });
 
-    if (!isValidProfile) {
+    if (!profile) {
       return NextResponse.json(
         { status: 0, message: "Profile not owned by user" },
         { status: 403 }
       );
     }
+    // Switch the user’s active profile in DB
+    await prisma.users.update({
+      where: { id: Number(currentUser.id) },
+      data: { defaultProfileId: Number(newProfileId) },
+    });
 
-    // Set the new profile ID in a response header or body to be consumed
-    // by the client-side refresh trigger.
-    // In this specific implementation, we will use a JSON response to pass
-    // the ID back, and the client-side code will use it to trigger the
-    // NextAuth refresh mechanism (e.g., using a custom query parameter).
-
+    // 🔄 Invalidate caches
+    revalidateTag("profiles");
+    revalidatePath("/");
+    // You can now proceed to update session, set active profile, etc.
     return NextResponse.json(
       {
         status: 1,
-        message: "Profile switch initiated",
+        message: "Profile switch successful",
         activeProfileId: newProfileId,
       },
       { status: 200 }
