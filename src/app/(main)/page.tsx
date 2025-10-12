@@ -1,7 +1,5 @@
 import { TravelBenefits } from "@/components/home/traveler-benefits";
 import { HeroSection } from "@/components/home/hero-section";
-import { RecentPosts } from "@/components/home/recent-posts";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../api/auth/[...nextauth]/route";
 import { TrendsSidebar } from "@/components/common/trends-sidebar";
@@ -12,32 +10,26 @@ export default async function HomePage() {
   const isSignedIn = session?.user;
 
   return (
-    <div>
+    <>
       {isSignedIn ? (
-        <main className="w-full min-w-0 flex gap-5">
-          <div className="w-full min-w-0 space-y-5">
-            {/* <PostEditor /> */}
-            <Tabs defaultValue="for-you">
-              <TabsList>
-                <TabsTrigger value="for-you">For You</TabsTrigger>
-                <TabsTrigger value="following">Following</TabsTrigger>
-              </TabsList>
-              <TabsContent value="for-you">
-                <ForYouFeed />
-              </TabsContent>
-              <TabsContent value="following">
-                {/* <FollowingFeed /> */}
-              </TabsContent>
-            </Tabs>
+        <main className="w-full flex flex-col lg:flex-row gap-5">
+          {/* Main posts feed */}
+          <div className="flex-1 min-w-0">
+            <ForYouFeed />
           </div>
-          {/* <TrendsSidebar /> */}
+          <div className="hidden lg:block w-60 flex-none">Communities</div>
+
+          {/* Optional Trends sidebar */}
+          {/* <div className="hidden xl:block w-72 flex-none">
+            <TrendsSidebar />
+          </div> */}
         </main>
       ) : (
-        <div className="w-full">
+        <div className="w-full flex flex-col gap-10">
           <HeroSection />
           <TravelBenefits />
         </div>
       )}
-    </div>
+    </>
   );
 }

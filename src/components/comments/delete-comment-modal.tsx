@@ -7,21 +7,21 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Post } from "@/types/types";
-import { useDeletePost } from "@/services/posts/use-delete-post";
+import { CommentData } from "@/types/types";
 import { LoadingButton } from "../loading-button";
+import { useDeleteComment } from "@/services/comments/use-delete-comment";
 
-interface DeletePostModalProps {
-  post: Post;
+interface DeleteCommentModalProps {
+  comment: CommentData;
   open: boolean;
   onClose: () => void;
 }
-export const DeletePostModal = ({
-  post,
+export const DeleteCommentModal = ({
+  comment,
   open,
   onClose,
-}: DeletePostModalProps) => {
-  const mutation = useDeletePost();
+}: DeleteCommentModalProps) => {
+  const mutation = useDeleteComment();
 
   const handleOpenChange = (open: boolean) => {
     if (!open || !mutation.isPending) {
@@ -33,9 +33,9 @@ export const DeletePostModal = ({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Delete Post</DialogTitle>
+          <DialogTitle>Delete Comment</DialogTitle>
           <DialogDescription>
-            Are you sure you want to delete this post?
+            Are you sure you want to delete this comment?
             <br />
             This action cannot be undone.
           </DialogDescription>
@@ -43,7 +43,7 @@ export const DeletePostModal = ({
         <DialogFooter>
           <LoadingButton
             variant="destructive"
-            onClick={() => mutation.mutate(post.id, { onSuccess: onClose })}
+            onClick={() => mutation.mutate(comment.id, { onSuccess: onClose })}
             loading={mutation.isPending}
           >
             Delete

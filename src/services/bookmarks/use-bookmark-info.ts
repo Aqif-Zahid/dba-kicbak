@@ -1,16 +1,17 @@
-import { FollowerInfo } from "@/types/types";
+import { BookmarkInfo } from "@/types/types";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 
-export const useFollowerInfo = (userId: number, initialState: FollowerInfo) => {
+export const useBookmarkInfo = (postId: number, initialState: BookmarkInfo) => {
   const query = useQuery({
-    queryKey: ["follower-info", userId],
+    queryKey: ["bookmark-info", postId],
     queryFn: async () => {
-      const res = await axios.get(`/api/users/${userId}/followers`);
+      const res = await axios.get(`/api/posts/${postId}/bookmarks`);
       return res.data;
     },
     initialData: initialState,
     staleTime: Infinity, // 1 hour
   });
+
   return query;
 };

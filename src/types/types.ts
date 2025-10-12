@@ -130,3 +130,29 @@ export type FollowerInfo = {
   followers: number;
   isFollowedByUser: boolean;
 };
+
+export type LikeInfo = {
+  likes: number;
+  isLikedByUser: boolean;
+};
+
+export type BookmarkInfo = {
+  isBookmarkedByUser: boolean;
+};
+
+export const getCommentDataInclude = (loggedInUserId: string) => {
+  return {
+    user: {
+      select: getUserDataSelect(loggedInUserId),
+    },
+  } satisfies Prisma.CommentInclude;
+};
+
+export type CommentData = Prisma.CommentGetPayload<{
+  include: ReturnType<typeof getCommentDataInclude>;
+}>;
+
+export interface CommentsPage {
+  comments: CommentData[];
+  previousCursor: string | null;
+}

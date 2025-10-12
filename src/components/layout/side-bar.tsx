@@ -1,12 +1,10 @@
-import { Home, Bookmark, FileText } from "lucide-react";
+import { headers } from "next/headers";
+import { Home, FileText, Hourglass } from "lucide-react";
 import { Button } from "../ui/button";
-import prisma from "@/lib/prisma";
 import Link from "next/link";
-import { NotificationsButton } from "../notifications/notifications-button";
-import { MessagesButton } from "../messages/messages-button";
 import LogOutButton from "./log-out-button";
 import { SwitchProfile } from "./switch-profile";
-import streamServerClient from "@/lib/stream";
+import { FaUserGroup } from "react-icons/fa6";
 
 interface MenubarProps {
   className?: string;
@@ -14,38 +12,17 @@ interface MenubarProps {
 }
 
 export const Sidebar = async ({ className, user }: MenubarProps) => {
-  let unreadNotificationsCount = 0;
-  let unreadMessagesCount = 0;
+  const isAdmin = user && user.role === "ADMIN";
 
-  if (user) {
-    // Upsert Stream user
-    try {
-      await streamServerClient.upsertUser({
-        id: user.id.toString(),
-        username: user.username || `user_${user.id}`,
-        name: user.displayName || "Unknown",
-      });
-    } catch (err) {
-      console.error("Failed to upsert Stream user:", err);
-    }
-
-    // Fetch unread counts
-    [unreadNotificationsCount, unreadMessagesCount] = await Promise.all([
-      prisma.notification.count({
-        where: {
-          recipient: { id: Number(user.id) },
-          read: false,
-        },
-      }),
-      streamServerClient
-        .getUnreadCount(user.id.toString())
-        .then((res) => res.total_unread_count),
-    ]);
-  }
+  const headersList = await headers();
+  const url =
+    headersList.get("x-invoke-path") || headersList.get("referer") || "/";
 
   return (
     <div className={className}>
-      {user && <SwitchProfile user={user} />}
+      <div className="hidden md:block">
+        {user && <SwitchProfile user={user} />}
+      </div>
       <Button
         variant="ghost"
         className="flex items-center justify-start gap-3 mb-2 hover:bg-primary hover:text-white"
@@ -59,7 +36,7 @@ export const Sidebar = async ({ className, user }: MenubarProps) => {
       </Button>
 
       <Button
-        variant="ghost"
+        variant={url.includes("/posts") ? "default" : "ghost"}
         className="flex items-center justify-start gap-3 mb-2 hover:bg-primary hover:text-white"
         title="Posts"
         asChild
@@ -70,27 +47,40 @@ export const Sidebar = async ({ className, user }: MenubarProps) => {
         </Link>
       </Button>
 
-      {user && (
+      {isAdmin && (
         <>
-          <NotificationsButton
-            initialState={{ unreadCount: unreadNotificationsCount }}
-          />
-          <MessagesButton initialState={{ unreadCount: unreadMessagesCount }} />
-
           <Button
-            variant="ghost"
+            variant={url.includes("/admin/users") ? "default" : "ghost"}
             className="flex items-center justify-start gap-3 mb-2 hover:bg-primary hover:text-white"
-            title="Bookmarks"
+            title="Manage Users"
             asChild
           >
-            <Link href="/bookmarks">
-              <Bookmark size={30} />
-              <span className="hidden lg:inline">Bookmarks</span>
+            <Link href="/admin/users">
+              <FaUserGroup className="w-16 h-16 flex-shrink-0" />
+              <span className="hidden lg:inline">Manage Users</span>
             </Link>
           </Button>
 
-          <div className="pt-4 border-t border-gray-200">
-            <div className="flex items-center space-x-3 text-sm p-3 rounded-lg bg-gray-50">
+          <Button
+            variant={
+              url.includes("/admin/pending-invites") ? "default" : "ghost"
+            }
+            className="flex items-center justify-start gap-3 mb-2 hover:bg-primary hover:text-white"
+            title="Pending Invites"
+            asChild
+          >
+            <Link href="/admin/pending-invites">
+              <Hourglass className="w-16 h-16 flex-shrink-0" />
+              <span className="hidden lg:inline">Pending Invites</span>
+            </Link>
+          </Button>
+        </>
+      )}
+
+      {user && (
+        <>
+          <div className="md:pt-4 border-t border-gray-200">
+            <div className="hidden md:flex items-center space-x-3 text-sm p-3 rounded-lg bg-gray-50">
               <span className="text-xs font-mono text-muted-foreground break-all">
                 User ID: {user.id}
               </span>

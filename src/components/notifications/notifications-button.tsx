@@ -1,6 +1,5 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { NotificationCountInfo } from "@/types/types";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
@@ -27,24 +26,18 @@ export const NotificationsButton = ({
   });
 
   return (
-    <Button
-      variant="ghost"
-      className="flex items-center justify-start gap-3 mb-2 hover:bg-primary hover:text-white"
+    <Link
+      href="/notifications"
+      className="relative flex items-center justify-center w-12 h-12 rounded-full 
+                 text-muted-foreground transition-colors"
       title="Notifications"
-      asChild
     >
-      <Link href="/notifications">
-        <div className="relative">
-          <Bell />
-          {!!data?.unreadCount && (
-            <span className="absolute -right-1 -top-1 rounded-full bg-primary text-primary-foreground px-1 text-xs font-medium tabular-nums">
-              {data.unreadCount}
-            </span>
-          )}
-        </div>
-
-        <span className="hidden lg:inline">Notifications</span>
-      </Link>
-    </Button>
+      <Bell size={20} />
+      {!!data?.unreadCount && (
+        <span className="absolute -right-2 -top-2 rounded-full bg-primary text-primary-foreground px-1 text-xs font-medium tabular-nums">
+          {data.unreadCount}
+        </span>
+      )}
+    </Link>
   );
 };

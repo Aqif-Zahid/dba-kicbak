@@ -44,14 +44,15 @@ export const formatNumber = (n: number): string => {
 
 export const formatRelativeDate = (from: Date) => {
   const currentDate = new Date();
-  const timeDiff = currentDate.getTime() - from.getTime();
+  const date = typeof from === "string" ? new Date(from) : from;
+  const timeDiff = currentDate.getTime() - date.getTime();
   if (timeDiff < 24 * 60 * 60 * 1000) {
-    return formatDistanceToNowStrict(from, { addSuffix: true });
+    return formatDistanceToNowStrict(date, { addSuffix: true });
   } else {
-    if (currentDate.getFullYear() == from.getFullYear()) {
-      return formatDate(from, "MMM d");
+    if (currentDate.getFullYear() == date.getFullYear()) {
+      return formatDate(date, "MMM d");
     } else {
-      return formatDate(from, "MMM d, yyyy");
+      return formatDate(date, "MMM d, yyyy");
     }
   }
 };

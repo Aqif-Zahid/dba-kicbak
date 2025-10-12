@@ -1,16 +1,17 @@
-import { FollowerInfo } from "@/types/types";
+import { LikeInfo } from "@/types/types";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 
-export const useFollowerInfo = (userId: number, initialState: FollowerInfo) => {
+export const useLikeInfo = (postId: number, initialState: LikeInfo) => {
   const query = useQuery({
-    queryKey: ["follower-info", userId],
+    queryKey: ["like-info", postId],
     queryFn: async () => {
-      const res = await axios.get(`/api/users/${userId}/followers`);
+      const res = await axios.get(`/api/posts/${postId}/likes`);
       return res.data;
     },
     initialData: initialState,
     staleTime: Infinity, // 1 hour
   });
+
   return query;
 };

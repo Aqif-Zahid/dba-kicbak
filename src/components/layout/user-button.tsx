@@ -30,9 +30,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useUser } from "@/providers/auth-provider";
-import { motion } from "framer-motion";
+
 import Link from "next/link";
-import { FaUserGroup } from "react-icons/fa6";
 import { UserAvatar } from "../common/user-avatar";
 import { cn } from "@/lib/utils";
 import { useTheme } from "next-themes";

@@ -1,8 +1,11 @@
-import { User } from "@/types/types";
+import { FollowerInfo, User } from "@/types/types";
 import { formatDate } from "date-fns";
 import { UserAvatar } from "../common/user-avatar";
 import { formatNumber } from "@/lib/utils";
 import { Linkify } from "./linkify";
+import { useFollowerInfo } from "@/services/followers/use-follower-info";
+import { FollowerCount } from "./follower-count";
+import { FollowButton } from "../followers/follow-button";
 
 interface UserProfileProps {
   user: User;
@@ -17,6 +20,13 @@ export const UserProfile = async ({
     displayName?.charAt(0).toUpperCase() ||
     email?.charAt(0).toUpperCase() ||
     "U";
+
+  const followerInfo: FollowerInfo = {
+    followers: user._count.followers,
+    isFollowedByUser: user.followers.some(
+      (follower) => follower.followerId === loggedInUserId
+    ),
+  };
   return (
     <div className="h-fit w-full space-y-5 rounded-2xl bg-card p-5">
       <UserAvatar
@@ -36,17 +46,17 @@ export const UserProfile = async ({
             <span>
               Posts :{" "}
               <span className="font-semibold">
-                {/* {formatNumber(user._count.posts)} */}
+                {formatNumber(user._count.posts)}
               </span>
             </span>
-            {/* <FollowerCount userId={user.id} initialState={followerInfo} /> */}
+            <FollowerCount userId={user.id} initialState={useFollowerInfo} />
           </div>
         </div>
-        {/* {Number(user.id) === loggedInUserId ? (
+        {user.id === loggedInUserId ? (
           <EditProfileButton user={user} />
         ) : (
           <FollowButton userId={user.id} initialState={followerInfo} />
-        )} */}
+        )}
       </div>
       {user.bio && (
         <>

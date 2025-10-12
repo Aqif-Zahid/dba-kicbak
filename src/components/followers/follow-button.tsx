@@ -7,7 +7,7 @@ import axios from "axios";
 import { toast } from "sonner";
 
 interface FollowButtonProps {
-  userId: string;
+  userId: number;
   initialState: FollowerInfo;
 }
 

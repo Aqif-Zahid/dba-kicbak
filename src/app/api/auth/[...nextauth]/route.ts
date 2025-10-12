@@ -34,7 +34,7 @@ export const authOptions: AuthOptions = {
 
         const userRecord = (await prisma.users.findUnique({
           where: { email: credentials.email },
-          include: { profiles: true, defaultProfile: true },
+          include: { defaultProfile: true },
         })) as UserWithRelations | null;
 
         if (
@@ -123,29 +123,18 @@ export const authOptions: AuthOptions = {
     async jwt({ token, user, trigger, session }) {
       // When the user logs in for the first time or the token is refreshed
       if (user) {
-        token.id = user.id;
-        token.email = user.email;
-        token.name = user.name;
-        token.defaultProfileId = user.defaultProfileId;
+        token = { ...user };
       }
       // When session is manually updated (e.g., after switching profiles)
       if (trigger === "update" && session?.user?.defaultProfileId) {
         token.defaultProfileId = session.user.defaultProfileId;
       }
-
       return token;
     },
-
     async session({ session, token }) {
       if (token) {
-        session.user = {
-          id: token.id,
-          name: token.name,
-          email: token.email,
-          defaultProfileId: token.defaultProfileId,
-        } as any;
+        session.user = { ...token } as any;
       }
-
       return session;
     },
   },

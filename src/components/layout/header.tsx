@@ -1,23 +1,50 @@
-"use client";
-
 import Image from "next/image";
-import { SigninModal } from "../auth/signin-modal";
-import { UserButton } from "./user-button";
-import { useUser } from "@/providers/auth-provider";
-import { RequestInviteCodeModal } from "../auth/request-invite-code-modal";
-import { useSigninModal } from "@/hooks/use-signin-modal";
 import Link from "next/link";
+import { UserButton } from "./user-button";
+import { SignInButton } from "./sign-in-button";
+import { NotificationsButton } from "../notifications/notifications-button";
+import { MessagesButton } from "../messages/messages-button";
+import { Bookmark, Menu } from "lucide-react";
+import streamServerClient from "@/lib/stream";
+import prisma from "@/lib/prisma";
+import { MobileMenuButton } from "./mobile-menu-button";
 
-export const Header = () => {
-  const { user } = useUser();
-  const { open } = useSigninModal();
+interface HeaderProps {
+  user: any;
+}
+
+export const Header = async ({ user }: HeaderProps) => {
+  let unreadNotificationsCount = 0;
+  let unreadMessagesCount = 0;
+
+  if (user) {
+    try {
+      await streamServerClient.upsertUser({
+        id: user.defaultProfileId.toString(),
+        username: user.username || `user_${user.defaultProfileId}`,
+        name: user.displayName || "Unknown",
+      });
+    } catch (err) {
+      console.error("Failed to upsert Stream user:", err);
+    }
+
+    [unreadNotificationsCount, unreadMessagesCount] = await Promise.all([
+      prisma.notification.count({
+        where: {
+          recipient: { id: Number(user.defaultProfileId) },
+          read: false,
+        },
+      }),
+      streamServerClient
+        .getUnreadCount(user.defaultProfileId.toString())
+        .then((res) => res.total_unread_count),
+    ]);
+  }
 
   return (
-    <header className="border-b border-border">
-      <SigninModal />
-      <RequestInviteCodeModal />
-      <div className="container mx-auto px-4 py-6 flex justify-between items-center">
-        <Link href="/">
+    <header className="border-b border-border relative z-50">
+      <div className="container mx-auto px-4 py-4 flex justify-between items-center">
+        <Link href="/" className="flex items-center">
           <Image
             src="/kicbak-logo.png"
             alt="Kicbak"
@@ -26,18 +53,37 @@ export const Header = () => {
             className="h-12 w-auto"
           />
         </Link>
-        {user ? (
-          <UserButton />
-        ) : (
-          <div className="flex gap-4">
-            <button
-              onClick={open}
-              className="px-6 py-3 bg-primary text-primary-foreground rounded-lg font-semibold transition-all duration-200 hover:bg-primary/90 hover:scale-105 cursor-pointer animate-pulse shadow-lg shadow-primary/25"
-            >
-              Sign in
-            </button>
-          </div>
-        )}
+
+        {/* Desktop Menu */}
+        <div className="hidden md:flex gap-x-4 items-center">
+          {user ? (
+            <>
+              <Link
+                href="/bookmarks"
+                className="relative flex items-center justify-center w-12 h-12 rounded-full 
+                 text-muted-foreground transition-colors"
+              >
+                <Bookmark size={20} />
+              </Link>
+              <MessagesButton
+                initialState={{ unreadCount: unreadMessagesCount }}
+              />
+              <NotificationsButton
+                initialState={{ unreadCount: unreadNotificationsCount }}
+              />
+              <UserButton className="ml-4" />
+            </>
+          ) : (
+            <SignInButton />
+          )}
+        </div>
+
+        {/* Mobile Menu Button */}
+        <MobileMenuButton
+          user={user}
+          unreadNotificationsCount={unreadNotificationsCount}
+          unreadMessagesCount={unreadMessagesCount}
+        />
       </div>
     </header>
   );

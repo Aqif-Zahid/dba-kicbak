@@ -15,12 +15,13 @@ export async function GET(req: NextRequest) {
       );
     }
     const posts = await prisma.post.findMany({
-      include: getPostsDataInclude(user.id),
+      include: getPostsDataInclude(Number(user.defaultProfileId)),
       orderBy: { createdAt: "desc" },
       take: pageSize + 1,
-      cursor: cursor ? { id: cursor } : undefined,
+      cursor: cursor ? { id: Number(cursor) } : undefined,
     });
-    const nextCursor = posts.length > pageSize ? posts[pageSize].id : null;
+    const nextCursor =
+      posts.length > pageSize ? String(posts[pageSize].id) : null;
     const data: PostsPage = { posts: posts.slice(0, pageSize), nextCursor };
 
     return Response.json(data);
