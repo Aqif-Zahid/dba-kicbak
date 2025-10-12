@@ -1,5 +1,5 @@
 import { headers } from "next/headers";
-import { Home, FileText, Hourglass } from "lucide-react";
+import { Home, FileText, Hourglass, UserCog, LockKeyhole } from "lucide-react";
 import { Button } from "../ui/button";
 import Link from "next/link";
 import LogOutButton from "./log-out-button";
@@ -85,6 +85,30 @@ export const Sidebar = async ({ className, user }: MenubarProps) => {
                 User ID: {user.id}
               </span>
             </div>
+            <Button
+              variant={url.includes("/user/profiles") ? "default" : "ghost"}
+              className="flex items-center justify-start gap-3 my-2 hover:bg-primary hover:text-white"
+              title="Profiles"
+              asChild
+            >
+              <Link href="/user/profiles">
+                <UserCog className="w-16 h-16 flex-shrink-0" />
+                <span className="hidden lg:inline">Manage Profiles</span>
+              </Link>
+            </Button>
+            <Button
+              variant={
+                url.includes("/user/change-password") ? "default" : "ghost"
+              }
+              className="flex items-center justify-start gap-3 my-2 hover:bg-primary hover:text-white"
+              title="Profiles"
+              asChild
+            >
+              <Link href="/user/change-password">
+                <LockKeyhole className="w-16 h-16 flex-shrink-0" />
+                <span className="hidden lg:inline">Change Password</span>
+              </Link>
+            </Button>
             <LogOutButton />
           </div>
         </>
