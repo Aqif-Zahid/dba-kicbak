@@ -1,18 +1,15 @@
 import { getServerSession } from "next-auth";
-import { Unauthorized } from "@/components/admin/unauthorized";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import ProfileSection from "@/components/profile/ProfileSection";
 
-const ProfilesPage = async () => {
+export default async function ProfilesPage() {
   const session = await getServerSession(authOptions);
-  if (!session?.user) {
-    return <Unauthorized />;
+  const userId = Number((session?.user as any)?.id);
+
+  if (!userId) {
+    //  Trigger global error boundary (error.tsx)
+    throw new Error("Unauthorized access — user ID missing.");
   }
 
-  return (
-    <section className="pb-20">
-      <p>Profiles Page</p>
-    </section>
-  );
-};
-
-export default ProfilesPage;
+  return <ProfileSection userId={userId} />;
+}
