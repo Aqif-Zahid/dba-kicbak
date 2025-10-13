@@ -88,7 +88,7 @@ export const SigninModal = () => {
   };
 
   return (
-    <ResponsiveModal open={isOpen} onOpenChange={close} size="sm">
+    <ResponsiveModal open={isOpen} onOpenChange={close} size="md">
       <div className="text-center mb-0">
         <h2 className="font-bold text-gray-700 text-lg mb-1">
           Sign in to Kicbak

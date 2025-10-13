@@ -8,7 +8,7 @@ const routeRoles: Record<string, string[] | "ANY"> = {
   "/users": "ANY", // Any authenticated user
 };
 
-const privateRoutes = ["/change-password"];
+const privateRoutes = ["/change-password", "/user/profiles"];
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;

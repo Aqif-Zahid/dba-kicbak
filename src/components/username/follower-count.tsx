@@ -4,11 +4,14 @@ import { useFollowerInfo } from "@/services/followers/use-follower-info";
 import { FollowerInfo } from "@/types/types";
 
 interface FollowerCountProps {
-  userId: number;
+  profileId: number;
   initialState: FollowerInfo;
 }
-export const FollowerCount = ({ userId, initialState }: FollowerCountProps) => {
-  const { data } = useFollowerInfo(userId, initialState);
+export const FollowerCount = ({
+  profileId,
+  initialState,
+}: FollowerCountProps) => {
+  const { data } = useFollowerInfo(profileId, initialState);
   return (
     <span>
       Followers <span className="font-semibold">{data.followers}</span>

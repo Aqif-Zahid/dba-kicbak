@@ -22,12 +22,29 @@ export type Profile = {
   id: number;
   userId: number;
   role: string;
-  createdAt?: Date | null;
+  createdAt: Date | null;
   updatedAt: Date;
   username: string;
   displayName: string;
   profilePicture?: string | null;
   personaTags?: any;
+  bio: string | null;
+  totalPosts?: number;
+  totalFollowing?: number;
+  totalFollowers?: number;
+};
+
+export type ExtendedProfile = Profile & {
+  user: Pick<User, "id" | "email" | "createdAt"> & { createdAt: Date | null };
+  _count: {
+    posts: number;
+    followers: number;
+    following: number;
+  };
+  followers: {
+    followerId: number;
+    followingId: number;
+  }[];
 };
 
 export interface NotificationCountInfo {

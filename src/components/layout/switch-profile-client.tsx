@@ -46,7 +46,7 @@ export const SwitchProfileClient = ({
       if (res.data.status === 1) {
         await signIn("refresh", {
           redirect: false,
-          activeProfileId: newProfileId,
+          defaultProfileId: newProfileId,
         });
         toast.success("Profile switched successfully!");
       }

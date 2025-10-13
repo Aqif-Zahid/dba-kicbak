@@ -1,14 +1,6 @@
 "use client";
-
 import {
   Loader,
-  LogOut,
-  Settings,
-  Key,
-  User,
-  Hourglass,
-  Pencil,
-  MessageSquare,
   UserIcon,
   Monitor,
   Sun,
@@ -16,7 +8,7 @@ import {
   Check,
   LogOutIcon,
 } from "lucide-react";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+
 import {
   DropdownMenu,
   DropdownMenuContent,

@@ -56,7 +56,7 @@ export const authOptions: AuthOptions = {
           role: userRecord.defaultProfile?.role ?? null,
           displayName: userRecord.defaultProfile?.displayName ?? null,
           username: userRecord.defaultProfile?.username ?? null,
-          profilePicture: userRecord.defaultProfile?.profilePicture ?? null,
+          image: userRecord.defaultProfile?.profilePicture ?? null,
           phoneNumber: userRecord.phoneNumber,
           dateOfBirth: userRecord.dateOfBirth,
           defaultProfileId: userRecord.defaultProfileId,
@@ -71,7 +71,7 @@ export const authOptions: AuthOptions = {
       async profile(profile) {
         let existingUser = (await prisma.users.findUnique({
           where: { email: profile.email },
-          include: { profiles: true, defaultProfile: true },
+          include: { defaultProfile: true },
         })) as UserWithRelations | null;
 
         // --- New User ---
@@ -92,7 +92,7 @@ export const authOptions: AuthOptions = {
             role: null,
             displayName: null,
             username: null,
-            profilePicture: profile.picture ?? null,
+            image: profile.picture ?? null,
             phoneNumber: null,
             dateOfBirth: null,
             defaultProfileId: existingUser.defaultProfileId,
@@ -107,10 +107,7 @@ export const authOptions: AuthOptions = {
           role: existingUser.defaultProfile?.role ?? null,
           displayName: existingUser.defaultProfile?.displayName ?? null,
           username: existingUser.defaultProfile?.username ?? null,
-          profilePicture:
-            existingUser.defaultProfile?.profilePicture ??
-            profile.picture ??
-            null,
+          image: existingUser.defaultProfile?.profilePicture ?? null,
           phoneNumber: existingUser.phoneNumber,
           dateOfBirth: existingUser.dateOfBirth,
           defaultProfileId: existingUser.defaultProfileId,
@@ -126,14 +123,14 @@ export const authOptions: AuthOptions = {
         token = { ...user };
       }
       // When session is manually updated (e.g., after switching profiles)
-      if (trigger === "update" && session?.user?.defaultProfileId) {
-        token.defaultProfileId = session.user.defaultProfileId;
+      if (trigger === "update" && session?.user) {
+        token = { ...token, ...session.user };
       }
       return token;
     },
     async session({ session, token }) {
       if (token) {
-        session.user = { ...token } as any;
+        session.user = { ...session.user, ...token } as Session["user"];
       }
       return session;
     },
