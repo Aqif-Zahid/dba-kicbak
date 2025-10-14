@@ -185,8 +185,8 @@ model Comment {
   updatedAt       DateTime      @default(now()) @map("updated_at")
   status          CommentStatus @default(VISIBLE)
   authorProfileId Int           @map("author_profile_id")
-  authorProfile         Profiles  @relation(fields: [authorProfileId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "comments_author_profile_id_profiles_id_fk")
-  posts    Post      @relation(fields: [postId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "comments_post_id_posts_id_fk")
+  authorProfile                 Profiles  @relation(fields: [authorProfileId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "comments_author_profile_id_profiles_id_fk")
+  posts    Post                  @relation(fields: [postId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "comments_post_id_posts_id_fk")
   mentions Mention[]
   votes    Vote[]
 

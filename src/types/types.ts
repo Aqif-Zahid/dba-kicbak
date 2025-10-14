@@ -172,7 +172,7 @@ export type BookmarkInfo = {
 
 export const getCommentDataInclude = (loggedInUserId: string) => {
   return {
-    user: {
+    authorProfile: {
       select: getUserDataSelect(loggedInUserId),
     },
   } satisfies Prisma.CommentInclude;
