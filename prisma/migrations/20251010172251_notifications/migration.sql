@@ -1,5 +1,5 @@
 -- CreateEnum
-CREATE TYPE "NotificationType" AS ENUM ('LIKE', 'FOLLOW', 'COMMENT');
+CREATE TYPE "NotificationType" AS ENUM ('VOTE', 'FOLLOW', 'COMMENT');
 
 -- CreateTable
 CREATE TABLE "bookmarks" (

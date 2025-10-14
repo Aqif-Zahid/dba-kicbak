@@ -9,10 +9,10 @@ import { formatRelativeDate } from "@/lib/utils";
 import { Linkify } from "../username/linkify";
 import { PostMoreButton } from "./post-more-button";
 import { MediaPreview } from "./media-preview";
-import { LikeButton } from "@/app/votes/like-button";
 import { CommentButton } from "../comments/comment-button";
 import { BookmarkButton } from "../bookmarks/bookmark-button";
 import { CommentSection } from "../comments/comment-section";
+import { VoteButton } from "@/app/votes/vote-button";
 
 interface PostDataProps {
   post: Post;
@@ -27,7 +27,7 @@ export const PostCard = ({ post }: PostDataProps) => {
     <article className="group/post space-y-3 rounded-2xl bg-card p-5 shadow-sm">
       <div className="flex justify-between gap-3">
         <div className="flex flex-wrap gap-3">
-          <UserTooltip user={post.authorProfile}>
+          <UserTooltip profile={post.authorProfile}>
             <Link href={`/users/${post.authorProfile.username}`}>
               <UserAvatar
                 avatarUrl={post.authorProfile.profilePicture}
@@ -36,7 +36,7 @@ export const PostCard = ({ post }: PostDataProps) => {
             </Link>
           </UserTooltip>
           <div>
-            <UserTooltip user={post.authorProfile}>
+            <UserTooltip profile={post.authorProfile}>
               <Link
                 href={`/users/${post.authorProfile.username}`}
                 className="block font-medium hover:underline"
@@ -52,7 +52,7 @@ export const PostCard = ({ post }: PostDataProps) => {
             </Link>
           </div>
         </div>
-        {post.authorProfile.id === Number(user?.id) && (
+        {post.authorProfile.id === user?.defaultProfileId && (
           <PostMoreButton
             post={post}
             className="opacity-0 transition-opacity group-hover/post:opacity-100"
@@ -68,12 +68,12 @@ export const PostCard = ({ post }: PostDataProps) => {
       <hr className="text-muted-foreground" />
       <div className="flex justify-between gap-5">
         <div className="flex items-center gap-5">
-          <LikeButton
+          <VoteButton
             postId={post.id}
             initialState={{
-              likes: post._count.votes,
-              isLikedByUser: post.votes.some(
-                (like) => like.userId === Number(user?.id)
+              votes: post._count.votes,
+              isVotedByUser: post.votes.some(
+                (vote) => vote.profileId === user?.defaultProfileId
               ),
             }}
           />
@@ -86,7 +86,7 @@ export const PostCard = ({ post }: PostDataProps) => {
           postId={post.id}
           initialState={{
             isBookmarkedByUser: post.bookmarks.some(
-              (bookmark) => bookmark.userId === user?.id
+              (bookmark) => bookmark.profileId === Number(user?.id)
             ),
           }}
         />

@@ -41,7 +41,6 @@ model Users {
   referralsReferralsReferredUserIdToUsers Referrals?      @relation("referrals_referred_user_idTousers")
   referralsReferralsReferrerUserIdToUsers Referrals?      @relation("referrals_referrer_user_idTousers")
   rewardsLedger                           RewardsLedger[]
-  votes                                   Vote[]
 
   @@map("users")
 }
@@ -59,13 +58,14 @@ model Profiles {
   displayName    String      @map("display_name")
   profilePicture String?     @map("profile_picture")
   personaTags    Json?       @default("[]") @map("persona_tags")
-  comments       Comment[]
-  posts          Post[]
-  bookmarks               Bookmark[]
-  receivedNotifications   Notification[] @relation("Recipient")
-  issuedNotifications     Notification[] @relation("Issuer")
-  followers               Follow[] @relation("Followers")
-  following               Follow[] @relation("Following")
+  votes                      Vote[]
+  comments                   Comment[]
+  posts                      Post[]
+  bookmarks                  Bookmark[]
+  receivedNotifications      Notification[] @relation("Recipient")
+  issuedNotifications        Notification[] @relation("Issuer")
+  followers                  Follow[] @relation("Followers")
+  following                  Follow[] @relation("Following")
 
   @@map("profiles")
 }
@@ -322,15 +322,14 @@ model SystemSettings {
 
 model Vote {
   id        Int       @id @default(autoincrement()) @map("id")
-  userId    Int       @map("user_id")
+  profileId    Int       @map("profile_id")
   postId    Int?      @map("post_id")
   commentId Int?      @map("comment_id")
   voteType  VoteType  @map("vote_type")
   createdAt DateTime? @default(now()) @map("created_at")
-
   comments Comment? @relation(fields: [commentId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "votes_comment_id_comments_id_fk")
   posts    Post?    @relation(fields: [postId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "votes_post_id_posts_id_fk")
-  users    Users    @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "votes_user_id_users_id_fk")
+  profiles    Profiles @relation(fields: [profileId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "votes_profile_id_profiles_id_fk")
 
   @@map("votes")
 }
@@ -454,7 +453,7 @@ enum MediaType {
 }
 
 enum NotificationType {
-  LIKE
+  VOTE
   FOLLOW
   COMMENT
 }

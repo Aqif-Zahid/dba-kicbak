@@ -1,12 +1,12 @@
-import { LikeInfo } from "@/types/types";
+import { VoteInfo } from "@/types/types";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 
-export const useLikeInfo = (postId: number, initialState: LikeInfo) => {
+export const useVoteInfo = (postId: number, initialState: VoteInfo) => {
   const query = useQuery({
-    queryKey: ["like-info", postId],
+    queryKey: ["vote-info", postId],
     queryFn: async () => {
-      const res = await axios.get(`/api/posts/${postId}/likes`);
+      const res = await axios.get(`/api/posts/${postId}/votes`);
       return res.data;
     },
     initialData: initialState,

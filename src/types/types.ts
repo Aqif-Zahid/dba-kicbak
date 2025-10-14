@@ -57,14 +57,27 @@ export interface MessageCountInfo {
 
 export const getPostsDataInclude = (loggedInUserId: number) => {
   return {
-    authorProfile: true,
+    authorProfile: {
+      include: {
+        followers: {
+          select: {
+            followerId: true,
+          },
+        },
+        _count: {
+          select: {
+            followers: true,
+          },
+        },
+      },
+    },
     attachment: true,
     votes: {
       where: {
-        userId: loggedInUserId,
+        profileId: loggedInUserId,
       },
       select: {
-        userId: true,
+        profileId: true,
       },
     },
     bookmarks: {
@@ -148,9 +161,9 @@ export type FollowerInfo = {
   isFollowedByUser: boolean;
 };
 
-export type LikeInfo = {
-  likes: number;
-  isLikedByUser: boolean;
+export type VoteInfo = {
+  votes: number;
+  isVotedByUser: boolean;
 };
 
 export type BookmarkInfo = {
