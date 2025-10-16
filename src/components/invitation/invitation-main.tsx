@@ -25,7 +25,7 @@ export const InvitationMain = ({ referralCode }: InvitationMainProps) => {
   };
   return (
     <section>
-      <main className="container mx-auto px-4 py-12">
+      <main className="mx-auto px-4 py-12">
         <motion.div
           className="max-w-full mx-auto text-center space-y-16"
           initial="hidden"
@@ -33,7 +33,7 @@ export const InvitationMain = ({ referralCode }: InvitationMainProps) => {
           variants={fadeUpStagger}
         >
           <motion.div className="space-y-12" variants={fadeUp}>
-            <h1 className="text-5xl md:text-4xl lg:text-6xl text-foreground">
+            <h1 className="text-2xl md:text-3xl lg:text-5xl text-foreground">
               Kicbak cuts out the travel middlemen.
               <br />
               Now, you get their commission.

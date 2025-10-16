@@ -8,6 +8,7 @@ import { Bookmark, Menu, PlusSquare } from "lucide-react";
 import streamServerClient from "@/lib/stream";
 import prisma from "@/lib/prisma";
 import { MobileMenuButton } from "./mobile-menu-button";
+import { SearchField } from "./search-field";
 
 interface HeaderProps {
   user: any;
@@ -56,6 +57,7 @@ export const Header = async ({ user }: HeaderProps) => {
 
         {/* Desktop Menu */}
         <div className="hidden md:flex gap-x-4 items-center">
+          <SearchField />
           {user ? (
             <>
               <Link
