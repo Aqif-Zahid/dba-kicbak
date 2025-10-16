@@ -2,15 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]/route";
-import { getCurrentUserId } from "@/helpers/get-current-user-id";
+import { getCurrentProfileId } from "@/helpers/get-current-user-id";
 
 type VoteType = "UPVOTE" | "DOWNVOTE" | null;
 
 export async function POST(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    const userId = getCurrentUserId(session);
-    if (!session?.user || !userId) {
+    const currentProfileId = getCurrentProfileId(session);
+    if (!session?.user || !currentProfileId) {
       return NextResponse.json(
         { status: 0, message: "Unauthorized" },
         { status: 401 }
@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
     // Check existing vote
     const existing = await prisma.vote.findFirst({
       where: {
-        userId,
+        authorProfileId: Number(currentProfileId),
         ...(postId ? { postId } : { commentId }),
       },
     });
@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
       // Insert new vote
       await prisma.vote.create({
         data: {
-          userId,
+          authorProfileId: currentProfileId,
           postId: postId ?? null,
           commentId: commentId ?? null,
           voteType,
@@ -118,7 +118,7 @@ export async function GET(req: NextRequest) {
     const postIdsParam = searchParams.get("postIds");
 
     const session = await getServerSession(authOptions);
-    const userId = getCurrentUserId(session);
+    const currentProfileId = getCurrentProfileId(session);
 
     // Single post/comment
     if (postId || commentId) {
@@ -134,8 +134,9 @@ export async function GET(req: NextRequest) {
       const downvotes = votesForTarget.filter(
         (v) => v.voteType === "DOWNVOTE"
       ).length;
-      const userVote: VoteType = userId
-        ? votesForTarget.find((v) => v.userId === userId)?.voteType ?? null
+      const userVote: VoteType = currentProfileId
+        ? votesForTarget.find((v) => v.profileId === currentProfileId)
+            ?.voteType ?? null
         : null;
 
       return NextResponse.json({ status: 1, upvotes, downvotes, userVote });
@@ -168,8 +169,9 @@ export async function GET(req: NextRequest) {
         result[id] = {
           upvotes: subset.filter((v) => v.voteType === "UPVOTE").length,
           downvotes: subset.filter((v) => v.voteType === "DOWNVOTE").length,
-          userVote: userId
-            ? subset.find((v) => v.userId === userId)?.voteType ?? null
+          userVote: currentProfileId
+            ? subset.find((v) => v.profileId === currentProfileId)?.voteType ??
+              null
             : null,
         };
       }

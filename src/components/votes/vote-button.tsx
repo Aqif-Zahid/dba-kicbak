@@ -23,7 +23,7 @@ export const VoteButton = ({ postId, initialState }: VoteButtonProps) => {
         ? await axios.delete(`/api/posts/${postId}/votes`)
         : await axios.post(`/api/posts/${postId}/votes`),
     onMutate: async () => {
-      const queryKey: QueryKey = ["votes-info", postId];
+      const queryKey: QueryKey = ["vote-info", postId];
 
       await queryClient.cancelQueries({ queryKey });
 

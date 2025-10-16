@@ -12,7 +12,7 @@ import { MediaPreview } from "./media-preview";
 import { CommentButton } from "../comments/comment-button";
 import { BookmarkButton } from "../bookmarks/bookmark-button";
 import { CommentSection } from "../comments/comment-section";
-import { VoteButton } from "@/app/votes/vote-button";
+import { VoteButton } from "@/components/votes/vote-button";
 
 interface PostDataProps {
   post: Post;
@@ -28,7 +28,7 @@ export const PostCard = ({ post }: PostDataProps) => {
       <div className="flex justify-between gap-3">
         <div className="flex flex-wrap gap-3">
           <UserTooltip profile={post.authorProfile}>
-            <Link href={`/users/${post.authorProfile.username}`}>
+            <Link href={`/${post.authorProfile.username}`}>
               <UserAvatar
                 avatarUrl={post.authorProfile.profilePicture}
                 avatarFallback="A"
@@ -38,7 +38,7 @@ export const PostCard = ({ post }: PostDataProps) => {
           <div>
             <UserTooltip profile={post.authorProfile}>
               <Link
-                href={`/users/${post.authorProfile.username}`}
+                href={`/${post.authorProfile.username}`}
                 className="block font-medium hover:underline"
               >
                 {post.authorProfile.displayName}

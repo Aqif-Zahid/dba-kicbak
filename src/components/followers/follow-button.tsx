@@ -7,21 +7,24 @@ import axios from "axios";
 import { toast } from "sonner";
 
 interface FollowButtonProps {
-  userId: number;
+  profileId: number;
   initialState: FollowerInfo;
 }
 
-export const FollowButton = ({ userId, initialState }: FollowButtonProps) => {
+export const FollowButton = ({
+  profileId,
+  initialState,
+}: FollowButtonProps) => {
   const queryClient = useQueryClient();
-  const { data } = useFollowerInfo(userId, initialState);
+  const { data } = useFollowerInfo(profileId, initialState);
 
   const { mutate } = useMutation({
     mutationFn: async () =>
       data.isFollowedByUser
-        ? axios.delete(`/api/users/${userId}/followers`)
-        : axios.post(`/api/users/${userId}/followers`),
+        ? axios.delete(`/api/profiles/${profileId}/followers`)
+        : axios.post(`/api/profiles/${profileId}/followers`),
     onMutate: async () => {
-      const queryKey: QueryKey = ["follower-info", userId];
+      const queryKey: QueryKey = ["follower-info", profileId];
 
       await queryClient.cancelQueries({ queryKey });
 
@@ -39,14 +42,14 @@ export const FollowButton = ({ userId, initialState }: FollowButtonProps) => {
     onError: (_error, _variables, context) => {
       if (context?.previousState) {
         queryClient.setQueryData<FollowerInfo>(
-          ["follower-info", userId],
+          ["follower-info", profileId],
           context.previousState
         );
       }
       toast.error("Failed to update follow status. Please try again.");
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["follower-info", userId] });
+      queryClient.invalidateQueries({ queryKey: ["follower-info", profileId] });
     },
   });
 

@@ -71,6 +71,7 @@ export const getPostsDataInclude = (loggedInUserId: number) => {
         },
       },
     },
+
     attachment: true,
     votes: {
       where: {
@@ -170,10 +171,38 @@ export type BookmarkInfo = {
   isBookmarkedByUser: boolean;
 };
 
-export const getCommentDataInclude = (loggedInUserId: string) => {
+export const getProfileDataSelect = (loggedInUserId: number) => {
+  return {
+    id: true,
+    userId: true,
+    role: true,
+    username: true,
+    displayName: true,
+    profilePicture: true,
+    bio: true,
+    createdAt: true,
+    updatedAt: true,
+    followers: {
+      where: {
+        followerId: loggedInUserId,
+      },
+      select: {
+        followerId: true,
+      },
+    },
+    _count: {
+      select: {
+        posts: true,
+        followers: true,
+      },
+    },
+  } satisfies Prisma.ProfilesSelect;
+};
+
+export const getCommentDataInclude = (loggedInUserId: number) => {
   return {
     authorProfile: {
-      select: getUserDataSelect(loggedInUserId),
+      select: getProfileDataSelect(loggedInUserId),
     },
   } satisfies Prisma.CommentInclude;
 };
@@ -185,4 +214,29 @@ export type CommentData = Prisma.CommentGetPayload<{
 export interface CommentsPage {
   comments: CommentData[];
   previousCursor: string | null;
+}
+
+//Notifications
+export const notificationsInclude = {
+  issuer: {
+    select: {
+      username: true,
+      displayName: true,
+      profilePicture: true,
+    },
+  },
+  post: {
+    select: {
+      content: true,
+    },
+  },
+} satisfies Prisma.NotificationInclude;
+
+export type NotificationData = Prisma.NotificationGetPayload<{
+  include: typeof notificationsInclude;
+}>;
+
+export interface NotificationsPage {
+  notifications: NotificationData[];
+  nextCursor: string | null;
 }

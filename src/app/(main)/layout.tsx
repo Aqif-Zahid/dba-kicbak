@@ -12,7 +12,9 @@ const MainLayout = async ({ children }: { children: React.ReactNode }) => {
 
   return (
     <div className="flex min-h-screen flex-col bg-background scroll-smooth">
-      <Header user={session?.user} />
+      <div className="sticky top-0 z-40 bg-white">
+        <Header user={session?.user} />
+      </div>
 
       {/* Main content area */}
       <div className="container flex w-full grow gap-5 py-5">

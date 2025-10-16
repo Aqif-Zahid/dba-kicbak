@@ -5,10 +5,10 @@ import { LoadingSkeleton } from "./loading-skeleton";
 import { InfiniteScrollContainer } from "../infinite-scroll-container";
 import { PostCard } from "./post-card";
 interface UserPostsProps {
-  userId: string;
+  profileId: number;
 }
 
-export const UserPosts = ({ userId }: UserPostsProps) => {
+export const UserPosts = ({ profileId }: UserPostsProps) => {
   const {
     data,
     fetchNextPage,
@@ -17,10 +17,10 @@ export const UserPosts = ({ userId }: UserPostsProps) => {
     isFetchingNextPage,
     status,
   } = useInfiniteQuery({
-    queryKey: ["post-feed", "user-posts", userId],
+    queryKey: ["post-feed", "user-posts", profileId],
     queryFn: async ({ pageParam }) => {
       const res = await axios.get(
-        `/api/users/${userId}/posts`,
+        `/api/profiles/${profileId}/posts`,
         pageParam ? { params: { cursor: pageParam } } : {}
       );
       return res.data;

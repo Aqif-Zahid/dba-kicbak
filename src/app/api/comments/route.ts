@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]/route";
-import { getCurrentUserId } from "@/helpers/get-current-user-id";
+import { getCurrentProfileId } from "@/helpers/get-current-user-id";
 import { getUser } from "@/lib/auth";
 
 // Helper: build nested comment tree
@@ -50,7 +50,7 @@ export async function GET(req: NextRequest) {
     }
 
     const session = await getServerSession(authOptions);
-    const currentUserId = getCurrentUserId(session);
+    const currentProfileId = getCurrentProfileId(session);
 
     const rows = await prisma.comment.findMany({
       where: { postId },
@@ -66,9 +66,9 @@ export async function GET(req: NextRequest) {
       const upvotes = c.votes.filter((v) => v.voteType === "UPVOTE").length;
       const downvotes = c.votes.filter((v) => v.voteType === "DOWNVOTE").length;
       const userVote =
-        currentUserId != null
-          ? c.votes.find((v) => Number(v.userId) === currentUserId)?.voteType ??
-            null
+        currentProfileId != null
+          ? c.votes.find((v) => Number(v.profileId) === currentProfileId)
+              ?.voteType ?? null
           : null;
 
       return {

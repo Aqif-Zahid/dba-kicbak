@@ -1,3 +1,4 @@
+import { submitComment } from "@/actions/comments/create-comment-actions";
 import { CommentsPage } from "@/types/types";
 import {
   InfiniteData,
@@ -7,7 +8,7 @@ import {
 } from "@tanstack/react-query";
 import { toast } from "sonner";
 
-export function useCreateComment(postId: string) {
+export function useCreateComment(postId: number) {
   const queryClient = useQueryClient();
   const mutation = useMutation({
     mutationFn: submitComment,

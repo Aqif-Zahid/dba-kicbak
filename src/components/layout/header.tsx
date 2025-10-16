@@ -4,7 +4,7 @@ import { UserButton } from "./user-button";
 import { SignInButton } from "./sign-in-button";
 import { NotificationsButton } from "../notifications/notifications-button";
 import { MessagesButton } from "../messages/messages-button";
-import { Bookmark, Menu } from "lucide-react";
+import { Bookmark, Menu, PlusSquare } from "lucide-react";
 import streamServerClient from "@/lib/stream";
 import prisma from "@/lib/prisma";
 import { MobileMenuButton } from "./mobile-menu-button";
@@ -42,7 +42,7 @@ export const Header = async ({ user }: HeaderProps) => {
   }
 
   return (
-    <header className="border-b border-border relative z-50">
+    <header className="border-b border-border relative z-50 fixed top-">
       <div className="container mx-auto px-4 py-4 flex justify-between items-center">
         <Link href="/" className="flex items-center">
           <Image
@@ -60,14 +60,23 @@ export const Header = async ({ user }: HeaderProps) => {
             <>
               <Link
                 href="/bookmarks"
-                className="relative flex items-center justify-center w-12 h-12 rounded-full 
-                 text-muted-foreground transition-colors"
+                className="relative flex items-center justify-center w-11 h-11 rounded-full 
+             text-muted-foreground transition-colors hover:bg-gray-200"
+                title="Bookmarks"
               >
                 <Bookmark size={20} />
               </Link>
               <MessagesButton
                 initialState={{ unreadCount: unreadMessagesCount }}
               />
+              <Link
+                href="/posts/create"
+                className="relative flex items-center text-sm font-bold justify-center w-25 h-11 rounded-full 
+             text-gray-900 transition-colors hover:bg-gray-200"
+                title="Bookmarks"
+              >
+                <PlusSquare size={20} className="mr-2" /> Create
+              </Link>
               <NotificationsButton
                 initialState={{ unreadCount: unreadNotificationsCount }}
               />

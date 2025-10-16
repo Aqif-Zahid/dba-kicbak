@@ -1,5 +1,6 @@
 "use server";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { getCurrentProfileId } from "@/helpers/get-current-user-id";
 import prisma from "@/lib/prisma";
 import { getPostsDataInclude } from "@/types/types";
 import { getServerSession } from "next-auth";
@@ -8,9 +9,10 @@ export async function deletePost(id: number) {
   const session = await getServerSession(authOptions);
 
   if (!session?.user) {
-    return { error: { message: "Unauthorized", status: 0 } };
+    throw new Error("Unauthorized");
   }
-  const userId = (session.user as any).id;
+
+  const currentProfileId = getCurrentProfileId(session);
 
   const post = await prisma.post.findUnique({
     where: { id },
@@ -19,13 +21,15 @@ export async function deletePost(id: number) {
   if (!post) {
     throw new Error("Post not found");
   }
-  if (post.authorProfileId !== userId) {
+
+  if (post.authorProfileId !== currentProfileId) {
     throw new Error("Unauthorized");
   }
-  const deletePost = await prisma.post.delete({
+
+  const deletedPost = await prisma.post.delete({
     where: { id },
-    include: getPostsDataInclude(userId),
+    include: getPostsDataInclude(currentProfileId),
   });
 
-  return deletePost;
+  return deletedPost;
 }

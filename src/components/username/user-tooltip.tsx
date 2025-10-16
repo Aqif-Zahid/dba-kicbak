@@ -13,33 +13,11 @@ import { useUser } from "@/providers/auth-provider";
 import { UserAvatar } from "../common/user-avatar";
 import { FollowButton } from "../followers/follow-button";
 import { FollowerCount } from "./follower-count";
-import { ProfileRole } from "@prisma/client";
-type Follower = {
-  followerId: number;
-  followingId?: number; // optional if not always returned
-};
-
-type ProfileResponse = {
-  id: number;
-  userId: number;
-  role: ProfileRole;
-  bio: string | null;
-  createdAt: Date | null;
-  updatedAt: Date;
-  username: string;
-  displayName: string;
-  profilePicture: string | null;
-  followers: Follower[];
-  _count: {
-    followers: number;
-  };
-};
+import { ProfileResponse } from "@/types/profile";
 interface UserTooltipProps extends PropsWithChildren {
   profile: ProfileResponse;
 }
-
 export const UserTooltip = ({ profile, children }: UserTooltipProps) => {
-  console.log(profile);
   const { user: loggedInUser } = useUser();
   const followerState: FollowerInfo = {
     // Use optional chaining and default to 0 if _count is missing
@@ -65,9 +43,9 @@ export const UserTooltip = ({ profile, children }: UserTooltipProps) => {
                   }
                 />
               </Link>
-              {loggedInUser?.id !== String(profile.id) && (
+              {loggedInUser?.defaultProfileId !== profile.id && (
                 <FollowButton
-                  userId={profile.id}
+                  profileId={profile.id}
                   initialState={followerState}
                 />
               )}

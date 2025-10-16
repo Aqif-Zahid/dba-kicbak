@@ -322,7 +322,7 @@ model SystemSettings {
 
 model Vote {
   id        Int       @id @default(autoincrement()) @map("id")
-  profileId    Int       @map("profile_id")
+  profileId  Int       @map("profile_id")
   postId    Int?      @map("post_id")
   commentId Int?      @map("comment_id")
   voteType  VoteType  @map("vote_type")
@@ -331,6 +331,7 @@ model Vote {
   posts    Post?    @relation(fields: [postId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "votes_post_id_posts_id_fk")
   profiles    Profiles @relation(fields: [profileId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "votes_profile_id_profiles_id_fk")
 
+  @@unique([profileId, postId])
   @@map("votes")
 }
 
@@ -368,7 +369,7 @@ model Notification {
   type        NotificationType @map("type")
   read        Boolean      @default(false) @map("read")
   createdAt   DateTime     @default(now()) @map("created_at")
-
+  
   @@map("notifications")
 }
 

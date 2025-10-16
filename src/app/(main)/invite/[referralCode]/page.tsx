@@ -1,10 +1,9 @@
-import Head from "next/head";
-import { getUserDetails } from "@/actions/user-actions";
 import { UserNotFound } from "@/components/admin/users/user-not-found";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { redirect } from "next/navigation";
 import { InvitationMain } from "@/components/invitation/invitation-main";
+import { getUserDetails } from "@/actions/user/user-actions";
 
 interface PageProps {
   params: Promise<{ referralCode: string }>;
@@ -28,15 +27,7 @@ const UserPage = async ({ params }: PageProps) => {
     redirect("/");
   }
 
-  return (
-    <>
-      <Head>
-        <title>{user.displayName} Invitation </title>
-      </Head>
-
-      <InvitationMain referralCode={resolvedParams.referralCode} />
-    </>
-  );
+  return <InvitationMain referralCode={resolvedParams.referralCode} />;
 };
 
 export default UserPage;

@@ -2,6 +2,7 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { TrendsSidebar } from "@/components/common/trends-sidebar";
 import { UserPosts } from "@/components/posts/user-posts";
 import { UserProfile } from "@/components/username/user-profile";
+import { getCurrentProfileId } from "@/helpers/get-current-user-id";
 import prisma from "@/lib/prisma";
 import { ExtendedProfile } from "@/types/types";
 import { Metadata } from "next";
@@ -65,25 +66,20 @@ export default async function UserNamePage({ params }: PageProps) {
   const user = await getUser(username);
 
   const session = await getServerSession(authOptions);
-  const loggedInUser = session?.user;
+  const currentProfileId = getCurrentProfileId(session);
 
   return (
     <main className="w-full min-w-0 flex gap-5">
       <div className="w-full min-w-0 space-y-5">
-        <UserProfile
-          user={user}
-          loggedInProfileId={
-            (loggedInUser as { defaultProfileId?: number })?.defaultProfileId
-          }
-        />
+        <UserProfile user={user} loggedInProfileId={Number(currentProfileId)} />
         <div className="rounded-2xl bg-card p-5 shadow-sm">
           <h2 className="text-center text-2xl font-bold">
             {user.displayName}&apos; posts
           </h2>
         </div>
-        {/* <UserPosts userId={user.id} /> */}
+        <UserPosts profileId={Number(currentProfileId)} />
       </div>
-      {/* <TrendsSidebar /> */}
+      <TrendsSidebar />
     </main>
   );
 }

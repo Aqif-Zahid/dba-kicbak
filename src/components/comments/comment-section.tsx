@@ -4,6 +4,7 @@ import { Loader2 } from "lucide-react";
 import { Post } from "@/types/types";
 import axios from "axios";
 import { CommentInput } from "./comment-input";
+import { Comment } from "./comment";
 
 interface CommentSectionProps {
   post: Post;

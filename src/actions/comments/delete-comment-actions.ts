@@ -1,13 +1,15 @@
 "use server";
 
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { getCurrentProfileId } from "@/helpers/get-current-user-id";
 import prisma from "@/lib/prisma";
-
-import { useUser } from "@/providers/auth-provider";
 import { getCommentDataInclude } from "@/types/types";
+import { getServerSession } from "next-auth";
 
-export async function deleteComment(id: string) {
-  const user = useUser();
-  if (!user) {
+export async function deleteComment(id: number) {
+  const session = await getServerSession(authOptions);
+  const profileId = getCurrentProfileId(session);
+  if (!session?.user) {
     throw new Error("Unauthorized");
   }
 
@@ -17,12 +19,12 @@ export async function deleteComment(id: string) {
   if (!comment) {
     throw new Error("Comment not found");
   }
-  if (comment.userId !== user.id) {
+  if (comment.authorProfileId !== profileId) {
     throw new Error("Unauthorized");
   }
   const deletedComment = await prisma.comment.delete({
     where: { id },
-    include: getCommentDataInclude(user.id),
+    include: getCommentDataInclude(profileId),
   });
   return deletedComment;
 }

@@ -17,12 +17,9 @@ export default async function HomePage() {
           <div className="flex-1 min-w-0">
             <ForYouFeed />
           </div>
-          <div className="hidden lg:block w-60 flex-none">Communities</div>
-
-          {/* Optional Trends sidebar */}
-          {/* <div className="hidden xl:block w-72 flex-none">
+          <div className="hidden xl:block w-72 flex-none">
             <TrendsSidebar />
-          </div> */}
+          </div>
         </main>
       ) : (
         <div className="w-full flex flex-col gap-10">

@@ -10,7 +10,7 @@ import { useUser } from "@/providers/auth-provider";
 import { useSigninModal } from "@/hooks/use-signin-modal";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
-import { CreatePostModal } from "@/components/modals/create-post-modal";
+import { CreatePostModal } from "@/components/posts/create-post-modal";
 
 export default function PostsPage() {
   const router = useRouter();

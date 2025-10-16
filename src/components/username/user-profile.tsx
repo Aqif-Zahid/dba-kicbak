@@ -28,7 +28,6 @@ export const UserProfile = async ({
     ),
   };
 
-  console.log(user, loggedInProfileId);
   return (
     <div className="h-fit w-full space-y-5 rounded-2xl bg-card p-5">
       <UserAvatar
@@ -60,7 +59,7 @@ export const UserProfile = async ({
         {user.id === loggedInProfileId ? (
           <EditProfileButton user={user} />
         ) : (
-          <FollowButton userId={user.id} initialState={followerInfo} />
+          <FollowButton profileId={user.id} initialState={followerInfo} />
         )}
       </div>
       {user.bio && (

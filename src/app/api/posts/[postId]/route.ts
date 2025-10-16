@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../../auth/[...nextauth]/route";
-import { getCurrentUserId } from "@/helpers/get-current-user-id";
+import { getCurrentProfileId } from "@/helpers/get-current-user-id";
 
 // === Helper: Build nested comment tree ===
 function buildCommentTree(all: any[]) {
@@ -48,7 +48,7 @@ export async function GET(
 
   try {
     const session = await getServerSession(authOptions);
-    const currentUserId = getCurrentUserId(session);
+    const currentProfileId = getCurrentProfileId(session);
 
     const post = await prisma.post.findUnique({
       where: { id: postId },
@@ -79,8 +79,9 @@ export async function GET(
       const upvotes = c.votes.filter((v) => v.voteType === "UPVOTE").length;
       const downvotes = c.votes.filter((v) => v.voteType === "DOWNVOTE").length;
       const userVote =
-        currentUserId != null
-          ? c.votes.find((v) => v.userId === currentUserId)?.voteType ?? null
+        currentProfileId != null
+          ? c.votes.find((v) => v.profileId === currentProfileId)?.voteType ??
+            null
           : null;
 
       return {
@@ -108,8 +109,9 @@ export async function GET(
       (v) => v.voteType === "DOWNVOTE"
     ).length;
     const postUserVote =
-      currentUserId != null
-        ? post.votes.find((v) => v.userId === currentUserId)?.voteType ?? null
+      currentProfileId != null
+        ? post.votes.find((v) => v.profileId === currentProfileId)?.voteType ??
+          null
         : null;
 
     return NextResponse.json({
@@ -171,8 +173,8 @@ export async function PATCH(
         { status: 404 }
       );
 
-    const currentUserId = getCurrentUserId(session);
-    const isAuthor = post.authorProfile?.userId === currentUserId;
+    const currentProfileId = getCurrentProfileId(session);
+    const isAuthor = post.authorProfile?.userId === currentProfileId;
     const isAdmin = (session.user as any)?.role?.toUpperCase() === "ADMIN";
 
     if (!isAuthor && !isAdmin)
@@ -229,8 +231,8 @@ export async function DELETE(
         { status: 404 }
       );
 
-    const currentUserId = getCurrentUserId(session);
-    const isAuthor = post.authorProfile?.userId === currentUserId;
+    const currentProfileId = getCurrentProfileId(session);
+    const isAuthor = post.authorProfile?.userId === currentProfileId;
     const isAdmin = (session.user as any)?.role?.toUpperCase() === "ADMIN";
 
     if (!isAuthor && !isAdmin)

@@ -49,6 +49,7 @@ export const authOptions: AuthOptions = {
           userRecord.passwordHash
         );
         if (!isValid) return null;
+        console.log(userRecord);
         return {
           id: userRecord.id.toString(),
           email: userRecord.email,

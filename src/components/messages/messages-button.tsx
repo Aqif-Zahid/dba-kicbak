@@ -25,7 +25,7 @@ export const MessagesButton = ({ initialState }: MessagesButtonProps) => {
   return (
     <Link
       href="/messages"
-      className="relative flex items-center justify-center w-12 h-12 rounded-full text-muted-foreground transition-colors"
+      className="relative flex items-center justify-center w-11 h-11 rounded-full text-muted-foreground transition-colors hover:bg-gray-200"
     >
       <div className="relative">
         <MessageCircleMore size={20} />

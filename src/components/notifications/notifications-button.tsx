@@ -28,13 +28,13 @@ export const NotificationsButton = ({
   return (
     <Link
       href="/notifications"
-      className="relative flex items-center justify-center w-12 h-12 rounded-full 
-                 text-muted-foreground transition-colors"
+      className="relative flex items-center justify-center w-11 h-11 rounded-full 
+             text-muted-foreground transition-colors hover:bg-gray-200"
       title="Notifications"
     >
       <Bell size={20} />
       {!!data?.unreadCount && (
-        <span className="absolute -right-2 -top-2 rounded-full bg-primary text-primary-foreground px-1 text-xs font-medium tabular-nums">
+        <span className="absolute right-1 top-0 rounded-full bg-primary text-primary-foreground px-1 text-xs font-medium tabular-nums">
           {data.unreadCount}
         </span>
       )}

@@ -1,16 +1,15 @@
-import { deletePost } from "@/actions/post-actions";
-import { Post } from "@/types/types";
+import { deletePost } from "@/actions/posts/delet-post-actions";
+import { PostsPage } from "@/types/types";
 import {
   InfiniteData,
   QueryFilters,
   useMutation,
   useQueryClient,
 } from "@tanstack/react-query";
-
 import { usePathname, useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-export const useDeletePost = () => {
+export function useDeletePost() {
   const queryClient = useQueryClient();
   const router = useRouter();
   const pathname = usePathname();
@@ -24,7 +23,7 @@ export const useDeletePost = () => {
 
       await queryClient.cancelQueries(queryFilter);
 
-      queryClient.setQueriesData<InfiniteData<Post, string | null>>(
+      queryClient.setQueriesData<InfiniteData<PostsPage, string | null>>(
         queryFilter,
         (oldData) => {
           if (!oldData) {
@@ -41,7 +40,7 @@ export const useDeletePost = () => {
       );
       toast.success("Post deleted successfully!");
       if (pathname === `/posts/${deletePost.id}`) {
-        router.push(`/users/${deletePost.authorProfile.username}`);
+        router.push(`/${deletePost.authorProfile.username}`);
       }
     },
     onError(error) {
@@ -51,4 +50,4 @@ export const useDeletePost = () => {
   });
 
   return mutation;
-};
+}

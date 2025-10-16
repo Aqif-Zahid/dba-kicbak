@@ -12,14 +12,17 @@ export async function GET(
     const loggedInUser = await getUser(req);
 
     if (!loggedInUser) {
-      return Response.json({ error: "Unauthorized" }, { status: 401 });
+      return Response.json(
+        { status: 0, message: "Unauthorized" },
+        { status: 401 }
+      );
     }
     const post = await prisma.post.findUnique({
       where: { id: Number(postId) },
       select: {
         votes: {
           where: {
-            profileId: loggedInUser.defaultProfileId,
+            profileId: Number(loggedInUser.defaultProfileId),
           },
           select: {
             profileId: true,
@@ -34,7 +37,10 @@ export async function GET(
     });
 
     if (!post) {
-      return Response.json({ error: "Post not found" }, { status: 404 });
+      return Response.json(
+        { status: 0, message: "Post not found" },
+        { status: 404 }
+      );
     }
     const data: VoteInfo = {
       votes: post._count.votes,
@@ -42,8 +48,10 @@ export async function GET(
     };
     return Response.json(data);
   } catch (err) {
-    console.log(err);
-    return Response.json({ error: "Internal server error" }, { status: 500 });
+    return Response.json(
+      { status: 0, message: "Internal server error" },
+      { status: 500 }
+    );
   }
 }
 
@@ -55,7 +63,10 @@ export async function POST(
     const { postId } = await context.params;
     const loggedInUser = await getUser(req);
     if (!loggedInUser) {
-      return Response.json({ error: "Unauthorized" }, { status: 401 });
+      return Response.json(
+        { status: 0, message: "Unauthorized" },
+        { status: 401 }
+      );
     }
 
     const post = await prisma.post.findUnique({
@@ -75,13 +86,14 @@ export async function POST(
       prisma.vote.upsert({
         where: {
           profileId_postId: {
-            authorProfileId: loggedInUser.defaultProfileId,
-            postId: postId,
+            profileId: Number(loggedInUser.defaultProfileId),
+            postId: Number(postId),
           },
         },
         create: {
-          profileId: loggedInUser.defaultProfileId,
+          profileId: Number(loggedInUser.defaultProfileId),
           postId: Number(postId),
+          voteType: "UPVOTE",
         },
         update: {},
       }),
@@ -90,7 +102,7 @@ export async function POST(
         ? [
             prisma.notification.create({
               data: {
-                issuerId: loggedInUser.id,
+                issuerId: Number(loggedInUser.defaultProfileId),
                 recipientId: post.authorProfileId,
                 type: "VOTE",
                 postId: Number(postId),
@@ -134,16 +146,16 @@ export async function DELETE(
     await prisma.$transaction([
       prisma.vote.deleteMany({
         where: {
-          profileId: loggedInUser.defaultProfileId,
+          profileId: Number(loggedInUser.defaultProfileId),
           postId: Number(postId),
         },
       }),
       prisma.notification.deleteMany({
         where: {
-          issuerId: loggedInUser.id,
-          recipientId: post.userId,
+          issuerId: Number(loggedInUser.defaultProfileId),
+          recipientId: post.authorProfileId,
           type: "VOTE",
-          postId: postId,
+          postId: Number(postId),
         },
       }),
     ]);

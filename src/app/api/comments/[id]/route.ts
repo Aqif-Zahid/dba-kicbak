@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../../auth/[...nextauth]/route";
-import { getCurrentUserId } from "@/helpers/get-current-user-id";
+import { getCurrentProfileId } from "@/helpers/get-current-user-id";
 
 // ======================
 // Helper: fetch session & comment
@@ -52,8 +52,8 @@ export async function PATCH(
     const { session, comment, error } = await getSessionAndComment(commentId);
     if (error) return NextResponse.json(error, { status: 401 });
 
-    const currentUserId = getCurrentUserId(session);
-    const isAuthor = Number(comment.authorProfile?.userId) === currentUserId;
+    const currentProfileId = getCurrentProfileId(session);
+    const isAuthor = Number(comment.authorProfile?.userId) === currentProfileId;
 
     if (!isAuthor) {
       return NextResponse.json(
@@ -96,8 +96,8 @@ export async function DELETE(
     const { session, comment, error } = await getSessionAndComment(commentId);
     if (error) return NextResponse.json(error, { status: 401 });
 
-    const currentUserId = getCurrentUserId(session);
-    const isAuthor = Number(comment.authorProfile?.userId) === currentUserId;
+    const currentProfileId = getCurrentProfileId(session);
+    const isAuthor = Number(comment.authorProfile?.userId) === currentProfileId;
     const isAdmin =
       ((session.user as any)?.role ?? "").toString().toUpperCase() === "ADMIN";
 
