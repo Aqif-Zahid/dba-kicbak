@@ -66,6 +66,7 @@ model Profiles {
   issuedNotifications        Notification[] @relation("Issuer")
   followers                  Follow[] @relation("Followers")
   following                  Follow[] @relation("Following")
+  votedComments              CommentVote[] @relation("ProfileVotes")
 
   @@map("profiles")
 }
@@ -186,9 +187,10 @@ model Comment {
   status          CommentStatus @default(VISIBLE)
   authorProfileId Int           @map("author_profile_id")
   authorProfile                 Profiles  @relation(fields: [authorProfileId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "comments_author_profile_id_profiles_id_fk")
-  posts    Post                  @relation(fields: [postId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "comments_post_id_posts_id_fk")
-  mentions Mention[]
-  votes    Vote[]
+  posts           Post          @relation(fields: [postId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "comments_post_id_posts_id_fk")
+  mentions                      Mention[]
+  votes                         Vote[]
+  commentVotes                  CommentVote[]           @relation("CommentVotes")
 
   @@map("comments")
 }
@@ -371,6 +373,24 @@ model Notification {
   createdAt   DateTime     @default(now()) @map("created_at")
   
   @@map("notifications")
+}
+
+
+//////////////////////////
+// COMMENT LIKES
+//////////////////////////
+
+model CommentVote {
+  id        Int      @id @default(autoincrement()) @map("id")
+  voteType  VoteType  @map("vote_type")
+  profileId Int      @map("profile_id")
+  commentId Int      @map("comment_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  profile Profiles   @relation("ProfileVotes", fields: [profileId], references: [id], map: "comment_votes_profile_id_profiles_fk")
+  comment Comment    @relation("CommentVotes", fields: [commentId], references: [id], map: "comment_votes_comment_id_comments_fk")
+
+  @@unique([profileId, commentId])
+  @@map("comment_votes")
 }
 
 //////////////////////////
