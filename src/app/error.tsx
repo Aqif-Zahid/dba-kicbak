@@ -3,7 +3,11 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 
-export default function ErrorPage() {
+interface ErrorProps {
+  error: Error;
+}
+
+export default function ErrorPage({ error }: ErrorProps) {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-red-50 via-red-100 to-red-200 px-4">
       <motion.div
@@ -37,7 +41,7 @@ export default function ErrorPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3, duration: 0.6 }}
-          className="text-4xl font-bold text-gray-800 mb-4"
+          className="text-4xl font-bold text-red-500 mb-4"
         >
           500 - Something went wrong
         </motion.h1>
@@ -48,7 +52,8 @@ export default function ErrorPage() {
           transition={{ delay: 0.5, duration: 0.6 }}
           className="text-gray-600 mb-6"
         >
-          Sorry, an unexpected error occurred. Please try again later.
+          {error.message ||
+            "Sorry, an unexpected error occurred. Please try again later."}
         </motion.p>
 
         <motion.div

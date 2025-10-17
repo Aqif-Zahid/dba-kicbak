@@ -28,7 +28,7 @@ export const ActionButtons = ({ user }: ActionButtonsProps) => {
   };
 
   const [ConfirmSendDialog, confirmSend] = useConfirm(
-    "Send Invitation Code to  User",
+    `Send Invitation Code to ${user.email}`,
     "This action can not be undone",
     "primary"
   );

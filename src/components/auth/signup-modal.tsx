@@ -25,6 +25,7 @@ interface SignupModalProps {
   setShow: React.Dispatch<React.SetStateAction<boolean>>;
   username?: string;
   referralCode: string;
+  email: string;
 }
 
 export const SignupModal = ({
@@ -32,6 +33,7 @@ export const SignupModal = ({
   setShow,
   username,
   referralCode,
+  email,
 }: SignupModalProps) => {
   const router = useRouter();
   const close = () => {
@@ -66,7 +68,7 @@ export const SignupModal = ({
     defaultValues: {
       firstName: "",
       lastName: "",
-      email: "",
+      email: email,
       usernameDesired: username ?? "",
       password: "",
     },
@@ -80,6 +82,7 @@ export const SignupModal = ({
         ...values,
         usernameDesired: username || values.usernameDesired,
         referralCode: referralCode,
+        email: email,
       };
       const res = await axios.post("/api/signup", data);
       if (res.data.status === 1) {
@@ -104,7 +107,7 @@ export const SignupModal = ({
   };
 
   const handleContinue = () => {
-    router.refresh();
+    router.push("/");
     close();
   };
 
@@ -239,6 +242,7 @@ export const SignupModal = ({
                         {...field}
                         type="email"
                         placeholder="Enter email address"
+                        disabled
                       />
                     </FormControl>
                     <FormMessage />

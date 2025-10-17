@@ -5,9 +5,10 @@ import { SignupModal } from "../auth/signup-modal";
 import { motion } from "framer-motion";
 interface ClaimUsernameProps {
   referralCode: string;
+  email: string;
 }
 
-export const ClaimUsername = ({ referralCode }: ClaimUsernameProps) => {
+export const ClaimUsername = ({ referralCode, email }: ClaimUsernameProps) => {
   // Framer Motion variants
   const fadeUp = {
     hidden: { opacity: 0, y: 30 },
@@ -52,6 +53,7 @@ export const ClaimUsername = ({ referralCode }: ClaimUsernameProps) => {
           setShow={setShowSignUp}
           username={username}
           referralCode={referralCode}
+          email={email}
         />
       )}
       <motion.div className="max-w-md mx-auto space-y-12" variants={fadeUp}>

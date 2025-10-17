@@ -19,7 +19,7 @@ const PendingInvitePage = () => {
     limit,
     search,
     "",
-    "WAITLISTED"
+    "PENDING"
   );
 
   const handlePageChange = (newPage: number) => setPage(newPage);

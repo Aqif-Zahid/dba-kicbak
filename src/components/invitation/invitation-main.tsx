@@ -4,9 +4,13 @@ import { motion } from "framer-motion";
 import ClaimUsername from "./claim-username";
 interface InvitationMainProps {
   referralCode: string;
+  email: string;
 }
 
-export const InvitationMain = ({ referralCode }: InvitationMainProps) => {
+export const InvitationMain = ({
+  referralCode,
+  email,
+}: InvitationMainProps) => {
   const { open } = useSigninModal();
 
   // Framer Motion variants
@@ -45,7 +49,7 @@ export const InvitationMain = ({ referralCode }: InvitationMainProps) => {
             </p>
           </motion.div>
           <motion.div className="max-w-md mx-auto space-y-12" variants={fadeUp}>
-            <ClaimUsername referralCode={referralCode} />
+            <ClaimUsername referralCode={referralCode} email={email} />
           </motion.div>
           <motion.div
             className="text-sm text-muted-foreground"

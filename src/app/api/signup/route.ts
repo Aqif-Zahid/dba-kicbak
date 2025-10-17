@@ -52,9 +52,16 @@ export async function POST(req: Request) {
       where: { email },
     });
 
-    if (existingUser) {
+    if (!existingUser) {
       return NextResponse.json(
-        { status: 0, message: "A user with this email already exists." },
+        { status: 0, message: "No user found with the invite code." },
+        { status: 409 }
+      );
+    }
+
+    if (existingUser.status !== "PENDING") {
+      return NextResponse.json(
+        { status: 0, message: "User has already an account with this email" },
         { status: 409 }
       );
     }
@@ -65,9 +72,10 @@ export async function POST(req: Request) {
     // 3️⃣ Transaction: Create user + default profile
     const result = await prisma.$transaction(async (tx: any) => {
       // 3a. Create User
-      const newUser = await tx.users.create({
+      await tx.users.update({
+        where: { id: existingUser.id },
         data: {
-          email,
+          email: existingUser.email,
           passwordHash: hashedPassword,
           status: "ACTIVE",
           authProvider: "LOCAL",
@@ -78,12 +86,10 @@ export async function POST(req: Request) {
         },
       });
 
-      if (!newUser) throw new Error("Failed to create user.");
-
       // 3b. Create Default Profile
       const newProfile = await tx.profiles.create({
         data: {
-          userId: newUser.id,
+          userId: existingUser.id,
           username: usernameDesired,
           displayName: `${firstName} ${lastName}`,
           role: "TRAVELER",
@@ -94,16 +100,16 @@ export async function POST(req: Request) {
 
       // 3c. Update User with defaultProfileId
       await tx.users.update({
-        where: { id: newUser.id },
+        where: { id: existingUser.id },
         data: { defaultProfileId: newProfile.id },
       });
 
       await streamServerClient.upsertUser({
-        id: newProfile.id,
+        id: String(newProfile.id),
         username: usernameDesired,
         name: `${firstName} ${lastName}`,
       });
-      return { userId: newUser.id, profileId: newProfile.id };
+      return { userId: existingUser.id, profileId: newProfile.id };
     });
 
     // 4️⃣ Return success
