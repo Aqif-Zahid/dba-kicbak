@@ -18,8 +18,8 @@ export const Chat = () => {
     return <Loader />;
   }
   return (
-    <main className="relative w-full overflow-hidden rounded-2xl bg-card shadow-sm">
-      <div className="absolute bottom-0 top-0 flex w-full">
+    <main className="relative w-full h-full overflow-hidden rounded-2xl bg-card shadow-sm">
+      <div className="absolute inset-0 flex">
         <StreamChat
           client={chatClient}
           theme={
