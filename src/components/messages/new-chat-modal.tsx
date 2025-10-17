@@ -236,7 +236,7 @@ const UserResult = forwardRef<HTMLButtonElement, UserResultProps>(
         <div className="flex items-center gap-2">
           <UserAvatar
             avatarUrl={user.image}
-            avatarFallback={user?.username?.charAt(0) || "U"}
+            avatarFallback={user?.username?.toUpperCase().charAt(0) || "U"}
           />
           <div className="flex flex-col text-start">
             <p className="font-bold">{user.name}</p>

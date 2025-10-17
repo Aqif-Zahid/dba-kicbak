@@ -25,8 +25,8 @@ export const PostDetails = ({ postId }: PostDetailsProps) => {
     return <PageError message="Unable to fetch post at this moment" />;
   }
   return (
-    <div className="mx-auto max-w-2xl px-5 py-10 space-y-5">
-      <PostCard post={data.data} />
+    <div className="mx-auto max-w-2xl px-5 space-y-5">
+      <PostCard post={data.data} from={"details"} />
     </div>
   );
 };

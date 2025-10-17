@@ -21,7 +21,9 @@ export const Comment = ({ comment }: CommentProps) => {
             <UserAvatar
               avatarUrl={comment.authorProfile.profilePicture}
               size={40}
-              avatarFallback={comment.authorProfile.username.charAt(0)}
+              avatarFallback={comment.authorProfile.username
+                .toUpperCase()
+                .charAt(0)}
             />
           </Link>
         </UserTooltip>

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { UserTooltip } from "../username/user-tooltip";
 import { UserAvatar } from "../common/user-avatar";
-import { formatRelativeDate } from "@/lib/utils";
+import { cn, formatRelativeDate } from "@/lib/utils";
 import { Linkify } from "../username/linkify";
 import { PostMoreButton } from "./post-more-button";
 import { MediaPreview } from "./media-preview";
@@ -17,9 +17,10 @@ import { useRouter } from "next/navigation";
 
 interface PostDataProps {
   post: Post;
+  from?: string;
 }
 
-export const PostCard = ({ post }: PostDataProps) => {
+export const PostCard = ({ post, from }: PostDataProps) => {
   const router = useRouter();
   const { user } = useUser();
 
@@ -28,8 +29,11 @@ export const PostCard = ({ post }: PostDataProps) => {
   return (
     <article className="group/post space-y-3 rounded-2xl bg-card  shadow-sm ">
       <div
-        className="hover:bg-gray-100 cursor-pointer rounded-2xl"
-        onClick={() => router.push(`/posts/${post.id}`)}
+        className={cn(
+          "rounded-2xl",
+          !from && "hover:bg-gray-100 cursor-pointer "
+        )}
+        onClick={from ? () => null : () => router.push(`/posts/${post.id}`)}
       >
         <div className="flex justify-between gap-3 p-5">
           <div className="flex flex-wrap gap-3">
@@ -37,7 +41,9 @@ export const PostCard = ({ post }: PostDataProps) => {
               <Link href={`/${post.authorProfile.username}`}>
                 <UserAvatar
                   avatarUrl={post.authorProfile.profilePicture}
-                  avatarFallback="A"
+                  avatarFallback={post.authorProfile.username
+                    .toUpperCase()
+                    .charAt(0)}
                 />
               </Link>
             </UserTooltip>

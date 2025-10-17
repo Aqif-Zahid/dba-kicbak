@@ -81,7 +81,7 @@ const WhoToFollow = async () => {
             >
               <UserAvatar
                 avatarUrl={profile.profilePicture}
-                avatarFallback={profile.username.charAt(0)}
+                avatarFallback={profile.username.toUpperCase().charAt(0)}
                 className="flex-none"
               />
               <div>
@@ -114,13 +114,13 @@ const getTrendingTopics = unstable_cache(
     const result = await prisma.$queryRawUnsafe<
       { hashtag: string; count: bigint }[]
     >(`
-      SELECT LOWER(unnest(regexp_matches(content, '#[[:alnum:]_]+', 'g'))) AS hashtag,
-             COUNT(*) AS count
-      FROM posts
-      GROUP BY hashtag
-      ORDER BY count DESC, hashtag ASC
-      LIMIT 5;
-    `);
+    SELECT LOWER(tag[1]) AS hashtag,
+         COUNT(*) AS count
+  FROM posts,
+  LATERAL regexp_matches(content, '#[A-Za-z0-9_]+', 'g') AS tag
+  GROUP BY tag[1]
+  ORDER BY count DESC, tag[1] ASC
+  LIMIT 5;`);
 
     return result.map((row) => ({
       hashtag: row.hashtag,
@@ -133,6 +133,8 @@ const getTrendingTopics = unstable_cache(
 
 const TrendingTopics = async () => {
   const trendingTopics = await getTrendingTopics();
+
+  console.log(trendingTopics);
 
   return (
     <div className="space-y-5 rounded-2xl bg-card p-5 shadow-sm">
