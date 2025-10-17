@@ -5,10 +5,10 @@ import { NextRequest } from "next/server";
 
 export async function GET(
   req: NextRequest,
-  context: { params: Promise<{ postId: string }> }
+  context: { params: Promise<{ commentId: string }> }
 ) {
   try {
-    const { postId } = await context.params;
+    const { commentId } = await context.params;
     const loggedInUser = await getUser(req);
 
     if (!loggedInUser) {
@@ -17,8 +17,8 @@ export async function GET(
         { status: 401 }
       );
     }
-    const post = await prisma.post.findUnique({
-      where: { id: Number(postId) },
+    const comment = await prisma.comment.findUnique({
+      where: { id: Number(commentId) },
       select: {
         votes: {
           where: {
@@ -36,15 +36,15 @@ export async function GET(
       },
     });
 
-    if (!post) {
+    if (!comment) {
       return Response.json(
-        { status: 0, message: "Post not found" },
+        { status: 0, message: "Comment not found" },
         { status: 404 }
       );
     }
     const data: VoteInfo = {
-      votes: post._count.votes,
-      isVotedByUser: !!post.votes.length,
+      votes: comment._count.votes,
+      isVotedByUser: !!comment.votes.length,
     };
     return Response.json(data);
   } catch (err) {
@@ -57,10 +57,10 @@ export async function GET(
 
 export async function POST(
   req: NextRequest,
-  context: { params: Promise<{ postId: string }> }
+  context: { params: Promise<{ commentId: string }> }
 ) {
   try {
-    const { postId } = await context.params;
+    const { commentId } = await context.params;
     const loggedInUser = await getUser(req);
     if (!loggedInUser) {
       return Response.json(
@@ -69,47 +69,34 @@ export async function POST(
       );
     }
 
-    const post = await prisma.post.findUnique({
+    const comment = await prisma.comment.findUnique({
       where: {
-        id: Number(postId),
+        id: Number(commentId),
       },
       select: {
         authorProfileId: true,
       },
     });
 
-    if (!post) {
-      return Response.json({ error: "Post not found" }, { status: 404 });
+    if (!comment) {
+      return Response.json({ error: "Comment not found" }, { status: 404 });
     }
 
     await prisma.$transaction([
-      prisma.vote.upsert({
+      prisma.commentVote.upsert({
         where: {
-          profileId_postId: {
+          profileId_commentId: {
             profileId: Number(loggedInUser.defaultProfileId),
-            postId: Number(postId),
+            commentId: Number(commentId),
           },
         },
         create: {
           profileId: Number(loggedInUser.defaultProfileId),
-          postId: Number(postId),
+          commentId: Number(commentId),
           voteType: "UPVOTE",
         },
         update: {},
       }),
-      //Notifications
-      ...(loggedInUser.defaultProfileId !== post.authorProfileId
-        ? [
-            prisma.notification.create({
-              data: {
-                issuerId: Number(loggedInUser.defaultProfileId),
-                recipientId: post.authorProfileId,
-                type: "VOTE",
-                postId: Number(postId),
-              },
-            }),
-          ]
-        : []),
     ]);
 
     return new Response();
@@ -121,41 +108,33 @@ export async function POST(
 
 export async function DELETE(
   req: NextRequest,
-  context: { params: Promise<{ postId: string }> }
+  context: { params: Promise<{ commentId: string }> }
 ) {
   try {
-    const { postId } = await context.params;
+    const { commentId } = await context.params;
     const loggedInUser = await getUser(req);
     if (!loggedInUser) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const post = await prisma.post.findUnique({
+    const comment = await prisma.comment.findUnique({
       where: {
-        id: Number(postId),
+        id: Number(commentId),
       },
       select: {
         authorProfileId: true,
       },
     });
 
-    if (!post) {
+    if (!comment) {
       return Response.json({ error: "Post not found" }, { status: 404 });
     }
 
     await prisma.$transaction([
-      prisma.vote.deleteMany({
+      prisma.commentVote.deleteMany({
         where: {
           profileId: Number(loggedInUser.defaultProfileId),
-          postId: Number(postId),
-        },
-      }),
-      prisma.notification.deleteMany({
-        where: {
-          issuerId: Number(loggedInUser.defaultProfileId),
-          recipientId: post.authorProfileId,
-          type: "VOTE",
-          postId: Number(postId),
+          commentId: Number(commentId),
         },
       }),
     ]);

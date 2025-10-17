@@ -71,6 +71,9 @@ export const PostCard = ({ post, from }: PostDataProps) => {
             />
           )}
         </div>
+        <h2 className="whitespace-pre-line break-words px-5 mb-4 font-bold text-lg">
+          {post.title}
+        </h2>
         <Linkify>
           <div className="whitespace-pre-line break-words px-5 mb-4">
             {post.content}
@@ -107,7 +110,6 @@ export const PostCard = ({ post, from }: PostDataProps) => {
         />
       </div>
       <div className="px-5 pb-5">
-        {" "}
         {showComments && <CommentSection post={post} />}
       </div>
     </article>

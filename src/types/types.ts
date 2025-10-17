@@ -204,6 +204,20 @@ export const getCommentDataInclude = (loggedInUserId: number) => {
     authorProfile: {
       select: getProfileDataSelect(loggedInUserId),
     },
+    commentVotes: {
+      where: {
+        profileId: loggedInUserId, // check if logged-in user voted
+      },
+      select: {
+        profileId: true,
+        voteType: true,
+      },
+    },
+    _count: {
+      select: {
+        commentVotes: true,
+      },
+    },
   } satisfies Prisma.CommentInclude;
 };
 

@@ -60,7 +60,7 @@ export const VoteButton = ({ postId, initialState }: VoteButtonProps) => {
         )}
       />
       <span className="text-sm font-medium tabular-nums">
-        {data.votes} <span className="hidden sm:inline">votes</span>
+        {data.votes} <span className="hidden sm:inline">likes</span>
       </span>
     </button>
   );

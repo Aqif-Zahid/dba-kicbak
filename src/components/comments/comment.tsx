@@ -1,10 +1,11 @@
-import { formatRelativeDate } from "@/lib/utils";
 import Link from "next/link";
+import { formatRelativeDate } from "@/lib/utils";
 import { useUser } from "@/providers/auth-provider";
 import { CommentData } from "@/types/types";
-import { UserTooltip } from "../username/user-tooltip";
 import { UserAvatar } from "../common/user-avatar";
+import { UserTooltip } from "../username/user-tooltip";
 import { CommentMoreButton } from "./comment-more-button";
+import { CommentVoteButton } from "../votes/comment-vote-button";
 
 interface CommentProps {
   comment: CommentData;
@@ -12,44 +13,60 @@ interface CommentProps {
 
 export const Comment = ({ comment }: CommentProps) => {
   const { user } = useUser();
+  const isAuthor = comment.authorProfileId === user?.defaultProfileId;
 
   return (
-    <div className="flex gap-3 py-3 group/comment">
-      <span className="hidden sm:inline">
+    <div className="flex flex-col gap-2 border-b border-gray-200 py-3">
+      <div className="flex gap-3">
+        {/* Avatar */}
         <UserTooltip profile={comment.authorProfile}>
           <Link href={`/${comment.authorProfile.username}`}>
             <UserAvatar
               avatarUrl={comment.authorProfile.profilePicture}
               size={40}
               avatarFallback={comment.authorProfile.username
-                .toUpperCase()
-                .charAt(0)}
+                .charAt(0)
+                .toUpperCase()}
             />
           </Link>
         </UserTooltip>
-      </span>
-      <div>
-        <div className="flex items-center text-sm gap-1">
-          <UserTooltip profile={comment.authorProfile}>
-            <Link
-              href={`/${comment.authorProfile.username}`}
-              className="font-medium hover:underline"
-            >
-              {comment.authorProfile.displayName}
-            </Link>
-          </UserTooltip>
-          <span className="text-muted-foreground text-xs">
-            {formatRelativeDate(comment.createdAt || new Date())}
-          </span>
+
+        {/* Comment body */}
+        <div className="flex-1">
+          <div className="flex items-center gap-2 text-sm">
+            <UserTooltip profile={comment.authorProfile}>
+              <Link
+                href={`/${comment.authorProfile.username}`}
+                className="font-medium hover:underline"
+              >
+                {comment.authorProfile.displayName}
+              </Link>
+            </UserTooltip>
+            <span className="text-muted-foreground text-xs">
+              {formatRelativeDate(comment.createdAt || new Date())}
+            </span>
+          </div>
+
+          <p className="mt-1 text-gray-800">{comment.content}</p>
+
+          {/* Actions */}
+          <div className="flex items-center">
+            <CommentVoteButton
+              commentId={comment.id}
+              initialState={{
+                votes: comment._count.commentVotes,
+                isVotedByUser: comment.commentVotes.some(
+                  (vote) => vote.profileId === user?.defaultProfileId
+                ),
+              }}
+            />
+
+            {isAuthor && (
+              <CommentMoreButton comment={comment} className="ml-auto" />
+            )}
+          </div>
         </div>
-        <div>{comment.content}</div>
       </div>
-      {comment.authorProfileId === user?.defaultProfileId && (
-        <CommentMoreButton
-          comment={comment}
-          className="ms-auto opacity-0 transition-opacity group-hover/comment:opacity-100"
-        />
-      )}
     </div>
   );
 };
