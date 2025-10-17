@@ -34,11 +34,9 @@ export const NewChatModal = ({
   const [selectedUsers, setSelectedUsers] = useState<UserResponse[]>(() =>
     preselectedUser ? [preselectedUser] : []
   );
-
   const [searchInput, setSearchInput] = useState("");
   const searchInputDebounce = useDebouncedValue(searchInput);
 
-  // Ref to hold user elements for scrolling
   const userRefs = useRef<Record<string, HTMLButtonElement | null>>({});
 
   const headerText =
@@ -51,29 +49,33 @@ export const NewChatModal = ({
   const { data, isFetching, isError, isSuccess } = useQuery({
     queryKey: ["stream-users", searchInputDebounce],
     queryFn: async () => {
+      if (!client || !loggedInUser) return { users: [] };
+
       const filters: any = {
-        id: { $nin: [loggedInUser?.defaultProfileId] },
-        role: { $ne: "ADMIN" }, // role filter is allowed
+        id: { $nin: [String(loggedInUser.defaultProfileId)] },
       };
 
+      // Add search if input exists
       if (searchInputDebounce) {
-        // Combine name and username search
         filters.$or = [
           { name: { $autocomplete: searchInputDebounce } },
           { username: { $autocomplete: searchInputDebounce } },
         ];
       }
 
-      return client.queryUsers(
-        filters,
-        { name: 1, username: 1 },
-        { limit: 15 }
-      );
+      // Correct sort format for Stream API
+      const sort: Record<string, 1 | -1> = { name: 1 };
+
+      try {
+        return await client.queryUsers(filters, sort, { limit: 15 });
+      } catch (error) {
+        console.error("Stream queryUsers error:", error);
+        return { users: [] }; // prevent crashes
+      }
     },
     enabled: !!client && !!loggedInUser,
   });
 
-  // Scroll to preselected user on first load
   useEffect(() => {
     if (preselectedUser && userRefs.current[preselectedUser.id]) {
       userRefs.current[preselectedUser.id]?.scrollIntoView({
@@ -116,7 +118,7 @@ export const NewChatModal = ({
       onChatCreated();
       toast.success("Channel created successfully");
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error(error.message);
       toast.error("Failed to create channel. Please try again.");
     },

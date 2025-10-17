@@ -5,6 +5,7 @@ import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import { Suspense } from "react";
 import "../styles/globals.css";
+import "stream-chat-react/dist/css/v2/index.css";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { AuthWrapper } from "@/providers/auth-wrapper";
 import { PageLoader } from "@/components/loader";
