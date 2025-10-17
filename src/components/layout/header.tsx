@@ -4,12 +4,13 @@ import { UserButton } from "./user-button";
 import { SignInButton } from "./sign-in-button";
 import { NotificationsButton } from "../notifications/notifications-button";
 import { MessagesButton } from "../messages/messages-button";
-import { Bookmark, Menu, PlusSquare } from "lucide-react";
+import { Bookmark, PlusSquare } from "lucide-react";
 import streamServerClient from "@/lib/stream";
 import prisma from "@/lib/prisma";
 import { MobileMenuButton } from "./mobile-menu-button";
 import { SearchField } from "./search-field";
 import { ThemeToggle } from "./theme-toggle";
+import { FaCommentDots } from "react-icons/fa6";
 
 interface HeaderProps {
   user: any;
@@ -44,7 +45,7 @@ export const Header = async ({ user }: HeaderProps) => {
   }
 
   return (
-    <header className="border-b border-border relative z-50 fixed top-">
+    <header className="border-b border-border relative z-50">
       <div className="container mx-auto px-4 py-4 flex justify-between items-center">
         <Link href="/" className="flex items-center">
           <Image
@@ -87,6 +88,14 @@ export const Header = async ({ user }: HeaderProps) => {
             </>
           ) : (
             <>
+              <Link
+                href="/posts"
+                className="relative flex items-center text-sm font-bold justify-center w-25 h-11 rounded-full 
+             text-gray-900 transition-colors hover:bg-gray-200"
+                title="Bookmarks"
+              >
+                <FaCommentDots size={20} className="mr-2 text-primary" /> Posts
+              </Link>
               <ThemeToggle />
               <SignInButton />
             </>

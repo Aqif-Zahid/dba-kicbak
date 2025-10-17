@@ -37,7 +37,7 @@ export const InvitationMain = ({
           variants={fadeUpStagger}
         >
           <motion.div className="space-y-12" variants={fadeUp}>
-            <h1 className="text-2xl md:text-3xl lg:text-5xl text-foreground">
+            <h1 className="text-5xl md:text-4xl lg:text-6xl text-foreground">
               Kicbak cuts out the travel middlemen.
               <br />
               Now, you get their commission.

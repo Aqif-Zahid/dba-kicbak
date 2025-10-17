@@ -14,7 +14,7 @@ export const MessagesButton = ({ initialState }: MessagesButtonProps) => {
     queryKey: ["unread-message-count"],
     queryFn: async () => {
       const res = await axios.get<MessageCountInfo>(
-        "/api/notifications/unread-count"
+        "/api/messages/unread-count"
       );
       return res.data;
     },

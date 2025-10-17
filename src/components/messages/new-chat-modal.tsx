@@ -9,7 +9,6 @@ import {
 } from "@/components/ui/dialog";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { useUser } from "@/providers/auth-provider";
-
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { CheckIcon, Loader2, SearchIcon, XIcon } from "lucide-react";
 import { useEffect, useRef, useState, forwardRef } from "react";
@@ -54,7 +53,7 @@ export const NewChatModal = ({
     queryFn: async () => {
       const filters: any = {
         id: { $nin: [loggedInUser?.defaultProfileId] },
-        role: { $ne: "admin" }, // role filter is allowed
+        role: { $ne: "ADMIN" }, // role filter is allowed
       };
 
       if (searchInputDebounce) {
@@ -118,7 +117,7 @@ export const NewChatModal = ({
       toast.success("Channel created successfully");
     },
     onError: (error) => {
-      console.error(error);
+      console.error(error.message);
       toast.error("Failed to create channel. Please try again.");
     },
   });

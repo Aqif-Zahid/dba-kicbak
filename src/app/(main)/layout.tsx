@@ -19,20 +19,24 @@ const MainLayout = async ({ children }: { children: React.ReactNode }) => {
       {/* Main content area */}
       <div className="container flex w-full grow gap-5 py-5">
         {/* Desktop sidebar */}
-        <Sidebar
-          user={session?.user}
-          className="sticky top-[5.50rem] h-fit hidden sm:block flex-none space-y-3 rounded-2xl bg-card px-3 py-5 lg:px-5 shadow-sm xl:w-80"
-        />
+        {session?.user && (
+          <Sidebar
+            user={session?.user}
+            className="sticky top-[5.50rem] h-fit hidden sm:block flex-none space-y-3 rounded-2xl bg-card px-3 py-5 lg:px-5 shadow-sm xl:w-80"
+          />
+        )}
 
         {/* Page content */}
         <main className="w-full">{children}</main>
       </div>
 
       {/* Mobile bottom sidebar */}
-      <Sidebar
-        user={session?.user}
-        className="sticky bottom-0 flex w-full justify-center gap-5 border-t bg-card p-3 sm:hidden"
-      />
+      {session?.user && (
+        <Sidebar
+          user={session?.user}
+          className="sticky bottom-0 flex w-full justify-center gap-5 border-t bg-card p-3 sm:hidden"
+        />
+      )}
 
       <ScrollToTopButton />
       <Footer />
