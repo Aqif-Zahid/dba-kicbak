@@ -13,8 +13,10 @@ import { Notification } from "./notification";
 import { Card, CardContent } from "../ui/card";
 import { Info } from "lucide-react";
 import { Button } from "../ui/button";
+import { useRouter } from "next/navigation";
 
 export const NotificationsMain = () => {
+  const router = useRouter();
   const {
     data,
     fetchNextPage,
@@ -70,7 +72,9 @@ export const NotificationsMain = () => {
             You don't have any notification yet.
           </h3>
 
-          <Button className="mt-2">Home</Button>
+          <Button className="mt-2" onClick={() => router.push("/")}>
+            Home
+          </Button>
         </CardContent>
       </Card>
     );

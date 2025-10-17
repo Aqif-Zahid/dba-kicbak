@@ -9,8 +9,10 @@ import { Card, CardContent } from "../ui/card";
 import { AlertTriangle, Info } from "lucide-react";
 import { Button } from "../ui/button";
 import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
+import { useRouter } from "next/navigation";
 
 export const ForYouFeed = () => {
+  const router = useRouter();
   const {
     data,
     fetchNextPage,
@@ -47,7 +49,9 @@ export const ForYouFeed = () => {
           <p className="text-sm text-muted-foreground">
             Be the first to share something interesting!
           </p>
-          <Button className="mt-2">Create your first post</Button>
+          <Button className="mt-2" onClick={() => router.push("/posts/create")}>
+            Create your first post
+          </Button>
         </CardContent>
       </Card>
     );
