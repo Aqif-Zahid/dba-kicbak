@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
       where: {
         email,
         status: {
-          in: ["PENDING", "WAITLISTED"], // Only consider pending/waitlisted
+          in: ["PENDING", "WAITLISTED"],
         },
       },
     });
