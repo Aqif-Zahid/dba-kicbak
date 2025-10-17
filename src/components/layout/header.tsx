@@ -9,6 +9,7 @@ import streamServerClient from "@/lib/stream";
 import prisma from "@/lib/prisma";
 import { MobileMenuButton } from "./mobile-menu-button";
 import { SearchField } from "./search-field";
+import { ThemeToggle } from "./theme-toggle";
 
 interface HeaderProps {
   user: any;
@@ -85,7 +86,10 @@ export const Header = async ({ user }: HeaderProps) => {
               <UserButton className="ml-4" />
             </>
           ) : (
-            <SignInButton />
+            <>
+              <ThemeToggle />
+              <SignInButton />
+            </>
           )}
         </div>
 

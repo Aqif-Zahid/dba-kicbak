@@ -9,6 +9,9 @@ import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { AuthWrapper } from "@/providers/auth-wrapper";
 import { PageLoader } from "@/components/loader";
 import { QueryProvider } from "@/providers/query-provider";
+import { NextSSRPlugin } from "@uploadthing/react/next-ssr-plugin";
+import { extractRouterConfig } from "uploadthing/server";
+import { fileRouter } from "./api/uploadthing/core";
 
 export const metadata: Metadata = {
   title: "Kicbak",
@@ -34,6 +37,7 @@ export default function RootLayout({
       <body className="font-sans">
         <AuthWrapper>
           <NuqsAdapter>
+            <NextSSRPlugin routerConfig={extractRouterConfig(fileRouter)} />
             <Suspense fallback={<PageLoader />}>
               <QueryProvider>
                 <ThemeProvider
