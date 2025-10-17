@@ -66,7 +66,7 @@ export const PostCard = ({ post }: PostDataProps) => {
           )}
         </div>
         <Linkify>
-          <div className="whitespace-pre-line break-words px-5">
+          <div className="whitespace-pre-line break-words px-5 mb-4">
             {post.content}
           </div>
         </Linkify>

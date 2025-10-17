@@ -76,7 +76,7 @@ const WhoToFollow = async () => {
         >
           <UserTooltip profile={profile}>
             <Link
-              href={`/users/${profile.username}`}
+              href={`/${profile.username}`}
               className="flex items-center gap-3"
             >
               <UserAvatar

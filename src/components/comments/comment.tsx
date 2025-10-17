@@ -17,7 +17,7 @@ export const Comment = ({ comment }: CommentProps) => {
     <div className="flex gap-3 py-3 group/comment">
       <span className="hidden sm:inline">
         <UserTooltip profile={comment.authorProfile}>
-          <Link href={`/users/${comment.authorProfile.username}`}>
+          <Link href={`/${comment.authorProfile.username}`}>
             <UserAvatar
               avatarUrl={comment.authorProfile.profilePicture}
               size={40}
@@ -30,7 +30,7 @@ export const Comment = ({ comment }: CommentProps) => {
         <div className="flex items-center text-sm gap-1">
           <UserTooltip profile={comment.authorProfile}>
             <Link
-              href={`/users/${comment.authorProfile.username}`}
+              href={`/${comment.authorProfile.username}`}
               className="font-medium hover:underline"
             >
               {comment.authorProfile.displayName}

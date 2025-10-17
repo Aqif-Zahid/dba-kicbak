@@ -4,6 +4,7 @@ import axios from "axios";
 import { LoadingSkeleton } from "./loading-skeleton";
 import { InfiniteScrollContainer } from "../infinite-scroll-container";
 import { PostCard } from "./post-card";
+import { Inbox } from "lucide-react";
 interface UserPostsProps {
   profileId: number;
 }
@@ -36,7 +37,12 @@ export const UserPosts = ({ profileId }: UserPostsProps) => {
     return <LoadingSkeleton />;
   }
   if (status === "success" && !posts.length && !hasNextPage) {
-    return <p className="text-center text-muted-foreground">No post yet</p>;
+    return (
+      <div className="flex flex-col items-center justify-center gap-2 py-8 text-center text-gray-500">
+        <Inbox className="h-10 w-10 text-gray-400" />
+        <p className="text-gray-500 font-medium text-lg">No posts yet</p>
+      </div>
+    );
   }
 
   if (status === "error") {

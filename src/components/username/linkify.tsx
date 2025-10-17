@@ -28,7 +28,9 @@ const LinkifyUsername = ({ children }: LinkifyProps) => {
       regex={/(@[a-zA-Z0-9_-]+)/}
       component={(match, key) => (
         <UserLinkWithTooltip username={match.slice(1)} key={key}>
-          {match}
+          <span onClick={(e) => e.stopPropagation()} className="cursor-pointer">
+            {match}
+          </span>
         </UserLinkWithTooltip>
       )}
     >
@@ -46,6 +48,7 @@ const LinkifyHashtag = ({ children }: LinkifyProps) => {
           key={key}
           href={`/hashtag/${match.slice(1)}`}
           className="text-primary hover:underline"
+          onClick={(e) => e.stopPropagation()}
         >
           {match}
         </Link>

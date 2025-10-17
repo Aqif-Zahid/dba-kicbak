@@ -77,7 +77,7 @@ export default async function UserNamePage({ params }: PageProps) {
             {user.displayName}&apos; posts
           </h2>
         </div>
-        <UserPosts profileId={Number(currentProfileId)} />
+        <UserPosts profileId={user.id} />
       </div>
       <TrendsSidebar />
     </main>

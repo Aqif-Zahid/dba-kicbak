@@ -34,7 +34,7 @@ export const UserTooltip = ({ profile, children }: UserTooltipProps) => {
         <TooltipContent>
           <div className="flex max-w-80 flex-col gap-3 break-words pax-1 py-2.5 md:min-w-52">
             <div className="flex justify-between items-center gap-2">
-              <Link href={`/users/${profile.username}`}>
+              <Link href={`/${profile.username}`}>
                 <UserAvatar
                   size={70}
                   avatarUrl={profile.profilePicture}
@@ -51,7 +51,7 @@ export const UserTooltip = ({ profile, children }: UserTooltipProps) => {
               )}
             </div>
             <div>
-              <Link href={`/users/${profile.username}`}>
+              <Link href={`/${profile.username}`}>
                 <div className="text-lg font-semibold hover:underline">
                   {profile.displayName}
                 </div>
