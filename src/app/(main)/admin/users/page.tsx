@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
-import { useGetUsers } from "@/services/users/use-get-users";
+import { useGetProfilesAdmin } from "@/services/profiles/use-get-profiles-admin";
 import PageError from "@/components/common/error-page";
 import { Button } from "@/components/ui/button";
 import { PageLoader } from "@/components/loader";
@@ -14,8 +14,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { UsersTable } from "@/components/admin/users/users-table";
-import { usersColumns } from "@/components/admin/users/columns";
+import { profileColumns } from "@/components/admin/profile/profile-columns"; // changed here
 import { userRoles } from "@/lib/types";
+import { ProfileAdmin } from "@/types/types"; // import type
 
 const UsersPage = () => {
   const [page, setPage] = useState(1);
@@ -25,7 +26,8 @@ const UsersPage = () => {
   const [search, setSearch] = useState("");
   const [role, setRole] = useState("");
 
-  const { data: result, isLoading } = useGetUsers(
+  //  use the new admin profiles hook
+  const { data: result, isLoading } = useGetProfilesAdmin(
     page,
     limit,
     search,
@@ -52,11 +54,11 @@ const UsersPage = () => {
       <div className="flex flex-col gap-y-4">
         {/* 🔹 Filters */}
         <div className="bg-white rounded-2xl shadow-lg p-5">
-          <div className=" grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div className="flex flex-col">
               <p className="mb-1 text-sm font-semibold">Search</p>
               <Input
-                placeholder="Search by email "
+                placeholder="Search by username or email"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
@@ -88,16 +90,17 @@ const UsersPage = () => {
           </div>
         </div>
 
+        {/* 🔹 Table */}
         <div className="bg-white rounded-2xl shadow-lg p-5">
           {isLoading ? (
             <PageLoader />
           ) : (
             <div>
-              <h2 className="font-bold mb-4">Users</h2>
-              <UsersTable
+              <h2 className="font-bold mb-4">Profiles</h2>
+              <UsersTable<ProfileAdmin, any> //  specify the type explicitly
                 page={page}
                 handlePageChange={handlePageChange}
-                columns={usersColumns}
+                columns={profileColumns} //  changed here
                 data={result ? result.data : []}
                 totalPages={result ? result.pagination.totalPages : 0}
                 total={result ? result.pagination.total : 0}
