@@ -55,7 +55,7 @@ export interface MessageCountInfo {
   unreadCount: number;
 }
 
-export const getPostsDataInclude = (loggedInUserId: number) => {
+export const getPostsDataInclude = (loggedInUserId: number | null) => {
   return {
     authorProfile: {
       include: {
@@ -75,20 +75,22 @@ export const getPostsDataInclude = (loggedInUserId: number) => {
     attachment: true,
     votes: {
       where: {
-        profileId: loggedInUserId,
+        profileId: loggedInUserId ?? undefined,
       },
       select: {
         profileId: true,
       },
     },
-    bookmarks: {
-      where: {
-        profileId: loggedInUserId,
-      },
-      select: {
-        profileId: true,
-      },
-    },
+    bookmarks: loggedInUserId
+      ? {
+          where: {
+            profileId: loggedInUserId,
+          },
+          select: {
+            profileId: true,
+          },
+        }
+      : false,
     _count: {
       select: {
         votes: true,
@@ -171,7 +173,7 @@ export type BookmarkInfo = {
   isBookmarkedByUser: boolean;
 };
 
-export const getProfileDataSelect = (loggedInUserId: number) => {
+export const getProfileDataSelect = (loggedInUserId: number | null) => {
   return {
     id: true,
     userId: true,
@@ -184,7 +186,7 @@ export const getProfileDataSelect = (loggedInUserId: number) => {
     updatedAt: true,
     followers: {
       where: {
-        followerId: loggedInUserId,
+        followerId: loggedInUserId ?? undefined,
       },
       select: {
         followerId: true,
@@ -199,14 +201,14 @@ export const getProfileDataSelect = (loggedInUserId: number) => {
   } satisfies Prisma.ProfilesSelect;
 };
 
-export const getCommentDataInclude = (loggedInUserId: number) => {
+export const getCommentDataInclude = (loggedInUserId: number | null) => {
   return {
     authorProfile: {
       select: getProfileDataSelect(loggedInUserId),
     },
     commentVotes: {
       where: {
-        profileId: loggedInUserId, // check if logged-in user voted
+        profileId: loggedInUserId ?? undefined, // check if logged-in user voted
       },
       select: {
         profileId: true,

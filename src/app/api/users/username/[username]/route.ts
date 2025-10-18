@@ -1,7 +1,7 @@
 import { getUser } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { getProfileDataSelect } from "@/types/types";
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
   req: NextRequest,
@@ -10,12 +10,7 @@ export async function GET(
   const { username } = await context.params; // Destructure inside
   try {
     const loggedInUser = await getUser(req);
-    if (!loggedInUser) {
-      return Response.json(
-        { status: 0, message: "Unauthorized" },
-        { status: 401 }
-      );
-    }
+
     const user = await prisma.profiles.findFirst({
       where: {
         username: {
@@ -23,20 +18,22 @@ export async function GET(
           mode: "insensitive",
         },
       },
-      select: getProfileDataSelect(Number(loggedInUser.defaultProfileId)),
+      select: getProfileDataSelect(
+        loggedInUser ? Number(loggedInUser.defaultProfileId) : null
+      ),
     });
 
     if (!user) {
-      return Response.json(
+      return NextResponse.json(
         { status: 0, message: "User not found" },
         { status: 404 }
       );
     }
 
-    return Response.json(user);
+    return NextResponse.json(user);
   } catch (err) {
     console.log(err);
-    return Response.json(
+    return NextResponse.json(
       { status: 0, message: "Internal server error" },
       { status: 500 }
     );

@@ -79,7 +79,7 @@ export const SigninModal = () => {
       setError(null);
       const res = await signIn("credentials", {
         redirect: false,
-        email: values.email,
+        email: values.email.toLowerCase(),
         password: values.password,
       });
 

@@ -7,6 +7,8 @@ import { VoteInfo } from "@/types/types";
 import axios from "axios";
 import { toast } from "sonner";
 import { useVoteInfo } from "@/services/votes/use-vote-info";
+import { useUser } from "@/providers/auth-provider";
+import { useSigninModal } from "@/hooks/use-signin-modal";
 
 interface VoteButtonProps {
   postId: number;
@@ -14,6 +16,9 @@ interface VoteButtonProps {
 }
 
 export const VoteButton = ({ postId, initialState }: VoteButtonProps) => {
+  const { user } = useUser();
+  const { open } = useSigninModal();
+
   const queryClient = useQueryClient();
   const { data } = useVoteInfo(postId, initialState);
 
@@ -51,8 +56,15 @@ export const VoteButton = ({ postId, initialState }: VoteButtonProps) => {
     // },
   });
 
+  const handleVote = () => {
+    if (user) {
+      mutate();
+    } else {
+      open();
+    }
+  };
   return (
-    <button className="flex items-center gap-2" onClick={() => mutate()}>
+    <button className="flex items-center gap-2" onClick={handleVote}>
       <Heart
         className={cn(
           "size-5",

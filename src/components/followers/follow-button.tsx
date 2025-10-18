@@ -5,6 +5,8 @@ import { useFollowerInfo } from "@/services/followers/use-follower-info";
 import { FollowerInfo } from "@/types/types";
 import axios from "axios";
 import { toast } from "sonner";
+import { useUser } from "@/providers/auth-provider";
+import { useSigninModal } from "@/hooks/use-signin-modal";
 
 interface FollowButtonProps {
   profileId: number;
@@ -15,9 +17,11 @@ export const FollowButton = ({
   profileId,
   initialState,
 }: FollowButtonProps) => {
+  const { user } = useUser();
+  const { open } = useSigninModal();
+
   const queryClient = useQueryClient();
   const { data } = useFollowerInfo(profileId, initialState);
-
   const { mutate } = useMutation({
     mutationFn: async () =>
       data.isFollowedByUser
@@ -53,10 +57,18 @@ export const FollowButton = ({
     },
   });
 
+  const handleFollow = () => {
+    if (user) {
+      mutate();
+    } else {
+      open();
+    }
+  };
+
   return (
     <Button
       variant={data.isFollowedByUser ? "secondary" : "default"}
-      onClick={() => mutate()}
+      onClick={handleFollow}
     >
       {data.isFollowedByUser ? "Unfollow" : "Follow"}
     </Button>

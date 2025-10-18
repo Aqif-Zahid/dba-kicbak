@@ -7,6 +7,8 @@ import { VoteInfo } from "@/types/types";
 import axios from "axios";
 import { toast } from "sonner";
 import { useCommentVoteInfo } from "@/services/votes/use-comment-vote-info";
+import { useUser } from "@/providers/auth-provider";
+import { useSigninModal } from "@/hooks/use-signin-modal";
 
 interface CommentVoteButtonProps {
   commentId: number;
@@ -17,6 +19,9 @@ export const CommentVoteButton = ({
   commentId,
   initialState,
 }: CommentVoteButtonProps) => {
+  const { user } = useUser();
+  const { open } = useSigninModal();
+
   const queryClient = useQueryClient();
   const { data } = useCommentVoteInfo(commentId, initialState);
 
@@ -50,13 +55,21 @@ export const CommentVoteButton = ({
     },
   });
 
+  const handleSubmit = () => {
+    if (user) {
+      mutate();
+    } else {
+      open();
+    }
+  };
+
   return (
     <button
       className={cn(
         "flex items-center gap-1 py-1 rounded-full hover:bg-gray-100 transition-colors",
         data.isVotedByUser && "text-red-500"
       )}
-      onClick={() => mutate()}
+      onClick={handleSubmit}
       disabled={isPending}
     >
       <Heart className={cn("h-4 w-4", data.isVotedByUser && "fill-red-500")} />

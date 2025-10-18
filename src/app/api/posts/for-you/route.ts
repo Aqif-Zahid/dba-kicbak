@@ -8,14 +8,9 @@ export async function GET(req: NextRequest) {
     const cursor = req.nextUrl.searchParams.get("cursor") || undefined;
     const pageSize = 10;
     const user = await getUser(req);
-    if (!user) {
-      return NextResponse.json(
-        { status: 0, message: "User Unauthorized!" },
-        { status: 401 }
-      );
-    }
+
     const posts = await prisma.post.findMany({
-      include: getPostsDataInclude(Number(user.defaultProfileId)),
+      include: getPostsDataInclude(user ? Number(user.defaultProfileId) : null),
       orderBy: { createdAt: "desc" },
       take: pageSize + 1,
       cursor: cursor ? { id: Number(cursor) } : undefined,

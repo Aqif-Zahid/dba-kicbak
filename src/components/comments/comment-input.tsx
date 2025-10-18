@@ -1,12 +1,13 @@
 import { useState, useRef, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "framer-motion";
-
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Loader2, SendHorizonal, Smile } from "lucide-react";
 import { Post } from "@/types/types";
 import { useCreateComment } from "@/services/comments/use-create-comment";
+import { useUser } from "@/providers/auth-provider";
+import { useSigninModal } from "@/hooks/use-signin-modal";
 
 // Dynamically import emoji picker
 const Picker = dynamic(() => import("emoji-picker-react"), { ssr: false });
@@ -16,6 +17,9 @@ interface CommentInputProps {
 }
 
 export const CommentInput = ({ post }: CommentInputProps) => {
+  const { user } = useUser();
+  const { open } = useSigninModal();
+
   const [input, setInput] = useState("");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [pickerPosition, setPickerPosition] = useState<"top" | "bottom">(
@@ -29,12 +33,16 @@ export const CommentInput = ({ post }: CommentInputProps) => {
     event.preventDefault();
     if (!input.trim()) return;
 
-    mutation.mutate(
-      { post, content: input },
-      {
-        onSuccess: () => setInput(""),
-      }
-    );
+    if (user) {
+      mutation.mutate(
+        { post, content: input },
+        {
+          onSuccess: () => setInput(""),
+        }
+      );
+    } else {
+      open();
+    }
   };
 
   const handleEmojiClick = (emojiData: any) => {

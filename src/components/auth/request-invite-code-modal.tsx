@@ -43,7 +43,10 @@ export const RequestInviteCodeModal = () => {
     try {
       setLoading(true);
       setError(null);
-      const res = await axios.post("/api/invite", values);
+      const data = {
+        email: values.email.toLowerCase(),
+      };
+      const res = await axios.post("/api/invite", data);
       if (res.data.status === 1) {
         setSubmitted(true);
         form.reset();

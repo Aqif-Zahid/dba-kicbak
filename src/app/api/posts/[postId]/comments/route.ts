@@ -1,7 +1,7 @@
 import { getUser } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { CommentsPage, getCommentDataInclude } from "@/types/types";
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
   req: NextRequest,
@@ -16,16 +16,11 @@ export async function GET(
 
     const user = await getUser(req);
 
-    if (!user) {
-      return Response.json(
-        { status: 0, message: "Unauthorized" },
-        { status: 401 }
-      );
-    }
-
     const comments = await prisma.comment.findMany({
       where: { postId: Number(postId) },
-      include: getCommentDataInclude(Number(user.defaultProfileId)),
+      include: getCommentDataInclude(
+        user ? Number(user.defaultProfileId) : null
+      ),
       orderBy: { createdAt: "asc" },
       take: -pageSize - 1,
       cursor: cursor ? { id: Number(cursor) } : undefined,
@@ -39,10 +34,10 @@ export async function GET(
       previousCursor,
     };
 
-    return Response.json(data);
+    return NextResponse.json(data);
   } catch (error) {
     console.error(error);
-    return Response.json(
+    return NextResponse.json(
       { status: 0, message: "Internal server error" },
       { status: 500 }
     );

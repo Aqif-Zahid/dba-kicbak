@@ -1,7 +1,8 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { getUser } from "@/lib/auth";
 
-export async function GET(req: Request) {
+export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
 
   const page = Number(searchParams.get("page")) || 1;
@@ -11,7 +12,15 @@ export async function GET(req: Request) {
 
   const where: any = {};
 
-  // 🔍 Search by username, display name, or email
+  const user = await getUser(req);
+  if (!user || user.role !== "ADMIN") {
+    return NextResponse.json(
+      { status: 0, message: "User Unauthorized!" },
+      { status: 401 }
+    );
+  }
+
+  // Search by username, display name, or email
   if (search) {
     where.OR = [
       { username: { contains: search, mode: "insensitive" } },

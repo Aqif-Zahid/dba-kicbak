@@ -8,12 +8,7 @@ export async function GET(
 ) {
   const { postId } = await context.params;
   const loggedInUser = await getUser(req);
-  if (!loggedInUser) {
-    return NextResponse.json(
-      { status: 0, message: "Unauthorized" },
-      { status: 401 }
-    );
-  }
+
   if (Number.isNaN(postId))
     return NextResponse.json(
       { status: 0, message: "Invalid post id" },
@@ -23,7 +18,9 @@ export async function GET(
   try {
     const post = await prisma.post.findUnique({
       where: { id: Number(postId) },
-      include: getPostsDataInclude(Number(loggedInUser.defaultProfileId)),
+      include: getPostsDataInclude(
+        loggedInUser ? Number(loggedInUser.defaultProfileId) : null
+      ),
     });
 
     if (!post)
