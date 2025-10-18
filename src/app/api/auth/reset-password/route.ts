@@ -7,7 +7,6 @@ import { z } from "zod";
 const resetPasswordSchema = z
   .object({
     email: z.string().email("Valid email is required"),
-    otp: z.string().min(6, "OTP is required"),
     newPassword: z
       .string()
       .min(8, "Password must be at least 8 characters long")
@@ -45,7 +44,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const { email, otp, newPassword } = parsed.data;
+    const { email, newPassword } = parsed.data;
 
     //  2. Check if user exists
     const user = await prisma.users.findUnique({ where: { email } });

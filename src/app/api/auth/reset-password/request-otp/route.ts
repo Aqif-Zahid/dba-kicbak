@@ -1,11 +1,11 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import crypto from "crypto";
 import nodemailer from "nodemailer";
 
 const OTP_TTL_MINUTES = 15;
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
     const { email } = await req.json();
 
@@ -65,6 +65,7 @@ export async function POST(req: Request) {
       data: { expiresIn: OTP_TTL_MINUTES },
     });
   } catch (err: any) {
+    console.log(err);
     return NextResponse.json(
       { status: 0, message: "Internal server error." },
       { status: 500 }

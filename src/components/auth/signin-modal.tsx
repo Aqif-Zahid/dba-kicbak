@@ -22,7 +22,9 @@ import { Button } from "../ui/button";
 import { Checkbox } from "../ui/checkbox";
 import { signIn, useSession } from "next-auth/react";
 import { useRequestInviteModal } from "@/hooks/use-request-invite-modal";
-import axios from "axios";
+import { OtpForm } from "./otp-form";
+import { RequestOtpForm } from "./request-otp-form";
+import { ResetPasswordForm } from "./reset-password-form";
 
 export const SigninModal = () => {
   const { isOpen, close } = useSigninModal();
@@ -31,26 +33,14 @@ export const SigninModal = () => {
 
   // STEP state for sign in and password reset flow
   const [authStep, setAuthStep] = useState<
-    "signin" | "resetEmail" | "resetOtp" | "resetPassword" | "resetSuccess"
+    "signin" | "resetEmail" | "resetOtp" | "resetPassword"
   >("signin");
+  const [resetEmail, setResetEmail] = useState<string>("");
 
   // Signin state
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-
-  // Reset Password states
-  const [resetEmail, setResetEmail] = useState("");
-  const [otp, setOtp] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-
-  const [emailError, setEmailError] = useState<string | null>(null);
-  const [otpError, setOtpError] = useState<string | null>(null);
-  const [passwordErrors, setPasswordErrors] = useState<string[]>([]);
-
-  const [showNewPassword, setShowNewPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // Zod validation for sign in
   const loginSchema = z.object({
@@ -72,7 +62,6 @@ export const SigninModal = () => {
     }
   }, [session, close]);
 
-  // ✅ Sign In Submit
   const onSubmit = async (values: z.infer<typeof loginSchema>) => {
     try {
       setLoading(true);
@@ -107,126 +96,6 @@ export const SigninModal = () => {
 
   const handleGoogleLogin = async () => {
     await signIn("google", { callbackUrl: "/profile" });
-  };
-
-  // ✅ Forgot Password → Switch step
-  const handleForgotPassword = () => {
-    setAuthStep("resetEmail");
-  };
-
-  // --- Password Reset Functions ---
-  const handleSendOtp = async () => {
-    setEmailError(null);
-    if (!resetEmail.trim()) {
-      setEmailError("Email is required");
-      return;
-    }
-    setLoading(true);
-    try {
-      const res = await axios.post(
-        "/api/auth/reset-password/request-otp",
-        { email: resetEmail },
-        { validateStatus: (status) => (status >= 200 && status < 300) || status === 404 }
-      );
-
-      if (res.status === 404) {
-        setEmailError(res.data?.message || "No account found with this email address.");
-        return;
-      }
-
-      if (res.data.status === 1) {
-        setAuthStep("resetOtp");
-      } else {
-        setEmailError(res.data.message || "Failed to send OTP");
-      }
-    } catch {
-      setEmailError("Something went wrong");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleVerifyOtp = async () => {
-    setOtpError(null);
-    if (!otp.trim()) {
-      setOtpError("OTP is required");
-      return;
-    }
-    setLoading(true);
-    try {
-      const res = await axios.post(
-        "/api/auth/reset-password/verify-otp",
-        { email: resetEmail, otp },
-        { validateStatus: (status) => (status >= 200 && status < 300) || status === 400 }
-      );
-
-      if (res.status === 400) {
-        setOtpError(res.data?.message || "Incorrect OTP");
-        return;
-      }
-
-      if (res.data.status === 1) {
-        setAuthStep("resetPassword");
-      } else {
-        setOtpError(res.data.message || "Invalid OTP");
-      }
-    } catch {
-      setOtpError("Something went wrong");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleResetPassword = async () => {
-    setPasswordErrors([]);
-    if (newPassword !== confirmPassword) {
-      setPasswordErrors(["Passwords do not match"]);
-      return;
-    }
-    setLoading(true);
-    try {
-      const res = await axios.post(
-        "/api/auth/reset-password",
-        { email: resetEmail, otp, newPassword, confirmPassword },
-        { validateStatus: (status) => (status >= 200 && status < 300) || status === 400 }
-      );
-
-      if (res.data.status === 1) {
-        // ✅ show success screen
-        setResetEmail("");
-        setOtp("");
-        setNewPassword("");
-        setConfirmPassword("");
-        setPasswordErrors([]);
-        setAuthStep("resetSuccess");
-      } else if (res.data.errors) {
-        setPasswordErrors(res.data.errors);
-      } else {
-        setPasswordErrors([res.data.message || "Failed to reset password"]);
-      }
-    } catch (err: any) {
-      const serverErrors = err?.response?.data?.errors;
-      if (serverErrors && Array.isArray(serverErrors)) {
-        setPasswordErrors(serverErrors);
-      } else {
-        setPasswordErrors([
-          err?.response?.data?.message || "Reset failed. Please try again.",
-        ]);
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleBackToLogin = () => {
-    setAuthStep("signin");
-    setResetEmail("");
-    setOtp("");
-    setNewPassword("");
-    setConfirmPassword("");
-    setPasswordErrors([]);
-    setEmailError(null);
-    setOtpError(null);
   };
 
   return (
@@ -266,7 +135,10 @@ export const SigninModal = () => {
           </div>
 
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 px-2">
+            <form
+              onSubmit={form.handleSubmit(onSubmit)}
+              className="space-y-4 px-2"
+            >
               <FormField
                 name="email"
                 control={form.control}
@@ -309,7 +181,11 @@ export const SigninModal = () => {
                           onClick={() => setShowPassword((prev) => !prev)}
                           className="absolute inset-y-0 right-3 flex items-center text-gray-500 hover:text-gray-700"
                         >
-                          {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                          {showPassword ? (
+                            <EyeOff size={18} />
+                          ) : (
+                            <Eye size={18} />
+                          )}
                         </button>
                       </div>
                     </FormControl>
@@ -324,7 +200,7 @@ export const SigninModal = () => {
                   type="button"
                   variant="ghost"
                   className="text-sm text-gray-500 font-normal"
-                  onClick={handleForgotPassword}
+                  onClick={() => setAuthStep("resetEmail")}
                 >
                   Forgot password?
                 </Button>
@@ -337,7 +213,12 @@ export const SigninModal = () => {
                 </div>
               )}
 
-              <Button type="submit" size="lg" className="w-full" disabled={loading}>
+              <Button
+                type="submit"
+                size="lg"
+                className="w-full"
+                disabled={loading}
+              >
                 {loading ? (
                   <span className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white"></span>
                 ) : (
@@ -361,138 +242,20 @@ export const SigninModal = () => {
 
       {/* STEP 2 — RESET EMAIL */}
       {authStep === "resetEmail" && (
-        <div className="space-y-4">
-          <h2 className="text-lg font-semibold text-center">Forgot Password</h2>
-          <p className="text-sm text-muted-foreground text-center">
-            Enter your email to receive a one-time code
-          </p>
-          <Input
-            type="email"
-            placeholder="you@example.com"
-            value={resetEmail}
-            onChange={(e) => {
-              setResetEmail(e.target.value);
-              if (emailError) setEmailError(null);
-            }}
-          />
-          {emailError && <p className="text-xs text-red-600 mt-1">{emailError}</p>}
-          <div className="flex gap-2">
-            <Button variant="outline" className="w-1/2" onClick={handleBackToLogin}>
-              Back
-            </Button>
-            <Button onClick={handleSendOtp} disabled={loading} className="w-1/2">
-              {loading ? "Sending..." : "Send OTP"}
-            </Button>
-          </div>
-        </div>
+        <RequestOtpForm
+          setAuthStep={setAuthStep}
+          setResetEmail={setResetEmail}
+        />
       )}
 
       {/* STEP 3 — OTP */}
       {authStep === "resetOtp" && (
-        <div className="space-y-4">
-          <h2 className="text-lg font-semibold text-center">Enter OTP</h2>
-          <p className="text-sm text-muted-foreground text-center">
-            We sent a 6-digit code to <strong>{resetEmail}</strong>
-          </p>
-          <Input
-            type="text"
-            placeholder="Enter OTP"
-            value={otp}
-            onChange={(e) => {
-              const raw = e.target.value;
-              const cleaned = raw.replace(/\D/g, "");
-              const limited = cleaned.slice(0, 6);
-              setOtp(limited);
-              if (otpError) setOtpError(null);
-            }}
-            inputMode="numeric"
-            pattern="[0-9]*"
-            maxLength={6}
-          />
-          {otpError && <p className="text-xs text-red-600 mt-1">{otpError}</p>}
-          <div className="flex gap-2">
-            <Button variant="outline" className="w-1/2" onClick={() => setAuthStep("resetEmail")}>
-              Back
-            </Button>
-            <Button onClick={handleVerifyOtp} disabled={loading} className="w-1/2">
-              {loading ? "Verifying..." : "Verify OTP"}
-            </Button>
-          </div>
-        </div>
+        <OtpForm setAuthStep={setAuthStep} resetEmail={resetEmail} />
       )}
 
       {/* STEP 4 — RESET PASSWORD */}
       {authStep === "resetPassword" && (
-        <div className="space-y-4">
-          <h2 className="text-lg font-semibold text-center">Reset Password</h2>
-
-          {/* New Password */}
-          <div className="relative">
-            <Input
-              type={showNewPassword ? "text" : "password"}
-              placeholder="New Password"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-            />
-            <button
-              type="button"
-              onClick={() => setShowNewPassword(!showNewPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-            >
-              {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-            </button>
-          </div>
-
-          {/* Confirm Password */}
-          <div className="relative">
-            <Input
-              type={showConfirmPassword ? "text" : "password"}
-              placeholder="Confirm Password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-            />
-            <button
-              type="button"
-              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-            >
-              {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-            </button>
-          </div>
-
-          {/* Inline password errors */}
-          {passwordErrors.length > 0 && (
-            <ul className="mt-2 text-xs text-red-600 space-y-1">
-              {passwordErrors.map((err, idx) => (
-                <li key={idx}>{err}</li>
-              ))}
-            </ul>
-          )}
-
-          <div className="flex gap-2">
-            <Button variant="outline" className="w-1/2" onClick={() => setAuthStep("resetOtp")}>
-              Back
-            </Button>
-            <Button onClick={handleResetPassword} disabled={loading} className="w-1/2">
-              {loading ? "Resetting..." : "Reset Password"}
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {/* STEP 5 — SUCCESS MESSAGE */}
-      {authStep === "resetSuccess" && (
-        <div className="space-y-4 text-center">
-          <h2 className="text-lg font-semibold text-green-600">
-            Password Changed Successfully
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            You can now log in with your new password.
-          </p>
-          <Button onClick={handleBackToLogin} className="w-full">
-            Back to Login
-          </Button>
-        </div>
+        <ResetPasswordForm setAuthStep={setAuthStep} email={resetEmail} />
       )}
     </ResponsiveModal>
   );
