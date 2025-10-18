@@ -6,7 +6,6 @@ import { Footer } from "@/components/layout/footer";
 import { ScrollToTopButton } from "@/components/layout/scroll-to-top-button";
 import { SigninModal } from "@/components/auth/signin-modal";
 import { RequestInviteCodeModal } from "@/components/auth/request-invite-code-modal";
-import ResetPasswordModal from "@/components/auth/reset-password-modal";
 
 const MainLayout = async ({ children }: { children: React.ReactNode }) => {
   const session = await getServerSession(authOptions);
@@ -45,7 +44,6 @@ const MainLayout = async ({ children }: { children: React.ReactNode }) => {
       {/* Global Modals */}
       <SigninModal />
       <RequestInviteCodeModal />
-      <ResetPasswordModal />
     </div>
   );
 };
