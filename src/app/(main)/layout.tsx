@@ -1,4 +1,3 @@
-import { headers } from "next/headers";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../api/auth/[...nextauth]/route";
 import { Header } from "@/components/layout/header";
@@ -10,11 +9,6 @@ import { RequestInviteCodeModal } from "@/components/auth/request-invite-code-mo
 
 const MainLayout = async ({ children }: { children: React.ReactNode }) => {
   const session = await getServerSession(authOptions);
-  const headersList = await headers();
-  const fullUrl = headersList.get("x-invoke-path") || "/";
-  const isHome = fullUrl === "/";
-
-  const isLoggedIn = session?.user;
 
   return (
     <div className="flex min-h-screen flex-col bg-background scroll-smooth">
@@ -25,7 +19,7 @@ const MainLayout = async ({ children }: { children: React.ReactNode }) => {
       {/* Main content area */}
       <div className="container flex w-full grow gap-5 py-5">
         {/* Desktop sidebar */}
-        {(isLoggedIn || !isHome) && (
+        {session?.user && (
           <Sidebar
             user={session?.user}
             className="sticky top-[5.50rem] h-fit hidden sm:block flex-none space-y-3 rounded-2xl bg-card px-3 py-5 lg:px-5 shadow-sm xl:w-80"
@@ -37,7 +31,7 @@ const MainLayout = async ({ children }: { children: React.ReactNode }) => {
       </div>
 
       {/* Mobile bottom sidebar */}
-      {(isLoggedIn || !isHome) && (
+      {session?.user && (
         <Sidebar
           user={session?.user}
           className="sticky bottom-0 flex w-full justify-center gap-5 border-t bg-card p-3 sm:hidden"
