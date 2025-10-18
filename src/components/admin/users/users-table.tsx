@@ -1,4 +1,7 @@
-"sue client";
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -20,7 +23,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
 
 interface DataTableProps<TData, TValue> {
   page: number;
@@ -31,7 +33,7 @@ interface DataTableProps<TData, TValue> {
   data: TData[];
 }
 
-export const UsersTable = <TData, TValue>({
+export const UsersTable = <TData extends { username?: string }, TValue>({
   page,
   totalPages,
   total,
@@ -41,6 +43,7 @@ export const UsersTable = <TData, TValue>({
 }: DataTableProps<TData, TValue>) => {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const router = useRouter(); // ✅ added
 
   const table = useReactTable({
     data,
@@ -64,27 +67,34 @@ export const UsersTable = <TData, TValue>({
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => {
-                  return (
-                    <TableHead key={header.id}>
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
-                    </TableHead>
-                  );
-                })}
+                {headerGroup.headers.map((header) => (
+                  <TableHead key={header.id}>
+                    {header.isPlaceholder
+                      ? null
+                      : flexRender(
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
+                  </TableHead>
+                ))}
               </TableRow>
             ))}
           </TableHeader>
+
           <TableBody>
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
+                  //  redirect to profile page on row click
+                  onClick={() => {
+                    const username = row.original.username;
+                    if (username) {
+                      router.push(`/${username}`);
+                    }
+                  }}
+                  className="cursor-pointer hover:bg-gray-50 transition-colors"
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
@@ -109,6 +119,7 @@ export const UsersTable = <TData, TValue>({
           </TableBody>
         </Table>
       </div>
+
       <div className="flex items-center justify-between space-x-2 py-4">
         <div>
           <p className="font-semibold text-sm">
@@ -120,7 +131,7 @@ export const UsersTable = <TData, TValue>({
             variant="outline"
             size="sm"
             onClick={() => handlePageChange(page - 1)}
-            disabled={page === 1 ? true : false}
+            disabled={page === 1}
           >
             Previous
           </Button>
