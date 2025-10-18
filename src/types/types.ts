@@ -254,3 +254,11 @@ export interface NotificationsPage {
   notifications: NotificationData[];
   nextCursor: string | null;
 }
+
+export interface ProfileAdmin extends Profile {
+  user: {
+    email?: string | null;
+    phoneNumber?: string | null;
+    status?: string | null;
+  };
+}
