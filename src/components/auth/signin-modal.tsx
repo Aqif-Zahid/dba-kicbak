@@ -21,10 +21,12 @@ import { Button } from "../ui/button";
 import { Checkbox } from "../ui/checkbox";
 import { signIn, useSession } from "next-auth/react";
 import { useRequestInviteModal } from "@/hooks/use-request-invite-modal";
+import { useResetPasswordModal } from "@/hooks/use-reset-password-modal";
 
 export const SigninModal = () => {
   const { isOpen, close } = useSigninModal();
   const { open: openInviteCodeModal } = useRequestInviteModal();
+  const { open: openResetPasswordModal } = useResetPasswordModal();
   const { data: session } = useSession();
 
   const [showPassword, setShowPassword] = useState(false);
@@ -44,7 +46,7 @@ export const SigninModal = () => {
     defaultValues: { email: "", password: "" },
   });
 
-  // 🔹 Close modal if session becomes available (e.g. Google login)
+  //  Close modal if session becomes available (e.g. Google login)
   useEffect(() => {
     if (session && isOpen) {
       close();
@@ -85,6 +87,12 @@ export const SigninModal = () => {
 
   const handleGoogleLogin = async () => {
     await signIn("google", { callbackUrl: "/profile" });
+  };
+
+  // Forgot Password → close Signin modal & open Reset Password modal
+  const handleForgotPassword = () => {
+    close();
+    openResetPasswordModal();
   };
 
   return (
@@ -181,7 +189,7 @@ export const SigninModal = () => {
               type="button"
               variant="ghost"
               className="text-sm text-gray-500 font-normal"
-              onClick={() => {}}
+              onClick={handleForgotPassword}
             >
               Forgot password?
             </Button>

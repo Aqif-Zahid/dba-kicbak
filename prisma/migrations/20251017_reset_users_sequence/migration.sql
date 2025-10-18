@@ -1,0 +1,1 @@
+SELECT setval('users_id_seq', (SELECT COALESCE(MAX(id), 0) FROM users) + 1, true);
