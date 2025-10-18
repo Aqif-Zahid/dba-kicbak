@@ -26,6 +26,7 @@ export const useManageProfile = () => {
         `Profile ${payload.id ? "updated" : "created"}  Successfully! `
       );
       queryClient.invalidateQueries({ queryKey: ["profiles"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-profiles"] });
     },
     onError: (_record, payload) => {
       toast.error(`Failed to ${payload.id ? "update" : "create"}  profile! `);
