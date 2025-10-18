@@ -6,6 +6,8 @@ import { BookmarkInfo } from "@/types/types";
 import { toast } from "sonner";
 import axios from "axios";
 import { useBookmarkInfo } from "@/services/bookmarks/use-bookmark-info";
+import { useUser } from "@/providers/auth-provider";
+import { useSigninModal } from "@/hooks/use-signin-modal";
 
 interface BookmarkButtonProps {
   postId: number;
@@ -16,6 +18,9 @@ export const BookmarkButton = ({
   postId,
   initialState,
 }: BookmarkButtonProps) => {
+  const { user } = useUser();
+  const { open } = useSigninModal();
+
   const queryClient = useQueryClient();
   const { data } = useBookmarkInfo(postId, initialState);
 
@@ -48,7 +53,10 @@ export const BookmarkButton = ({
   });
 
   return (
-    <button className="flex items-center gap-2" onClick={() => mutate()}>
+    <button
+      className="flex items-center gap-2"
+      onClick={user ? () => mutate() : () => open()}
+    >
       <Bookmark
         className={cn(
           "size-5",

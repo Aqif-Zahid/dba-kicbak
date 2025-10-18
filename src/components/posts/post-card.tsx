@@ -103,9 +103,11 @@ export const PostCard = ({ post, from }: PostDataProps) => {
         <BookmarkButton
           postId={post.id}
           initialState={{
-            isBookmarkedByUser: post.bookmarks.some(
-              (bookmark) => bookmark.profileId === Number(user?.id)
-            ),
+            isBookmarkedByUser:
+              post.bookmarks &&
+              post.bookmarks.some(
+                (bookmark) => bookmark.profileId === Number(user?.id)
+              ),
           }}
         />
       </div>
