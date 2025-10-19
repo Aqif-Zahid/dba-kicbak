@@ -11,7 +11,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Button } from "../ui/button";
 import axios from "axios";
-import { signIn } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
 import { toast } from "sonner";
 import { Check, ChevronDown, UserIcon, Users } from "lucide-react";
 import { Profile, User } from "@/types/types";
@@ -25,36 +25,38 @@ export const SwitchProfileClient = ({
   user,
   profiles,
 }: SwitchProfileClientProps) => {
+  const { update } = useSession();
+
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const currentProfile = profiles.find(
     (profile) => profile.id === user.defaultProfileId
   );
 
-  const handleSwitch = (profileId: number) => {
+  const handleSwitch = async (profile: Profile) => {
     setIsMenuOpen(false);
-    if (profileId !== currentProfile?.id) {
-      switchProfile(profileId);
-    }
-  };
-
-  const switchProfile = async (newProfileId: number) => {
-    try {
-      const res = await axios.post("/api/auth/switch-profile", {
-        newProfileId,
-      });
-
-      if (res.data.status === 1) {
-        await signIn("refresh", {
-          redirect: false,
-          defaultProfileId: newProfileId,
+    if (profile.id !== currentProfile?.id) {
+      try {
+        const res = await axios.post("/api/auth/switch-profile", {
+          newProfileId: profile.id,
         });
-        toast.success("Profile switched successfully!");
+        if (res.data.status === 1) {
+          await update({
+            defaultProfileId: profile.id,
+            role: profile.role,
+            displayName: profile.displayName,
+            username: profile?.username,
+            image: profile.profilePicture,
+          });
+          toast.success("Profile switched successfully!");
+          window.location.reload();
+        }
+      } catch (error) {
+        console.error("Failed to switch profile:", error);
+        toast.error("Failed to switch profile. Please try again.");
       }
-    } catch (error) {
-      console.error("Failed to switch profile:", error);
-      toast.error("Failed to switch profile. Please try again.");
     }
   };
+
   return (
     <DropdownMenu open={isMenuOpen} onOpenChange={setIsMenuOpen}>
       <DropdownMenuTrigger asChild>
@@ -97,7 +99,7 @@ export const SwitchProfileClient = ({
         {profiles.map((profile: Profile) => (
           <DropdownMenuItem
             key={`${profile.id || "no-id"}-${profile.username || ""}`}
-            onClick={() => handleSwitch(profile.id)}
+            onClick={() => handleSwitch(profile)}
             className={cn(
               "flex items-center space-x-3 cursor-pointer p-2 rounded-lg",
               profile.id === currentProfile?.id &&

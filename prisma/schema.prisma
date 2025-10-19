@@ -41,6 +41,7 @@ model Users {
   referralsReferralsReferredUserIdToUsers Referrals?      @relation("referrals_referred_user_idTousers")
   referralsReferralsReferrerUserIdToUsers Referrals?      @relation("referrals_referrer_user_idTousers")
   rewardsLedger                           RewardsLedger[]
+  passwordResetOtps                       PasswordResetOtp[]
 
   @@map("users")
 }
@@ -392,6 +393,22 @@ model CommentVote {
   @@unique([profileId, commentId])
   @@map("comment_votes")
 }
+
+model PasswordResetOtp {
+  id        Int       @id @default(autoincrement())
+  otpHash   String    @map("otp_hash")
+  expiresAt DateTime  @map("expires_at")
+  usedAt    DateTime? @map("used_at")
+  attempts  Int       @default(0)
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  userId Int   @map("user_id")
+  user   Users @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
+  @@map("password_reset_otp")
+}
+
 
 //////////////////////////
 // ENUMS

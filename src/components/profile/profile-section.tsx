@@ -1,10 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { toast, Toaster } from "sonner";
-import { Loader2, Star, Trash2 } from "lucide-react";
+import { Star, Trash2 } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { ProfileModal } from "./profile-modal";
 import { useGetProfiles } from "@/services/profiles/use-get-profiles";
@@ -12,7 +11,8 @@ import { Profile } from "@/types/types";
 import { FaPencilAlt } from "react-icons/fa";
 import { useConfirm } from "@/hooks/use-confirm";
 import { useDeleteProfile } from "@/services/profiles/use-delete-profile";
-import { signIn } from "next-auth/react";
+import { useChangeDefaultProfile } from "@/services/profiles/use-change-default-profile";
+import Loader from "../common/loader";
 
 interface ProfileSectionProps {
   user: any;
@@ -46,36 +46,46 @@ export default function ProfileSection({ user }: ProfileSectionProps) {
     });
   };
 
-  const switchProfile = async (newProfileId: number) => {
+  const [ConfirmUpdateDialog, confirmUpdate] = useConfirm(
+    "Update Default Profile",
+    "This action can not be undone",
+    "destructive"
+  );
+
+  const { mutateAsync: updateDefaultProfile, isPending: isLoading } =
+    useChangeDefaultProfile();
+
+  const handleDefaultProfile = async (newProfileId: number) => {
+    const ok = await confirmUpdate();
+    if (!ok) {
+      return;
+    }
     try {
-      const res = await axios.post("/api/auth/switch-profile", {
-        newProfileId,
+      const res = await updateDefaultProfile({
+        id: newProfileId,
       });
 
-      if (res.data.status === 1) {
-        await signIn("refresh", {
-          redirect: false,
-          defaultProfileId: newProfileId,
-        });
-        toast.success("Profile switched successfully!");
+      if (res.status === 1) {
+        toast.success(res.message);
+      } else {
+        toast.error(
+          "Failed to update default profile profile. Please try again."
+        );
       }
     } catch (error) {
-      console.error("Failed to switch profile:", error);
-      toast.error("Failed to switch profile. Please try again.");
+      console.error("Failed to update default profile:", error);
+      toast.error("Failed to update default profile. Please try again.");
     }
   };
 
   if (isFetching || !result) {
-    return (
-      <div className="flex justify-center items-center h-32">
-        <Loader2 className="animate-spin text-gray-400" />
-      </div>
-    );
+    return <Loader />;
   }
 
   return (
     <>
       <ConfirmDialog />
+      <ConfirmUpdateDialog />
       <div className="space-y-4">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold">Manage Profiles</h2>
@@ -95,7 +105,7 @@ export default function ProfileSection({ user }: ProfileSectionProps) {
               {result.data.map((profile) => (
                 <div
                   key={profile.id}
-                  className="relative bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300 group"
+                  className="relative bg-card rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300 group"
                 >
                   {/* Default Badge */}
                   {user.defaultProfileId === profile.id && (
@@ -176,7 +186,7 @@ export default function ProfileSection({ user }: ProfileSectionProps) {
                             : "outline"
                         }
                         size="sm"
-                        onClick={() => switchProfile(profile.id)}
+                        onClick={() => handleDefaultProfile(profile.id)}
                         disabled={
                           user.defaultProfileId === profile.id || isPending
                         }
