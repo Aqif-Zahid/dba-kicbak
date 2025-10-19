@@ -123,8 +123,8 @@ export const authOptions: AuthOptions = {
         token = { ...user };
       }
       // When session is manually updated (e.g., after switching profiles)
-      if (trigger === "update" && session?.user) {
-        token = { ...token, ...session.user };
+      if (trigger === "update" && session) {
+        token = { ...token, ...session };
       }
       return token;
     },

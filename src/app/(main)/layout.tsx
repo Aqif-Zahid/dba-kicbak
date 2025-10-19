@@ -9,7 +9,6 @@ import { RequestInviteCodeModal } from "@/components/auth/request-invite-code-mo
 
 const MainLayout = async ({ children }: { children: React.ReactNode }) => {
   const session = await getServerSession(authOptions);
-
   return (
     <div className="flex min-h-screen flex-col bg-background scroll-smooth">
       <div className="sticky top-0 z-40 bg-white">
