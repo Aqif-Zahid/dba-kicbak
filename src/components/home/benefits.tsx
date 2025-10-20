@@ -1,27 +1,87 @@
 "use client";
 
-import benefitDataJson from "@/data/benefits.json";
 import { motion, AnimatePresence } from "framer-motion";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useState } from "react";
 
-// Define the expected shape of the JSON file
-type BenefitData = {
-  titles: Record<string, string>;
-  [key: string]: string[] | Record<string, string>;
+//  Inlined JSON data
+const benefitData = {
+  titles: {
+    Travelers: "Travelers Benefits",
+    Suppliers:
+      "Travel Suppliers (tours & experiences, hotels, short term vacation rentals, etc)",
+    "Creators & Affiliates":
+      "Travel Creators & Marketers (travel creators, communities, websites, apps, platforms, etc)",
+    "Agents & Advisors": "Travel Agents & Advisors",
+    "Tech & Ecosystem Partners":
+      "Travel Tech & Ecosystem Partners (B2C & B2B travel businesses)",
+  },
+
+  Travelers: [
+    "Earn Tips for Sharing Travel Advice: Get paid tips for helping others with your travel advice.",
+    "Train Your AI Travel Agent: Get your own travel AI agent trained on your preferences to help you find and book travel.",
+    "Get Better Rewards for Booking Direct: Get up to 20%+ cashback when you book direct via Kicbak.",
+    "Earn Higher Status: Get higher cashback % the more your travel and help the community.",
+    "Ultimate Travel Savings Account: Save up for travel with your own travel savings account and get bonus deposits from travel suppliers and destinations that boost your.",
+    "Get Personalized Offers: Get personalized offers from travel sellers based on your preferences.",
+    "Get Expert Travel Advice: Get experts advice from our community of travel experts and locals from around the world.",
+  ],
+
+  Suppliers: [
+    "Get Access to All Our Travelers: Access our community of travelers who book direct.",
+    "Get Direct Bookings: Boost your direct bookings and take back customers and control from OTAs.",
+    "Own Your Guests: Own the guest relationship and contact info.",
+    "Get Repeat Guests: Get repeat guests who book direct.",
+    "Your Own Loyalty Program: Customize your own direct-booking loyalty rewards program.",
+    "Boost Your Direct Booking Conversions: Convert your website visitors from lookers to bookers.",
+    "You Get a New Revenue Stream: Turn past guests who don’t return into a new revenue stream.",
+    "Build Your Brand: Build your audience of travelers and gain fans.",
+    "Extend Your Marketing: Get promoted by travel creators, travel agents/advisors, and others.",
+    "Get Included in AI Search: Get your brand and bookable inventory included in AI agent searches and search engine optimization.",
+    "Earn Tips for Sharing Advice: Get paid tips for helping others with your travel advice.",
+  ],
+
+  "Creators & Affiliates": [
+    "Forever Revenue Stream: The industry’s best affiliate program. Introduce travelers to Kicbak and earn whenever they book and every time they book, forever.",
+    "Own Your Audience: Move your followers off socials and own them on Kicbak, with full access to engage them directly, without algorithms limiting your reach.",
+    "Get Paid Sponsorships: Get paid for sponsored collaborations with travel businesses.",
+    "Get Free & Discounted Travel: Get free and discounted travel based on your content and status.",
+    "Earn Tips for Sharing Advice: Get paid tips for helping others with your travel content and advice.",
+  ],
+
+  "Agents & Advisors": [
+    "Get Access to All Our Travelers: Engage with our community of travelers for free and convert them into your customers.",
+    "Forever Revenue Stream: Introduce travelers to Kicbak and earn the industry’s best revenue share whenever they book and every time they book, forever.",
+    "Build Your Brand: Build your audience of travelers and gain fans.",
+    "Get Included in AI Search: Get your name into AI agent searches and search engine optimization.",
+    "Get Paid for Travel Advice: Get paid for helping others with their travel questions and plans.",
+  ],
+
+  "Tech & Ecosystem Partners": [
+    "Get Access to All Our Travelers and/or Travel Suppliers",
+    "Build & Own Your Community on Our Platform",
+    "Grow Your Brand to Travelers and/or Travel Suppliers",
+    "Support the Direct Booking Ecosystem",
+  ],
 };
 
-// Cast imported JSON to our type
-const benefitData = benefitDataJson as BenefitData;
-const tabKeys = Object.keys(benefitData).filter((tab) => tab !== "titles");
-const benefitEntries = Object.entries(benefitData).filter(([tab]) => tab !== "titles");
+//  Strong typing for tab keys
+type TitlesMap = typeof benefitData.titles;
+type TabKey = keyof TitlesMap;
+
+// Build tab keys & entries with correct types
+const tabKeys = Object.keys(benefitData.titles) as TabKey[];
+const benefitEntries: Array<[TabKey, string[]]> = tabKeys.map((tab) => [
+  tab,
+  benefitData[tab] as string[],
+]);
 
 export function Benefits() {
-  const [activeTab, setActiveTab] = useState(tabKeys[0]);
+  const [activeTab, setActiveTab] = useState<TabKey>(tabKeys[0]);
 
   return (
-    <Card className="w-full max-w-5xl p-6 mx-auto shadow-lg bg-gray-50 mb-40">
+    <Card className="w-full max-w-5xl p-6 mx-auto shadow-lg bg-gray-50 mb-8">
       <CardHeader>
         <CardTitle className="text-3xl font-bold text-center">
           Which are you? See how you benefit
@@ -31,7 +91,7 @@ export function Benefits() {
         <Tabs
           defaultValue={tabKeys[0]}
           value={activeTab}
-          onValueChange={setActiveTab}
+          onValueChange={(v) => setActiveTab(v as TabKey)}
           className="w-full"
         >
           {/* Sticky Scrollable Tab List */}
@@ -85,24 +145,22 @@ export function Benefits() {
                       </h2>
 
                       <ul className="space-y-4">
-                        {(benefits as string[]).map(
-                          (benefit: string, index: number) => {
-                            const [benefitTitle, benefitDesc] = benefit.split(": ");
-                            return (
-                              <li key={index} className="flex items-start">
-                                <span className="mr-2 text-xl text-[oklch(0.64_0.25_13.47)]">
-                                  •
-                                </span>
-                                <p className="text-gray-700 leading-relaxed">
-                                  <strong className="font-semibold">
-                                    {benefitTitle}
-                                  </strong>
-                                  {benefitDesc ? `: ${benefitDesc}` : ""}
-                                </p>
-                              </li>
-                            );
-                          }
-                        )}
+                        {benefits.map((benefit: string, index: number) => {
+                          const [benefitTitle, benefitDesc] = benefit.split(": ");
+                          return (
+                            <li key={index} className="flex items-start">
+                              <span className="mr-2 text-xl text-[oklch(0.64_0.25_13.47)]">
+                                •
+                              </span>
+                              <p className="text-gray-700 leading-relaxed">
+                                <strong className="font-semibold">
+                                  {benefitTitle}
+                                </strong>
+                                {benefitDesc ? `: ${benefitDesc}` : ""}
+                              </p>
+                            </li>
+                          );
+                        })}
                       </ul>
                     </motion.div>
                   </TabsContent>
