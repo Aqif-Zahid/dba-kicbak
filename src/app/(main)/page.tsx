@@ -1,4 +1,4 @@
-import { TravelBenefits } from "@/components/home/traveler-benefits";
+import { Benefits } from "@/components/home/benefits";
 import { HeroSection } from "@/components/home/hero-section";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../api/auth/[...nextauth]/route";
@@ -24,7 +24,7 @@ export default async function HomePage() {
       ) : (
         <div className="w-full flex flex-col gap-10">
           <HeroSection />
-          <TravelBenefits />
+          <Benefits />
         </div>
       )}
     </>
