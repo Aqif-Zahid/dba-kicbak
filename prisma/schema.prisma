@@ -28,8 +28,17 @@ model Users {
   dateOfBirth      String?       @map("date_of_birth")
   referralCode     String?       @map("referral_code")
   defaultProfileId Int?          @map("default_profile_id")
-  profiles         Profiles[]    @relation("UserProfiles") // all profiles for the user
+  profiles         Profiles[]    @relation("UserProfiles")
   defaultProfile   Profiles?     @relation("DefaultProfile", fields: [defaultProfileId], references: [id])
+
+  // Self-relation to track who referred this user
+  referrerId Int?    @map("referrer_id")
+  referrer   Users?  @relation("UserReferrer", fields: [referrerId], references: [id])
+  referrals  Users[] @relation("UserReferrer") // users that this user referred
+
+  // Back-relations for the Referrals table
+  referralsAsReferrer Referrals[] @relation("referrals_referrer_user_idTousers")
+  referralsAsReferred Referrals[] @relation("referrals_referred_user_idTousers")
 
   communities   Community[]
   groups        Group[]
@@ -37,49 +46,46 @@ model Users {
   mentions      Mention[]
   organizations Organization[]
 
-  referralCodes                           ReferralCodes?
-  referralsReferralsReferredUserIdToUsers Referrals?      @relation("referrals_referred_user_idTousers")
-  referralsReferralsReferrerUserIdToUsers Referrals?      @relation("referrals_referrer_user_idTousers")
-  rewardsLedger                           RewardsLedger[]
-  passwordResetOtps                       PasswordResetOtp[]
+  referralCodes     ReferralCodes?
+  rewardsLedger     RewardsLedger[]
+  passwordResetOtps PasswordResetOtp[]
 
   @@map("users")
 }
 
 model Profiles {
-  id             Int         @id @default(autoincrement()) @map("id")
-  userId         Int         @map("user_id")
-  user           Users       @relation("UserProfiles", fields: [userId], references: [id]) // all profiles
-  defaultFor     Users[]     @relation("DefaultProfile") // reverse relation for defaultProfile
-  role           ProfileRole @default(TRAVELER)
-  bio            String?     @map("bio")
-  createdAt      DateTime?   @default(now()) @map("created_at")
-  updatedAt      DateTime    @default(now()) @map("updated_at")
-  username       String      @unique(map: "profiles_username_unique") @map("username")
-  displayName    String      @map("display_name")
-  profilePicture String?     @map("profile_picture")
-  personaTags    Json?       @default("[]") @map("persona_tags")
-  votes                      Vote[]
-  comments                   Comment[]
-  posts                      Post[]
-  bookmarks                  Bookmark[]
-  receivedNotifications      Notification[] @relation("Recipient")
-  issuedNotifications        Notification[] @relation("Issuer")
-  followers                  Follow[] @relation("Followers")
-  following                  Follow[] @relation("Following")
-  votedComments              CommentVote[] @relation("ProfileVotes")
+  id                    Int            @id @default(autoincrement()) @map("id")
+  userId                Int            @map("user_id")
+  user                  Users          @relation("UserProfiles", fields: [userId], references: [id]) // all profiles
+  defaultFor            Users[]        @relation("DefaultProfile") // reverse relation for defaultProfile
+  role                  ProfileRole    @default(TRAVELER)
+  bio                   String?        @map("bio")
+  createdAt             DateTime?      @default(now()) @map("created_at")
+  updatedAt             DateTime       @default(now()) @map("updated_at")
+  username              String         @unique(map: "profiles_username_unique") @map("username")
+  displayName           String         @map("display_name")
+  profilePicture        String?        @map("profile_picture")
+  personaTags           Json?          @default("[]") @map("persona_tags")
+  votes                 Vote[]
+  comments              Comment[]
+  posts                 Post[]
+  bookmarks             Bookmark[]
+  receivedNotifications Notification[] @relation("Recipient")
+  issuedNotifications   Notification[] @relation("Issuer")
+  followers             Follow[]       @relation("Followers")
+  following             Follow[]       @relation("Following")
+  votedComments         CommentVote[]  @relation("ProfileVotes")
 
   @@map("profiles")
 }
 
 model Follow {
-  
-  followerId    Int
-  follower      Profiles     @relation("Following", fields: [followerId] , references: [id] , onDelete:  Cascade)
-  followingId   Int
-  following     Profiles     @relation("Followers", fields: [followingId] , references: [id] , onDelete:  Cascade)
-  
-  @@unique([followerId , followingId])
+  followerId  Int
+  follower    Profiles @relation("Following", fields: [followerId], references: [id], onDelete: Cascade)
+  followingId Int
+  following   Profiles @relation("Followers", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followingId])
   @@map("follows")
 }
 
@@ -136,35 +142,33 @@ model Post {
   status          PostStatus @default(DRAFT)
   upvotes         Int?       @default(0)
   downvotes       Int?       @default(0)
-  createdAt       DateTime  @default(now()) @map("created_at")
+  createdAt       DateTime   @default(now()) @map("created_at")
   updatedAt       DateTime   @default(now()) @map("updated_at")
   authorProfileId Int        @map("author_profile_id")
-  attachment                 Media[]
+  attachment      Media[]
 
-  comments          Comment[]
-  mentions          Mention[]
-  authorProfile     Profiles          @relation(fields: [authorProfileId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "posts_author_profile_id_profiles_id_fk")
-  communities       Community         @relation(fields: [communityId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "posts_community_id_communities_id_fk")
-  postsToCategories PostsToCategory[]
-  votes             Vote[]
-  linkedNotifications    Notification[]
-  bookmarks              Bookmark[]
+  comments            Comment[]
+  mentions            Mention[]
+  authorProfile       Profiles          @relation(fields: [authorProfileId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "posts_author_profile_id_profiles_id_fk")
+  communities         Community         @relation(fields: [communityId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "posts_community_id_communities_id_fk")
+  postsToCategories   PostsToCategory[]
+  votes               Vote[]
+  linkedNotifications Notification[]
+  bookmarks           Bookmark[]
 
   @@map("posts")
 }
 
-
 model Media {
-  id             String       @id  @default(cuid())
-  postId         Int?
-  post           Post?         @relation(fields: [postId] , references: [id] , onDelete:  SetNull)
-  type           MediaType
-  url            String
+  id     String    @id @default(cuid())
+  postId Int?
+  post   Post?     @relation(fields: [postId], references: [id], onDelete: SetNull)
+  type   MediaType
+  url    String
 
-  createdAt      DateTime @default(now())
+  createdAt DateTime @default(now())
 
   @@map("post_media")
-
 }
 
 model Category {
@@ -187,11 +191,11 @@ model Comment {
   updatedAt       DateTime      @default(now()) @map("updated_at")
   status          CommentStatus @default(VISIBLE)
   authorProfileId Int           @map("author_profile_id")
-  authorProfile                 Profiles  @relation(fields: [authorProfileId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "comments_author_profile_id_profiles_id_fk")
+  authorProfile   Profiles      @relation(fields: [authorProfileId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "comments_author_profile_id_profiles_id_fk")
   posts           Post          @relation(fields: [postId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "comments_post_id_posts_id_fk")
-  mentions                      Mention[]
-  votes                         Vote[]
-  commentVotes                  CommentVote[]           @relation("CommentVotes")
+  mentions        Mention[]
+  votes           Vote[]
+  commentVotes    CommentVote[] @relation("CommentVotes")
 
   @@map("comments")
 }
@@ -268,7 +272,7 @@ model ReferralCodes {
 
 model Referrals {
   id             Int            @id @default(autoincrement()) @map("id")
-  referrerUserId Int?           @unique(map: "referrals_referrer_user_id_unique") @map("referrer_user_id")
+  referrerUserId Int?           @map("referrer_user_id")
   referredEmail  String?        @map("referred_email")
   referredUserId Int?           @unique(map: "referrals_referred_user_id_unique") @map("referred_user_id")
   referralCode   String?        @map("referral_code")
@@ -276,9 +280,9 @@ model Referrals {
   createdAt      DateTime?      @default(now()) @map("created_at")
   lastEventAt    DateTime?      @map("last_event_at")
 
-  referralCodes ReferralCodes? @relation(fields: [referralCode], references: [code], onDelete: NoAction, onUpdate: NoAction, map: "referrals_referral_code_referral_codes_code_fk")
-  usersReferred Users?         @relation("referrals_referred_user_idTousers", fields: [referredUserId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "referrals_referred_user_id_users_id_fk")
   usersReferrer Users?         @relation("referrals_referrer_user_idTousers", fields: [referrerUserId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "referrals_referrer_user_id_users_id_fk")
+  usersReferred Users?         @relation("referrals_referred_user_idTousers", fields: [referredUserId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "referrals_referred_user_id_users_id_fk")
+  referralCodes ReferralCodes? @relation(fields: [referralCode], references: [code], onDelete: NoAction, onUpdate: NoAction, map: "referrals_referral_code_referral_codes_code_fk")
 
   @@map("referrals")
 }
@@ -325,14 +329,14 @@ model SystemSettings {
 
 model Vote {
   id        Int       @id @default(autoincrement()) @map("id")
-  profileId  Int       @map("profile_id")
+  profileId Int       @map("profile_id")
   postId    Int?      @map("post_id")
   commentId Int?      @map("comment_id")
   voteType  VoteType  @map("vote_type")
   createdAt DateTime? @default(now()) @map("created_at")
-  comments Comment? @relation(fields: [commentId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "votes_comment_id_comments_id_fk")
-  posts    Post?    @relation(fields: [postId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "votes_post_id_posts_id_fk")
-  profiles    Profiles @relation(fields: [profileId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "votes_profile_id_profiles_id_fk")
+  comments  Comment?  @relation(fields: [commentId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "votes_comment_id_comments_id_fk")
+  posts     Post?     @relation(fields: [postId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "votes_post_id_posts_id_fk")
+  profiles  Profiles  @relation(fields: [profileId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "votes_profile_id_profiles_id_fk")
 
   @@unique([profileId, postId])
   @@map("votes")
@@ -349,33 +353,31 @@ model EmailEvent {
 }
 
 model Bookmark {
-  id         String     @id @default(cuid()) @map("id")
-  profileId  Int        @map("profile_id")
-  userProfile    Profiles   @relation(fields: [profileId], references: [id], onDelete: Cascade)
-  postId     Int        @map("post_id")
-  post       Post       @relation(fields: [postId], references: [id], onDelete: Cascade)
-  createdAt  DateTime   @default(now()) @map("created_at")
+  id          String   @id @default(cuid()) @map("id")
+  profileId   Int      @map("profile_id")
+  userProfile Profiles @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  postId      Int      @map("post_id")
+  post        Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now()) @map("created_at")
 
   @@unique([profileId, postId])
   @@map("bookmarks")
 }
 
-
 model Notification {
-  id          String       @id @default(cuid()) @map("id")
-  recipientId Int          @map("recipient_id")
-  recipient   Profiles     @relation("Recipient", fields: [recipientId], references: [id], onDelete: Cascade)
-  issuerId    Int          @map("issuer_id")
-  issuer      Profiles     @relation("Issuer", fields: [issuerId], references: [id], onDelete: Cascade)
-  postId      Int?         @map("post_id")
-  post        Post?        @relation(fields: [postId], references: [id], onDelete: Cascade)
+  id          String           @id @default(cuid()) @map("id")
+  recipientId Int              @map("recipient_id")
+  recipient   Profiles         @relation("Recipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  issuerId    Int              @map("issuer_id")
+  issuer      Profiles         @relation("Issuer", fields: [issuerId], references: [id], onDelete: Cascade)
+  postId      Int?             @map("post_id")
+  post        Post?            @relation(fields: [postId], references: [id], onDelete: Cascade)
   type        NotificationType @map("type")
-  read        Boolean      @default(false) @map("read")
-  createdAt   DateTime     @default(now()) @map("created_at")
-  
+  read        Boolean          @default(false) @map("read")
+  createdAt   DateTime         @default(now()) @map("created_at")
+
   @@map("notifications")
 }
-
 
 //////////////////////////
 // COMMENT LIKES
@@ -383,12 +385,12 @@ model Notification {
 
 model CommentVote {
   id        Int      @id @default(autoincrement()) @map("id")
-  voteType  VoteType  @map("vote_type")
+  voteType  VoteType @map("vote_type")
   profileId Int      @map("profile_id")
   commentId Int      @map("comment_id")
   createdAt DateTime @default(now()) @map("created_at")
-  profile Profiles   @relation("ProfileVotes", fields: [profileId], references: [id], map: "comment_votes_profile_id_profiles_fk")
-  comment Comment    @relation("CommentVotes", fields: [commentId], references: [id], map: "comment_votes_comment_id_comments_fk")
+  profile   Profiles @relation("ProfileVotes", fields: [profileId], references: [id], map: "comment_votes_profile_id_profiles_fk")
+  comment   Comment  @relation("CommentVotes", fields: [commentId], references: [id], map: "comment_votes_comment_id_comments_fk")
 
   @@unique([profileId, commentId])
   @@map("comment_votes")
@@ -408,7 +410,6 @@ model PasswordResetOtp {
   @@index([userId, expiresAt])
   @@map("password_reset_otp")
 }
-
 
 //////////////////////////
 // ENUMS
@@ -487,7 +488,6 @@ enum VoteType {
 enum MediaType {
   IMAGE
   VIDEO
-
 }
 
 enum NotificationType {

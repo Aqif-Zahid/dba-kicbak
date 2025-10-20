@@ -12,7 +12,6 @@ const signupSchema = z.object({
   usernameDesired: z.string().min(3).max(20),
   personaSelected: z.array(z.string()).optional(),
   referralCode: z.string().optional(),
-  source: z.string().optional(),
   password: z
     .string()
     .min(8, "Password must be at least 8 characters")
@@ -22,6 +21,25 @@ const signupSchema = z.object({
       "Password must include uppercase, lowercase, number, and special character"
     ),
 });
+
+// === Helper function to resolve referrer ID ===
+async function getReferrerId(referralCode?: string): Promise<number | null> {
+  if (!referralCode) return null;
+
+  const referralCodeRecord = await prisma.referralCodes.findUnique({
+    where: { code: referralCode },
+  });
+
+  if (referralCodeRecord?.userId) {
+    return referralCodeRecord.userId;
+  }
+
+  const referrerUser = await prisma.users.findFirst({
+    where: { referralCode: referralCode },
+  });
+
+  return referrerUser ? referrerUser.id : null;
+}
 
 // === POST handler ===
 export async function POST(req: Request) {
@@ -43,11 +61,9 @@ export async function POST(req: Request) {
     usernameDesired,
     personaSelected,
     referralCode,
-    source,
   } = parse.data;
 
   try {
-    // 1️⃣ Check if email already exists
     const existingUser = await prisma.users.findUnique({
       where: { email },
     });
@@ -61,32 +77,28 @@ export async function POST(req: Request) {
 
     if (existingUser.status !== "PENDING") {
       return NextResponse.json(
-        { status: 0, message: "User has already an account with this email" },
+        { status: 0, message: "User already has an account with this email" },
         { status: 409 }
       );
     }
 
-    // 2️⃣ Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
+    const referrerId = await getReferrerId(referralCode);
 
-    // 3️⃣ Transaction: Create user + default profile
     const result = await prisma.$transaction(async (tx: any) => {
-      // 3a. Create User
       await tx.users.update({
         where: { id: existingUser.id },
         data: {
-          email: existingUser.email,
           passwordHash: hashedPassword,
           status: "ACTIVE",
           authProvider: "LOCAL",
           personaSelected: personaSelected ?? [],
-          source,
           referralCode,
+          referrerId: referrerId ?? null,
           inviteRequired: true,
         },
       });
 
-      // 3b. Create Default Profile
       const newProfile = await tx.profiles.create({
         data: {
           userId: existingUser.id,
@@ -98,21 +110,32 @@ export async function POST(req: Request) {
 
       if (!newProfile) throw new Error("Failed to create default profile.");
 
-      // 3c. Update User with defaultProfileId
       await tx.users.update({
         where: { id: existingUser.id },
         data: { defaultProfileId: newProfile.id },
       });
+
+      if (referrerId) {
+        await tx.referrals.create({
+          data: {
+            referrerUserId: referrerId,
+            referredUserId: existingUser.id,
+            referredEmail: email,
+            referralCode: referralCode ?? null,
+            status: "SIGNED_UP",
+          },
+        });
+      }
 
       await streamServerClient.upsertUser({
         id: String(newProfile.id),
         username: usernameDesired,
         name: `${firstName} ${lastName}`,
       });
+
       return { userId: existingUser.id, profileId: newProfile.id };
     });
 
-    // 4️⃣ Return success
     return NextResponse.json(
       { status: 1, message: "Signed up successfully", userId: result.userId },
       { status: 200 }
