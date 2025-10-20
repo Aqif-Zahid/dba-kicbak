@@ -36,6 +36,8 @@ export const NewChatModal = ({
   );
   const [searchInput, setSearchInput] = useState("");
   const searchInputDebounce = useDebouncedValue(searchInput);
+  const [chatName, setChatName] = useState("");
+  const isGroupChat = selectedUsers.length > 1;
 
   const userRefs = useRef<Record<string, HTMLButtonElement | null>>({});
 
@@ -99,7 +101,8 @@ export const NewChatModal = ({
       const channel = client.channel("messaging", undefined, {
         members: memberIds.map(String),
         name: isGroup
-          ? memberIds
+          ? chatName ||
+            memberIds
               .map((id) =>
                 id === loggedInUser.defaultProfileId
                   ? loggedInUser.displayName
@@ -126,7 +129,7 @@ export const NewChatModal = ({
 
   return (
     <Dialog open onOpenChange={onOpenChange}>
-      <DialogContent className="bg-card p-0">
+      <DialogContent className="bg-card p-0 max-h-[90vh] scroll-y-auto">
         <DialogHeader className="px-6 pt-6">
           <DialogTitle>{headerText}</DialogTitle>
         </DialogHeader>
@@ -158,6 +161,21 @@ export const NewChatModal = ({
                   }
                 />
               ))}
+            </div>
+          )}
+
+          {isGroupChat && (
+            <div className="p-4">
+              <label className="mb-1 block text-sm font-medium text-muted-foreground">
+                Chat Name (optional)
+              </label>
+              <input
+                type="text"
+                placeholder="Enter a group name..."
+                className="w-full rounded-md border px-3 py-2 focus:border-primary focus:outline-none"
+                value={chatName}
+                onChange={(e) => setChatName(e.target.value)}
+              />
             </div>
           )}
 

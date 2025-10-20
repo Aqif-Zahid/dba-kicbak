@@ -43,7 +43,9 @@ export const Notification = ({ notification }: NotificationProps) => {
         <div className="space-y-2">
           <UserAvatar
             avatarUrl={notification.issuer.profilePicture}
-            avatarFallback={notification.issuer.username.charAt(0)}
+            avatarFallback={notification.issuer.username
+              .charAt(0)
+              .toUpperCase()}
             size={36}
           />
           <div>
