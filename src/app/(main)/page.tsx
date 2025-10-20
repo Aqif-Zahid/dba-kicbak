@@ -1,9 +1,10 @@
-import { TravelBenefits } from "@/components/home/traveler-benefits";
+import { Benefits } from "@/components/home/benefits";
 import { HeroSection } from "@/components/home/hero-section";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../api/auth/[...nextauth]/route";
 import { TrendsSidebar } from "@/components/common/trends-sidebar";
 import { ForYouFeed } from "@/components/home/for-you-feed";
+import { Comparisons } from "@/components/home/comparisons";
 
 export default async function HomePage() {
   const session = await getServerSession(authOptions);
@@ -24,7 +25,8 @@ export default async function HomePage() {
       ) : (
         <div className="w-full flex flex-col gap-10">
           <HeroSection />
-          <TravelBenefits />
+          <Benefits />
+          <Comparisons />
         </div>
       )}
     </>
