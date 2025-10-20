@@ -1,4 +1,4 @@
-import NextAuth, { AuthOptions, User as NextAuthUser } from "next-auth";
+import NextAuth, { AuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
@@ -8,10 +8,18 @@ import type {
   Profiles as ProfileType,
 } from "@prisma/client";
 
-// Extend the NextAuth User type to include defaultProfileId
+// Extend NextAuth User type
 declare module "next-auth" {
   interface User {
-    defaultProfileId?: string | number | null;
+    id: string;
+    status: string;
+    role: string | null;
+    username: string | null;
+    displayName: string | null;
+    image: string | null;
+    phoneNumber: string | null;
+    dateOfBirth: string | null;
+    defaultProfileId: string | number | null;
   }
 }
 
@@ -41,14 +49,16 @@ export const authOptions: AuthOptions = {
           !userRecord ||
           !userRecord.passwordHash ||
           userRecord.status !== "ACTIVE"
-        )
+        ) {
           return null;
+        }
 
         const isValid = await bcrypt.compare(
           credentials.password,
           userRecord.passwordHash
         );
         if (!isValid) return null;
+
         return {
           id: userRecord.id.toString(),
           email: userRecord.email,
@@ -69,37 +79,37 @@ export const authOptions: AuthOptions = {
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
       async profile(profile) {
-        let existingUser = (await prisma.users.findUnique({
+        const existingUser = (await prisma.users.findUnique({
           where: { email: profile.email },
           include: { defaultProfile: true },
         })) as UserWithRelations | null;
 
-        // --- New User ---
-        if (!existingUser) {
-          existingUser = await prisma.users.create({
-            data: {
-              email: profile.email!,
-              authProvider: "GOOGLE",
-              status: "PENDING",
-            },
-            include: { profiles: true, defaultProfile: true },
-          });
-
+        if (!existingUser || existingUser.status !== "ACTIVE") {
+          let newUser = existingUser;
+          if (!existingUser) {
+            newUser = await prisma.users.create({
+              data: {
+                email: profile.email!,
+                authProvider: "GOOGLE",
+                status: "PENDING",
+              },
+              include: { profiles: true, defaultProfile: true },
+            });
+          }
           return {
-            id: existingUser.id.toString(),
-            email: existingUser.email,
-            status: existingUser.status,
+            id: newUser?.id.toString() || "0", //Temporary will check for a better solution
+            email: newUser?.email,
+            status: "PENDING",
             role: null,
-            displayName: null,
+            displayName: `${profile.given_name}_${profile.family_name}`,
             username: null,
-            image: profile.picture ?? null,
+            image: profile.image,
             phoneNumber: null,
             dateOfBirth: null,
-            defaultProfileId: existingUser.defaultProfileId,
+            defaultProfileId: newUser?.defaultProfileId || 0,
           };
         }
 
-        // --- Existing User ---
         return {
           id: existingUser.id.toString(),
           email: existingUser.email,
@@ -117,28 +127,57 @@ export const authOptions: AuthOptions = {
   ],
 
   callbacks: {
-    async jwt({ token, user, trigger, session }) {
-      // When the user logs in for the first time or the token is refreshed
-      if (user) {
-        token = { ...user };
+    async signIn({ user, account }) {
+      if (account?.provider !== "google") return true;
+      if (!user?.email) return false;
+
+      const existingUser = (await prisma.users.findUnique({
+        where: { email: user.email },
+        include: { defaultProfile: true },
+      })) as UserWithRelations | null;
+
+      // New or Pending → return redirect URL as string
+      if (!existingUser || existingUser.status === "PENDING") {
+        return `/api/auth/complete-profile/set-cookie?id=${
+          user.id
+        }&email=${encodeURIComponent(
+          user.email
+        )}&displayName=${encodeURIComponent(
+          user.displayName || ""
+        )}&image=${encodeURIComponent(user.image || "")}`;
       }
-      // When session is manually updated (e.g., after switching profiles)
-      if (trigger === "update" && session) {
-        token = { ...token, ...session };
+
+      // Active → allow login normally
+      return true;
+    },
+
+    async jwt({ token, user }) {
+      if (user) {
+        token = { ...token, ...user };
+        if ((user as any).redirectTo)
+          token.redirectTo = (user as any).redirectTo;
       }
       return token;
     },
+
     async session({ session, token }) {
-      if (token) {
-        session.user = { ...session.user, ...token } as Session["user"];
-      }
+      session.user = { ...session.user, ...token } as typeof session.user;
       return session;
+    },
+
+    async redirect({ url, baseUrl }) {
+      // Handle relative URLs
+      if (url.startsWith("/")) return `${baseUrl}${url}`;
+      if (url.startsWith(baseUrl)) return url;
+      return baseUrl;
     },
   },
 
-  pages: { signIn: "/auth/signin" },
+  pages: {
+    signIn: "/auth/signin",
+  },
 };
 
-// --- App Router compatibility ---
+// --- App Router handlers ---
 export const GET = NextAuth(authOptions);
 export const POST = NextAuth(authOptions);
