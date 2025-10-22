@@ -1,10 +1,26 @@
 import { headers } from "next/headers";
-import { Home, FileText, Hourglass, UserCog, LockKeyhole } from "lucide-react";
+import {
+  Home,
+  FileText,
+  Hourglass,
+  UserCog,
+  LockKeyhole,
+  LayoutGrid,
+  ListTree,
+  MessageCircle,
+  Plus,
+} from "lucide-react";
 import { Button } from "../ui/button";
 import Link from "next/link";
 import LogOutButton from "./log-out-button";
 import { SwitchProfile } from "./switch-profile";
 import { FaUserGroup } from "react-icons/fa6";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "../ui/accordion";
 
 interface MenubarProps {
   className?: string;
@@ -76,6 +92,67 @@ export const Sidebar = async ({ className, user }: MenubarProps) => {
           </Button>
         </>
       )}
+
+      <Accordion type="single" collapsible className="w-full">
+        <AccordionItem value="community">
+          <AccordionTrigger className=" px-3 py-2 rounded-lg hover:no-underline">
+            <div className="flex items-center gap-3">
+              <LayoutGrid className="w-4 h-4 flex-shrink-0" />
+              <span className="hidden lg:inline"> Communities</span>
+            </div>
+          </AccordionTrigger>
+          <AccordionContent className="pl-10 flex flex-col space-y-2">
+            <Button
+              variant={
+                url.includes("/communities/create") ? "default" : "ghost"
+              }
+              className="justify-start hover:bg-primary hover:text-white"
+              asChild
+            >
+              <Link href="/communities/create">
+                <Plus className="w-4 h-4 mr-2" />
+                Create Communities
+              </Link>
+            </Button>
+            <Button
+              variant={url.includes("/admin/communities") ? "default" : "ghost"}
+              className="justify-start hover:bg-primary hover:text-white"
+              asChild
+            >
+              <Link href="/communities">
+                <ListTree className="w-4 h-4 mr-2" />
+                Manage Communities
+              </Link>
+            </Button>
+            {isAdmin && (
+              <>
+                <Button
+                  variant={
+                    url.includes("/admin/topic-groups") ? "default" : "ghost"
+                  }
+                  className="justify-start hover:bg-primary hover:text-white"
+                  asChild
+                >
+                  <Link href="/admin/topic-groups">
+                    <MessageCircle className="w-4 h-4 mr-2" />
+                    Topic Groups
+                  </Link>
+                </Button>
+                <Button
+                  variant={url.includes("/admin/topics") ? "default" : "ghost"}
+                  className="justify-start hover:bg-primary hover:text-white"
+                  asChild
+                >
+                  <Link href="/admin/topics">
+                    <FileText className="w-4 h-4 mr-2" />
+                    Topics
+                  </Link>
+                </Button>
+              </>
+            )}
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
 
       {user && (
         <>

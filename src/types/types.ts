@@ -264,3 +264,29 @@ export interface ProfileAdmin extends Profile {
     status?: string | null;
   };
 }
+
+export type Topic = {
+  id: number;
+  title: string;
+  description?: string;
+  communityId?: number;
+  groupId?: number;
+  createdById: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type TopicGroup = {
+  id: number;
+  name: string;
+  description: string;
+  createdAt: string;
+  createdById: number;
+  topics: Topic[];
+  createdBy: {
+    id: number;
+    displayName: string;
+    username: string;
+    profilePicture: string;
+  };
+};
