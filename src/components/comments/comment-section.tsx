@@ -1,4 +1,7 @@
-import { useInfiniteQuery } from "@tanstack/react-query";
+"use client";
+
+import { useEffect } from "react";
+import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { Post } from "@/types/types";
@@ -11,30 +14,53 @@ interface CommentSectionProps {
 }
 
 export const CommentSection = ({ post }: CommentSectionProps) => {
-  const { data, fetchNextPage, hasNextPage, isFetching, status } =
-    useInfiniteQuery({
-      queryKey: ["comments", post.id],
-      queryFn: async ({ pageParam }) => {
-        const res = await axios.get(
-          `/api/posts/${post.id}/comments`,
-          pageParam ? { params: { cursor: pageParam } } : {}
-        );
-        return res.data;
-      },
+  const queryClient = useQueryClient();
 
-      initialPageParam: null as string | null,
-      getNextPageParam: (firstPage) => firstPage.previousCursor,
-      select: (data) => ({
-        pages: [...data.pages].reverse(),
-        pageParams: [...data.pageParams].reverse(),
-      }),
-    });
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetching,
+    status,
+    refetch,
+  } = useInfiniteQuery({
+    queryKey: ["comments", post.id],
+    queryFn: async ({ pageParam }) => {
+      const res = await axios.get(
+        `/api/posts/${post.id}/comments`,
+        pageParam ? { params: { cursor: pageParam } } : {}
+      );
+      return res.data;
+    },
+    initialPageParam: null as string | null,
+    getNextPageParam: (firstPage) => firstPage?.data?.previousCursor ?? null,
+    select: (data) => ({
+      pages: [...data.pages].reverse(),
+      pageParams: [...data.pageParams].reverse(),
+    }),
+  });
 
-  const comments = data?.pages.flatMap((page) => page.comments) || [];
+  useEffect(() => {
+    refetch();
+  }, [post.allowComments, post.id, refetch, queryClient]);
+
+  const comments =
+    data?.pages?.flatMap((page) => page?.data?.comments ?? []) ?? [];
+
+  const commentsDisabled =
+    data?.pages?.[data.pages.length - 1]?.commentsDisabled ?? false;
 
   return (
-    <div>
-      <CommentInput post={post} />
+    <div className="mt-4">
+      {!commentsDisabled ? (
+        <CommentInput post={post} />
+      ) : (
+        <p className="text-sm text-muted-foreground italic mb-4">
+          Commenting is disabled for this post.
+        </p>
+      )}
+
+      {/* Load older comments */}
       {hasNextPage && (
         <Button
           variant="link"
@@ -42,11 +68,13 @@ export const CommentSection = ({ post }: CommentSectionProps) => {
           disabled={isFetching}
           onClick={() => fetchNextPage()}
         >
-          Load previous comment
+          Load previous comments
         </Button>
       )}
+
+      {/* States */}
       {status === "pending" && <Loader2 className="mx-auto animate-spin" />}
-      {status === "success" && !comments.length && (
+      {status === "success" && comments.length === 0 && (
         <p className="text-center text-muted-foreground">No comments yet.</p>
       )}
       {status === "error" && (
@@ -54,10 +82,12 @@ export const CommentSection = ({ post }: CommentSectionProps) => {
           An error occurred while loading comments.
         </p>
       )}
+
+      {/* Safe rendering of comments */}
       <div className="divide-y">
-        {comments.map((comment) => (
-          <Comment key={comment.id} comment={comment} />
-        ))}
+        {comments.map((comment) =>
+          comment ? <Comment key={comment.id} comment={comment} /> : null
+        )}
       </div>
     </div>
   );

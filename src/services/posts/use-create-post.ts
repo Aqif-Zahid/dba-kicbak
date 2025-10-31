@@ -9,14 +9,26 @@ import {
 } from "@tanstack/react-query";
 import { toast } from "sonner";
 
+// Inputs your server action now accepts
+type CreatePostInput = {
+  title: string;
+  content: string;
+  mediaIds: string[];
+  communityId?: number;
+  type: "POLL" | "QUESTION" | "DISCUSSION";
+  allowComments: boolean;
+};
+
 export function useCreatePost() {
   const queryClient = useQueryClient();
-
   const { user } = useUser();
 
   const mutation = useMutation({
-    mutationFn: createPost,
+    // pass the input through to the server action
+    mutationFn: (input: CreatePostInput) => createPost(input),
+
     onSuccess: async (newPost) => {
+      // keep your existing feed cache update behavior
       const queryFilter = {
         queryKey: ["post-feed"],
         predicate(query) {
@@ -34,29 +46,31 @@ export function useCreatePost() {
         queryFilter,
         (oldData) => {
           const firstPage = oldData?.pages[0];
-          if (firstPage) {
-            return {
-              pageParams: oldData.pageParams,
-              pages: [
-                {
-                  posts: [newPost, ...firstPage.posts],
-                  nextCursor: firstPage.nextCursor,
-                },
-                ...oldData.pages.slice(1),
-              ],
-            };
-          }
+          if (!firstPage) return oldData;
+          return {
+            pageParams: oldData.pageParams,
+            pages: [
+              {
+                posts: [newPost, ...firstPage.posts],
+                nextCursor: firstPage.nextCursor,
+              },
+              ...oldData.pages.slice(1),
+            ],
+          };
         }
       );
 
+      // re-fetch for queries that had no data yet
       queryClient.invalidateQueries({
         queryKey: queryFilter.queryKey,
-        predicate(query) {
-          return queryFilter.predicate(query) && !query.state.data;
+        predicate(q) {
+          return queryFilter.predicate(q) && !q.state.data;
         },
       });
+
       toast.success("Post created successfully");
     },
+
     onError(error) {
       console.error(error);
       toast.error("Failed to post. Please try again.");

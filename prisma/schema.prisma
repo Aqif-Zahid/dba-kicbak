@@ -37,8 +37,8 @@ model Users {
   organizations Organization[]
 
   referralCodes                           ReferralCodes?
-  referralsReferralsReferredUserIdToUsers Referrals?      @relation("referrals_referred_user_idTousers")
-  referralsReferralsReferrerUserIdToUsers Referrals?      @relation("referrals_referrer_user_idTousers")
+  referralsReferralsReferredUserIdToUsers Referrals?         @relation("referrals_referred_user_idTousers")
+  referralsReferralsReferrerUserIdToUsers Referrals?         @relation("referrals_referrer_user_idTousers")
   rewardsLedger                           RewardsLedger[]
   passwordResetOtps                       PasswordResetOtp[]
 
@@ -46,52 +46,52 @@ model Users {
 }
 
 model Profiles {
-  id                   Int         @id @default(autoincrement()) @map("id")
-  userId               Int         @map("user_id")
-  user                 Users       @relation("UserProfiles", fields: [userId], references: [id])
-  defaultFor           Users[]     @relation("DefaultProfile")
-  role                 ProfileRole @default(TRAVELER)
-  bio                  String?     @map("bio")
-  createdAt            DateTime?   @default(now()) @map("created_at")
-  updatedAt            DateTime    @default(now()) @map("updated_at")
-  username             String      @unique(map: "profiles_username_unique") @map("username")
-  displayName          String      @map("display_name")
-  profilePicture       String?     @map("profile_picture")
-  personaTags          Json?       @default("[]") @map("persona_tags")
-  votes                Vote[]
-  comments             Comment[]
-  posts                Post[]
-  bookmarks            Bookmark[]
+  id                    Int            @id @default(autoincrement()) @map("id")
+  userId                Int            @map("user_id")
+  user                  Users          @relation("UserProfiles", fields: [userId], references: [id])
+  defaultFor            Users[]        @relation("DefaultProfile")
+  role                  ProfileRole    @default(TRAVELER)
+  bio                   String?        @map("bio")
+  createdAt             DateTime?      @default(now()) @map("created_at")
+  updatedAt             DateTime       @default(now()) @map("updated_at")
+  username              String         @unique(map: "profiles_username_unique") @map("username")
+  displayName           String         @map("display_name")
+  profilePicture        String?        @map("profile_picture")
+  personaTags           Json?          @default("[]") @map("persona_tags")
+  votes                 Vote[]
+  comments              Comment[]
+  posts                 Post[]
+  bookmarks             Bookmark[]
   receivedNotifications Notification[] @relation("Recipient")
   issuedNotifications   Notification[] @relation("Issuer")
-  followers            Follow[] @relation("Followers")
-  following            Follow[] @relation("Following")
-  votedComments        CommentVote[] @relation("ProfileVotes")
-  
+  followers             Follow[]       @relation("Followers")
+  following             Follow[]       @relation("Following")
+  votedComments         CommentVote[]  @relation("ProfileVotes")
+
   // Communities **owned** by this profile
-  ownedCommunities     Community[] @relation("CommunityOwner")
-  
+  ownedCommunities Community[] @relation("CommunityOwner")
+
   // Communities this profile is a **member** of
-  memberOfCommunities  Community[] @relation("CommunityMembers")
-  
+  memberOfCommunities Community[] @relation("CommunityMembers")
+
   // Favorite communities
-  favoriteCommunities  Community[] @relation("FavoriteCommunities")
-  
+  favoriteCommunities Community[] @relation("FavoriteCommunities")
+
   // Topics created by this profile
-  createdTopicGroups   TopicGroup[]
-  createdTopics        Topic[]
+  createdTopicGroups TopicGroup[]
+  createdTopics      Topic[]
+  PollVote           PollVote[]
 
   @@map("profiles")
 }
 
 model Follow {
-  
-  followerId    Int
-  follower      Profiles     @relation("Following", fields: [followerId] , references: [id] , onDelete:  Cascade)
-  followingId   Int
-  following     Profiles     @relation("Followers", fields: [followingId] , references: [id] , onDelete:  Cascade)
-  
-  @@unique([followerId , followingId])
+  followerId  Int
+  follower    Profiles @relation("Following", fields: [followerId], references: [id], onDelete: Cascade)
+  followingId Int
+  following   Profiles @relation("Followers", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followingId])
   @@map("follows")
 }
 
@@ -114,59 +114,54 @@ model Organization {
 //////////////////////////
 
 model Community {
-  id           Int        @id @default(autoincrement()) @map("id")
-  name         String     @map("name")
-  slug         String     @unique(map: "communities_slug_unique") @map("slug")
-  description  String?    @map("description")
+  id          Int        @id @default(autoincrement()) @map("id")
+  name        String     @map("name")
+  slug        String     @unique(map: "communities_slug_unique") @map("slug")
+  description String?    @map("description")
   // Owner relation
-  ownerId      Int @default(1)
-  owner        Profiles   @relation("CommunityOwner", fields: [ownerId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  ownerId     Int        @default(1)
+  owner       Profiles   @relation("CommunityOwner", fields: [ownerId], references: [id], onDelete: Cascade, onUpdate: NoAction)
   // Members of this community (many-to-many)
-  members      Profiles[] @relation("CommunityMembers")
-  createdAt    DateTime?  @default(now()) @map("created_at")
-  posts        Post[]
+  members     Profiles[] @relation("CommunityMembers")
+  createdAt   DateTime?  @default(now()) @map("created_at")
+  posts       Post[]
   // Favorite communities
-  favoredBy    Profiles[] @relation("FavoriteCommunities")
+  favoredBy   Profiles[] @relation("FavoriteCommunities")
   // Topics within this community
-  topics      Topic[] 
+  topics      Topic[]
 
   @@map("communities")
 }
 
-
-
 model TopicGroup {
-  id           Int          @id @default(autoincrement())
-  name         String
-  description  String?
-  createdAt    DateTime?    @default(now())
-  topics       Topic[]
-  createdById  Int
-  createdBy    Profiles     @relation(fields: [createdById], references: [id])
+  id          Int       @id @default(autoincrement())
+  name        String
+  description String?
+  createdAt   DateTime? @default(now())
+  topics      Topic[]
+  createdById Int
+  createdBy   Profiles  @relation(fields: [createdById], references: [id])
 
   @@map("topic_groups")
 }
 
 model Topic {
-  id           Int          @id @default(autoincrement())
-  communityId  Int? 
-  groupId      Int          // required
-  title        String
-  description  String?
-  createdAt    DateTime?    @default(now())
-  updatedAt    DateTime     @default(now())
-  createdById  Int
-  createdBy    Profiles     @relation(fields: [createdById], references: [id])
+  id          Int       @id @default(autoincrement())
+  communityId Int?
+  groupId     Int // required
+  title       String
+  description String?
+  createdAt   DateTime? @default(now())
+  updatedAt   DateTime  @default(now())
+  createdById Int
+  createdBy   Profiles  @relation(fields: [createdById], references: [id])
 
   // Relation to group
-  group        TopicGroup   @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  community    Community?  @relation(fields: [communityId], references: [id], onDelete: SetNull)
+  group     TopicGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  community Community? @relation(fields: [communityId], references: [id], onDelete: SetNull)
 
   @@map("topics")
 }
-
-
-
 
 model Group {
   id        Int       @id @default(autoincrement()) @map("id")
@@ -189,35 +184,37 @@ model Post {
   status          PostStatus @default(DRAFT)
   upvotes         Int?       @default(0)
   downvotes       Int?       @default(0)
-  createdAt       DateTime  @default(now()) @map("created_at")
+  createdAt       DateTime   @default(now()) @map("created_at")
   updatedAt       DateTime   @default(now()) @map("updated_at")
   authorProfileId Int        @map("author_profile_id")
-  attachment                 Media[]
+  attachment      Media[]
+  type            PostType   @default(DISCUSSION)
+  allowComments   Boolean    @default(true)
 
-  comments          Comment[]
-  mentions          Mention[]
-  authorProfile     Profiles          @relation(fields: [authorProfileId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "posts_author_profile_id_profiles_id_fk")
-  communities       Community         @relation(fields: [communityId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "posts_community_id_communities_id_fk")
-  postsToCategories PostsToCategory[]
-  votes             Vote[]
-  linkedNotifications    Notification[]
-  bookmarks              Bookmark[]
+  comments            Comment[]
+  mentions            Mention[]
+  authorProfile       Profiles          @relation(fields: [authorProfileId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "posts_author_profile_id_profiles_id_fk")
+  communities         Community         @relation(fields: [communityId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "posts_community_id_communities_id_fk")
+  postsToCategories   PostsToCategory[]
+  votes               Vote[]
+  linkedNotifications Notification[]
+  bookmarks           Bookmark[]
+
+  poll Poll? @relation("PostPoll")
 
   @@map("posts")
 }
 
-
 model Media {
-  id             String       @id  @default(cuid())
-  postId         Int?
-  post           Post?         @relation(fields: [postId] , references: [id] , onDelete:  SetNull)
-  type           MediaType
-  url            String
+  id     String    @id @default(cuid())
+  postId Int?
+  post   Post?     @relation(fields: [postId], references: [id], onDelete: SetNull)
+  type   MediaType
+  url    String
 
-  createdAt      DateTime @default(now())
+  createdAt DateTime @default(now())
 
   @@map("post_media")
-
 }
 
 model Category {
@@ -240,11 +237,11 @@ model Comment {
   updatedAt       DateTime      @default(now()) @map("updated_at")
   status          CommentStatus @default(VISIBLE)
   authorProfileId Int           @map("author_profile_id")
-  authorProfile                 Profiles  @relation(fields: [authorProfileId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "comments_author_profile_id_profiles_id_fk")
+  authorProfile   Profiles      @relation(fields: [authorProfileId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "comments_author_profile_id_profiles_id_fk")
   posts           Post          @relation(fields: [postId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "comments_post_id_posts_id_fk")
-  mentions                      Mention[]
-  votes                         Vote[]
-  commentVotes                  CommentVote[]           @relation("CommentVotes")
+  mentions        Mention[]
+  votes           Vote[]
+  commentVotes    CommentVote[] @relation("CommentVotes")
 
   @@map("comments")
 }
@@ -261,6 +258,37 @@ model Mention {
   users    Users    @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "mentions_user_id_users_id_fk")
 
   @@map("mentions")
+}
+
+model Poll {
+  id            Int          @id @default(autoincrement())
+  postId        Int          @unique
+  post          Post         @relation("PostPoll", fields: [postId], references: [id], onDelete: Cascade)
+  expiresAt     DateTime
+  isClosed      Boolean      @default(false)
+  allowMultiple Boolean      @default(false)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  options       PollOption[]
+}
+
+model PollOption {
+  id     Int        @id @default(autoincrement())
+  pollId Int
+  poll   Poll       @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  text   String
+  votes  PollVote[]
+}
+
+model PollVote {
+  id        Int        @id @default(autoincrement())
+  optionId  Int
+  option    PollOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  profileId Int
+  profile   Profiles   @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  createdAt DateTime   @default(now())
+
+  @@unique([optionId, profileId]) // one vote per option per user
 }
 
 //////////////////////////
@@ -378,14 +406,14 @@ model SystemSettings {
 
 model Vote {
   id        Int       @id @default(autoincrement()) @map("id")
-  profileId  Int       @map("profile_id")
+  profileId Int       @map("profile_id")
   postId    Int?      @map("post_id")
   commentId Int?      @map("comment_id")
   voteType  VoteType  @map("vote_type")
   createdAt DateTime? @default(now()) @map("created_at")
-  comments Comment? @relation(fields: [commentId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "votes_comment_id_comments_id_fk")
-  posts    Post?    @relation(fields: [postId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "votes_post_id_posts_id_fk")
-  profiles    Profiles @relation(fields: [profileId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "votes_profile_id_profiles_id_fk")
+  comments  Comment?  @relation(fields: [commentId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "votes_comment_id_comments_id_fk")
+  posts     Post?     @relation(fields: [postId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "votes_post_id_posts_id_fk")
+  profiles  Profiles  @relation(fields: [profileId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "votes_profile_id_profiles_id_fk")
 
   @@unique([profileId, postId])
   @@map("votes")
@@ -402,33 +430,31 @@ model EmailEvent {
 }
 
 model Bookmark {
-  id         String     @id @default(cuid()) @map("id")
-  profileId  Int        @map("profile_id")
-  userProfile    Profiles   @relation(fields: [profileId], references: [id], onDelete: Cascade)
-  postId     Int        @map("post_id")
-  post       Post       @relation(fields: [postId], references: [id], onDelete: Cascade)
-  createdAt  DateTime   @default(now()) @map("created_at")
+  id          String   @id @default(cuid()) @map("id")
+  profileId   Int      @map("profile_id")
+  userProfile Profiles @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  postId      Int      @map("post_id")
+  post        Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now()) @map("created_at")
 
   @@unique([profileId, postId])
   @@map("bookmarks")
 }
 
-
 model Notification {
-  id          String       @id @default(cuid()) @map("id")
-  recipientId Int          @map("recipient_id")
-  recipient   Profiles     @relation("Recipient", fields: [recipientId], references: [id], onDelete: Cascade)
-  issuerId    Int          @map("issuer_id")
-  issuer      Profiles     @relation("Issuer", fields: [issuerId], references: [id], onDelete: Cascade)
-  postId      Int?         @map("post_id")
-  post        Post?        @relation(fields: [postId], references: [id], onDelete: Cascade)
+  id          String           @id @default(cuid()) @map("id")
+  recipientId Int              @map("recipient_id")
+  recipient   Profiles         @relation("Recipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  issuerId    Int              @map("issuer_id")
+  issuer      Profiles         @relation("Issuer", fields: [issuerId], references: [id], onDelete: Cascade)
+  postId      Int?             @map("post_id")
+  post        Post?            @relation(fields: [postId], references: [id], onDelete: Cascade)
   type        NotificationType @map("type")
-  read        Boolean      @default(false) @map("read")
-  createdAt   DateTime     @default(now()) @map("created_at")
-  
+  read        Boolean          @default(false) @map("read")
+  createdAt   DateTime         @default(now()) @map("created_at")
+
   @@map("notifications")
 }
-
 
 //////////////////////////
 // COMMENT LIKES
@@ -436,12 +462,12 @@ model Notification {
 
 model CommentVote {
   id        Int      @id @default(autoincrement()) @map("id")
-  voteType  VoteType  @map("vote_type")
+  voteType  VoteType @map("vote_type")
   profileId Int      @map("profile_id")
   commentId Int      @map("comment_id")
   createdAt DateTime @default(now()) @map("created_at")
-  profile Profiles   @relation("ProfileVotes", fields: [profileId], references: [id], map: "comment_votes_profile_id_profiles_fk")
-  comment Comment    @relation("CommentVotes", fields: [commentId], references: [id], map: "comment_votes_comment_id_comments_fk")
+  profile   Profiles @relation("ProfileVotes", fields: [profileId], references: [id], map: "comment_votes_profile_id_profiles_fk")
+  comment   Comment  @relation("CommentVotes", fields: [commentId], references: [id], map: "comment_votes_comment_id_comments_fk")
 
   @@unique([profileId, commentId])
   @@map("comment_votes")
@@ -461,7 +487,6 @@ model PasswordResetOtp {
   @@index([userId, expiresAt])
   @@map("password_reset_otp")
 }
-
 
 //////////////////////////
 // ENUMS
@@ -540,11 +565,16 @@ enum VoteType {
 enum MediaType {
   IMAGE
   VIDEO
-
 }
 
 enum NotificationType {
   VOTE
   FOLLOW
   COMMENT
+}
+
+enum PostType {
+  POLL
+  QUESTION
+  DISCUSSION
 }

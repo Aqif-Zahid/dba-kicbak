@@ -17,7 +17,8 @@ export function useDeleteComment() {
 
       await queryClient.cancelQueries({ queryKey });
 
-      queryClient.setQueryData<InfiniteData<CommentsPage, string | null>>(
+      // ⬇️ Use the new envelope shape: page.data.comments (not page.comments)
+      queryClient.setQueryData<InfiniteData<any, string | null>>(
         queryKey,
         (oldData) => {
           if (!oldData) {
@@ -25,13 +26,58 @@ export function useDeleteComment() {
           }
           return {
             pageParams: oldData.pageParams,
-            pages: oldData.pages.map((page) => ({
-              previousCursor: page.previousCursor,
-              comments: page.comments.filter((c) => c.id !== deletedComment.id),
+            pages: oldData.pages.map((page: any) => ({
+              ...page,
+              data: {
+                ...page.data,
+                comments: (page?.data?.comments ?? []).filter(
+                  (c: any) => c?.id !== deletedComment.id
+                ),
+                previousCursor: page?.data?.previousCursor ?? null,
+              },
             })),
-          };
+          } as InfiniteData<any, string | null>;
         }
       );
+
+      // 🔽 Decrement comments count in the single-post cache
+      const postKey = ["post", String(deletedComment.postId)];
+      queryClient.setQueryData(postKey, (old: any) => {
+        if (!old?.data) return old;
+        const prev = old.data?._count?.comments ?? 0;
+        return {
+          ...old,
+          data: {
+            ...old.data,
+            _count: {
+              ...old.data._count,
+              comments: Math.max(0, prev - 1),
+            },
+          },
+        };
+      });
+
+      // 🔽 Decrement comments count in the feed cache (For You)
+      queryClient.setQueriesData({ queryKey: ["for-you"] }, (old: any) => {
+        if (!old?.pages) return old;
+        return {
+          ...old,
+          pages: old.pages.map((page: any) => ({
+            ...page,
+            posts: page.posts.map((p: any) =>
+              p.id === deletedComment.postId
+                ? {
+                    ...p,
+                    _count: {
+                      ...p._count,
+                      comments: Math.max(0, (p._count?.comments ?? 0) - 1),
+                    },
+                  }
+                : p
+            ),
+          })),
+        };
+      });
 
       toast.success("Comment deleted successfully");
     },

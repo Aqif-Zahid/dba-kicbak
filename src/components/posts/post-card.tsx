@@ -14,6 +14,8 @@ import { BookmarkButton } from "../bookmarks/bookmark-button";
 import { CommentSection } from "../comments/comment-section";
 import { VoteButton } from "@/components/votes/vote-button";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { PollSection } from "@/components/posts/poll-section";
 
 interface PostDataProps {
   post: Post;
@@ -23,22 +25,41 @@ interface PostDataProps {
 export const PostCard = ({ post, from }: PostDataProps) => {
   const router = useRouter();
   const { user } = useUser();
-
   const [showComments, setShowComments] = useState(false);
 
+  const handleCommentClick = () => {
+    setShowComments((v) => !v);
+    if (!post.allowComments) {
+      toast.info("Commenting is disabled for this post.");
+    }
+  };
+
+  // prevent navigation when clicking on interactive elements
+  const handleCardClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (from) return;
+
+    const target = e.target as HTMLElement;
+    const isInteractive = target.closest(
+      "button, a, input, textarea, select, [role='menu'], [role='dialog'], [data-no-nav]"
+    );
+    if (isInteractive) return;
+
+    router.push(`/posts/${post.id}`);
+  };
+
   return (
-    <article className="group/post space-y-3 rounded-2xl bg-card  shadow-sm ">
+    <article className="group/post space-y-3 rounded-2xl bg-card shadow-sm">
       <div
         className={cn(
           "rounded-2xl",
-          !from && "hover:bg-gray-100 cursor-pointer "
+          !from && "hover:bg-gray-100 cursor-pointer"
         )}
-        onClick={from ? () => null : () => router.push(`/posts/${post.id}`)}
+        onClick={handleCardClick}
       >
         <div className="flex justify-between gap-3 p-5">
           <div className="flex flex-wrap gap-3">
             <UserTooltip profile={post.authorProfile}>
-              <Link href={`/${post.authorProfile.username}`}>
+              <Link href={`/${post.authorProfile.username}`} data-no-nav>
                 <UserAvatar
                   avatarUrl={post.authorProfile.profilePicture}
                   avatarFallback={post.authorProfile.username
@@ -52,6 +73,7 @@ export const PostCard = ({ post, from }: PostDataProps) => {
                 <Link
                   href={`/${post.authorProfile.username}`}
                   className="block font-medium hover:underline"
+                  data-no-nav
                 >
                   {post.authorProfile.displayName}
                 </Link>
@@ -59,6 +81,7 @@ export const PostCard = ({ post, from }: PostDataProps) => {
               <Link
                 href={`/posts/${post.id}`}
                 className="block text-sm text-muted-foreground hover:underline"
+                data-no-nav
               >
                 {formatRelativeDate(post.createdAt)}
               </Link>
@@ -71,35 +94,48 @@ export const PostCard = ({ post, from }: PostDataProps) => {
             />
           )}
         </div>
+
         <h2 className="whitespace-pre-line break-words px-5 mb-4 font-bold text-lg">
           {post.title}
         </h2>
+
         <Linkify>
           <div className="whitespace-pre-line break-words px-5 mb-4">
             {post.content}
           </div>
         </Linkify>
+
         {!!post.attachment.length && (
           <MediaPreview attachment={post.attachment} />
         )}
+
+        {post.type === "POLL" && (
+          <div className="px-5 pb-5">
+            <PollSection
+              postId={post.id}
+              isAuthor={post.authorProfile.id === user?.defaultProfileId}
+            />
+          </div>
+        )}
       </div>
+
       <hr className="text-muted-foreground" />
+
       <div className="flex justify-between gap-5 px-5">
         <div className="flex items-center gap-5">
           <VoteButton
             postId={post.id}
             initialState={{
-              votes: post._count.votes,
-              isVotedByUser: post.votes.some(
-                (vote) => vote.profileId === user?.defaultProfileId
-              ),
+              votes: post._count?.votes ?? 0,
+              isVotedByUser:
+                post.votes?.some(
+                  (vote) => vote.profileId === user?.defaultProfileId
+                ) ?? false,
             }}
           />
-          <CommentButton
-            post={post}
-            onClick={() => setShowComments(!showComments)}
-          />
+          <CommentButton post={post} onClick={handleCommentClick} />
         </div>
+
         <BookmarkButton
           postId={post.id}
           initialState={{
@@ -111,6 +147,7 @@ export const PostCard = ({ post, from }: PostDataProps) => {
           }}
         />
       </div>
+
       <div className="px-5 pb-5">
         {showComments && <CommentSection post={post} />}
       </div>
