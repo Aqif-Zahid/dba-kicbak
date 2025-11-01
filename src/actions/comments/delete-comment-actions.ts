@@ -16,12 +16,11 @@ export async function deleteComment(id: number) {
   if (!comment) throw new Error("Comment not found");
   if (comment.authorProfileId !== profileId) throw new Error("Unauthorized");
 
-  // soft delete
+  // Soft delete: mark as deleted but keep original content in DB
   const deletedComment = await prisma.comment.update({
     where: { id },
     data: {
       status: "DELETED",
-      content: "[deleted]",
     },
     include: getCommentDataInclude(profileId),
   });

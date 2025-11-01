@@ -47,6 +47,11 @@ export const PostCard = ({ post, from }: PostDataProps) => {
     router.push(`/posts/${post.id}`);
   };
 
+  // Fallbacks for deleted posts
+  const isDeleted = post.status === "DELETED";
+  const displayTitle = isDeleted ? "[Deleted]" : post.title;
+  const displayContent = isDeleted ? "[Deleted]" : post.content;
+
   return (
     <article className="group/post space-y-3 rounded-2xl bg-card shadow-sm">
       <div
@@ -95,21 +100,32 @@ export const PostCard = ({ post, from }: PostDataProps) => {
           )}
         </div>
 
-        <h2 className="whitespace-pre-line break-words px-5 mb-4 font-bold text-lg">
-          {post.title}
+        {/* Deleted post display */}
+        <h2
+          className={cn(
+            "whitespace-pre-line break-words px-5 mb-4 font-bold text-lg",
+            isDeleted && "italic text-muted-foreground"
+          )}
+        >
+          {displayTitle}
         </h2>
 
         <Linkify>
-          <div className="whitespace-pre-line break-words px-5 mb-4">
-            {post.content}
+          <div
+            className={cn(
+              "whitespace-pre-line break-words px-5 mb-4",
+              isDeleted && "italic text-muted-foreground"
+            )}
+          >
+            {displayContent}
           </div>
         </Linkify>
 
-        {!!post.attachment.length && (
+        {!!post.attachment.length && !isDeleted && (
           <MediaPreview attachment={post.attachment} />
         )}
 
-        {post.type === "POLL" && (
+        {post.type === "POLL" && !isDeleted && (
           <div className="px-5 pb-5">
             <PollSection
               postId={post.id}

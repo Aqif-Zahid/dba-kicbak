@@ -1,10 +1,9 @@
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { NextResponse, NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
+import { getUser } from "@/lib/auth";
 
 export async function GET(
-  _req: Request,
+  req: NextRequest,
   context: { params: Promise<{ postId: string }> }
 ) {
   try {
@@ -18,8 +17,8 @@ export async function GET(
       );
     }
 
-    const session = await getServerSession(authOptions);
-    const userId = session?.user?.id;
+    const user = await getUser(req);
+    const profileId = user?.defaultProfileId ?? null;
 
     // Fetch post with poll, including allowMultiple
     const post = await prisma.post.findUnique({
@@ -54,16 +53,6 @@ export async function GET(
     const expired = poll.expiresAt < now;
     const timeLeftMs = Math.max(0, poll.expiresAt.getTime() - now.getTime());
 
-    // Current user's profile id (if logged in)
-    let userProfileId: number | null = null;
-    if (userId) {
-      const profile = await prisma.profiles.findFirst({
-        where: { userId: Number(userId) },
-        select: { id: true },
-      });
-      userProfileId = profile?.id ?? null;
-    }
-
     // Aggregate options
     const totalVotes = poll.options.reduce(
       (sum, opt) => sum + opt.votes.length,
@@ -74,18 +63,13 @@ export async function GET(
       id: opt.id,
       text: opt.text,
       voteCount: opt.votes.length,
-      votedByUser: !!opt.votes.find((v) => v.profileId === userProfileId),
+      votedByUser: !!opt.votes.find((v) => v.profileId === profileId),
       percentage:
         totalVotes === 0 ? 0 : Math.round((opt.votes.length / totalVotes) * 100),
     }));
 
-    // Only use allowMultiple from schema (no maxSelections)
-    const allowMultiple = Boolean(poll.allowMultiple);
-
     const userHasVoted = options.some((opt) => opt.votedByUser);
     const isClosed = poll.isClosed || expired;
-
-    // allow results viewing if poll is closed or user has voted
     const canViewResults = isClosed || userHasVoted;
 
     return NextResponse.json(
@@ -102,8 +86,8 @@ export async function GET(
           options,
           totalVotes,
           userHasVoted,
-          allowMultiple,
-          canViewResults, 
+          allowMultiple: Boolean(poll.allowMultiple),
+          canViewResults,
         },
       },
       { status: 200 }

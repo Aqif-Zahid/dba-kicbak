@@ -47,7 +47,16 @@ export const Comment = ({ comment }: CommentProps) => {
             </span>
           </div>
 
-          <p className="mt-1 text-gray-800">{comment.content}</p>
+          {/* Handle deleted comment display */}
+          <p
+            className={`mt-1 text-sm ${
+              comment.status === "DELETED"
+                ? "italic text-muted-foreground"
+                : "text-gray-800"
+            }`}
+          >
+            {comment.status === "DELETED" ? "[Deleted]" : comment.content}
+          </p>
 
           {/* Actions */}
           <div className="flex items-center">

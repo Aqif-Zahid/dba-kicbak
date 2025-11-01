@@ -24,16 +24,22 @@ export async function deletePost(id: number) {
   if (!post) throw new Error("Post not found");
   if (post.authorProfileId !== currentProfileId) throw new Error("Unauthorized");
 
-  // Soft delete instead of hard delete
+  // Soft delete while preserving original title and content in DB
   const deletedPost = await prisma.post.update({
     where: { id },
     data: {
       status: "DELETED",
-      content: "[deleted]",
-      title: "[deleted]",
     },
     include: getPostsDataInclude(currentProfileId),
   });
 
-  return deletedPost;
+  // Mask deleted post’s data at the API layer if returned
+  //    (in case filters ever fail or are bypassed)
+  const maskedPost = {
+    ...deletedPost,
+    title: "[Deleted]",
+    content: "[Deleted]",
+  };
+
+  return maskedPost;
 }

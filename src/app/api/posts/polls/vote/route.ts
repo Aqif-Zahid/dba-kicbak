@@ -1,6 +1,5 @@
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "../../../auth/[...nextauth]/route";
+import { NextResponse, NextRequest } from "next/server";
+import { getUser } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { z } from "zod";
 import { notifyChannel } from "@/lib/pg-listener";
@@ -9,18 +8,17 @@ const voteSchema = z.object({
   pollOptionId: z.number(),
 });
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    const userId = Number(session?.user?.id);
-
-    if (!userId) {
+    const user = await getUser(req);
+    if (!user) {
       return NextResponse.json(
         { status: 0, message: "Unauthorized: No active session" },
         { status: 401 }
       );
     }
 
+    const userId = Number(user.id);
     const json = await req.json();
     const parsed = voteSchema.safeParse(json);
     if (!parsed.success) {
@@ -78,8 +76,8 @@ export async function POST(req: Request) {
       const existingOnClicked = await tx.pollVote.findUnique({
         where: {
           optionId_profileId: {
-            optionId: pollOptionId,
-            profileId: profile.id,
+            optionId: Number(pollOptionId), // ✅ numeric cast fix #1
+            profileId: Number(profile.id),  // ✅ numeric cast fix #2
           },
         },
       });
@@ -90,7 +88,7 @@ export async function POST(req: Request) {
           await tx.pollVote.delete({ where: { id: existingOnClicked.id } });
         } else {
           await tx.pollVote.create({
-            data: { optionId: pollOptionId, profileId: profile.id },
+            data: { optionId: Number(pollOptionId), profileId: Number(profile.id) }, // ✅ numeric cast fix #3
           });
         }
       } else {
@@ -102,19 +100,19 @@ export async function POST(req: Request) {
         } else {
           await tx.pollVote.deleteMany({
             where: {
-              profileId: profile.id,
-              option: { pollId: option.pollId },
+              profileId: Number(profile.id),
+              option: { pollId: Number(option.pollId) },
             },
           });
           await tx.pollVote.create({
-            data: { optionId: pollOptionId, profileId: profile.id },
+            data: { optionId: Number(pollOptionId), profileId: Number(profile.id) },
           });
         }
       }
 
       // Return updated snapshot
       const updatedPoll = await tx.poll.findUnique({
-        where: { id: option.pollId },
+        where: { id: Number(option.pollId) },
         include: {
           options: {
             include: { votes: true },
@@ -124,7 +122,7 @@ export async function POST(req: Request) {
       return updatedPoll;
     });
 
-    await notifyChannel("poll_updates", { pollId: option.pollId });
+    await notifyChannel("poll_updates", { pollId: Number(option.pollId) });
 
     return NextResponse.json(
       { status: 1, message: "Vote updated", data: result },

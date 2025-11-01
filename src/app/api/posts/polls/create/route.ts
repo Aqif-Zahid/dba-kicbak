@@ -1,12 +1,10 @@
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "../../../auth/[...nextauth]/route";
+import { NextResponse, NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
 import { z } from "zod";
 import { notifyChannel } from "@/lib/pg-listener";
+import { getUser } from "@/lib/auth";
 
 const createPollSchema = z.object({
-  communityId: z.number(),
   title: z.string().min(3, "Title must be at least 3 characters"),
   content: z.string().optional(),
   options: z
@@ -21,17 +19,24 @@ const createPollSchema = z.object({
   allowMultiple: z.boolean().optional().default(false),
 });
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    const userId = session?.user?.id;
-
-    if (!userId) {
+    const user = await getUser(req);
+    if (!user) {
       return NextResponse.json(
         { status: 0, message: "Unauthorized: No active session" },
         { status: 401 }
       );
     }
+
+    const profileId = Number(user.defaultProfileId);
+    if (isNaN(profileId)) {
+     return NextResponse.json(
+      { status: 0, message: "Profile not found" },
+      { status: 404 }
+     );
+   }
+
 
     const json = await req.json();
     const parsed = createPollSchema.safeParse(json);
@@ -42,7 +47,10 @@ export async function POST(req: Request) {
       );
     }
 
-    const { communityId, title, content, options, duration, allowMultiple } = parsed.data;
+    const { title, content, options, duration, allowMultiple } = parsed.data;
+
+    // ✅ Hard-coded communityId for now
+    const communityId = 1;
 
     const totalMinutes =
       duration.days * 24 * 60 + duration.hours * 60 + duration.minutes;
@@ -62,18 +70,6 @@ export async function POST(req: Request) {
 
     const expiresAt = new Date(Date.now() + totalMinutes * 60 * 1000);
 
-    // Resolve author's profile
-    const authorProfile = await prisma.profiles.findFirst({
-      where: { userId: Number(userId) },
-      select: { id: true },
-    });
-    if (!authorProfile) {
-      return NextResponse.json(
-        { status: 0, message: "Author profile not found" },
-        { status: 404 }
-      );
-    }
-
     // Create Post + Poll (+ Options)
     const created = await prisma.$transaction(async (tx) => {
       const post = await tx.post.create({
@@ -83,7 +79,7 @@ export async function POST(req: Request) {
           content: content?.trim() || "",
           type: "POLL",
           status: "PUBLISHED",
-          authorProfileId: authorProfile.id,
+          authorProfileId: profileId,
           allowComments: true,
         },
       });

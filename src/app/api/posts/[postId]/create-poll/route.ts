@@ -1,6 +1,5 @@
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { NextResponse, NextRequest } from "next/server";
+import { getUser } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { z } from "zod";
 
@@ -15,13 +14,14 @@ const createPollSchema = z.object({
     minutes: z.number().int().min(0).max(60),
   }),
   allowMultiple: z.boolean().optional().default(false),
-  allowComments: z.boolean().optional().default(true), 
+  allowComments: z.boolean().optional().default(true),
 });
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    const userId = session?.user?.id;
+    const user = await getUser(req);
+    const userId = Number(user?.id);
+
     if (!userId) {
       return NextResponse.json(
         { status: 0, message: "Unauthorized: No active session" },
@@ -45,7 +45,7 @@ export async function POST(req: Request) {
       options,
       duration,
       allowMultiple,
-      allowComments, 
+      allowComments,
     } = parsed.data;
 
     const totalMinutes =
@@ -79,7 +79,6 @@ export async function POST(req: Request) {
       );
     }
 
-    
     const post = await prisma.post.create({
       data: {
         communityId,
@@ -100,7 +99,7 @@ export async function POST(req: Request) {
         },
       },
       include: {
-        poll: { include: { options: true } }, 
+        poll: { include: { options: true } },
       },
     });
 
