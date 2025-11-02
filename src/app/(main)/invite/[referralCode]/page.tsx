@@ -28,7 +28,7 @@ const UserPage = async ({ params, searchParams }: PageProps) => {
   const currentUser = session?.user;
 
   //Check if the user is valid or not
-  if (!user || !userWithEmail) {
+  if (!user) {
     return <UserNotFound />;
   }
   //Redirect already logged in user

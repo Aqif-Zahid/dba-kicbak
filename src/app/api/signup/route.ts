@@ -25,7 +25,6 @@ const signupSchema = z.object({
 // === Helper function to resolve referrer ID ===
 async function getReferrerId(referralCode?: string): Promise<number | null> {
   if (!referralCode) return null;
-
   const referralCodeRecord = await prisma.referralCodes.findUnique({
     where: { code: referralCode },
   });
@@ -33,12 +32,7 @@ async function getReferrerId(referralCode?: string): Promise<number | null> {
   if (referralCodeRecord?.userId) {
     return referralCodeRecord.userId;
   }
-
-  const referrerUser = await prisma.users.findFirst({
-    where: { referralCode: referralCode },
-  });
-
-  return referrerUser ? referrerUser.id : null;
+  return null;
 }
 
 // === POST handler ===
@@ -67,41 +61,50 @@ export async function POST(req: Request) {
     const existingUser = await prisma.users.findUnique({
       where: { email },
     });
+    let existingUserId = 0;
 
-    if (!existingUser) {
-      return NextResponse.json(
-        { status: 0, message: "No user found with the invite code." },
-        { status: 409 }
-      );
+    if (existingUser) {
+      if (existingUser.status !== "PENDING") {
+        return NextResponse.json(
+          { status: 0, message: "User already has an account with this email" },
+          { status: 409 }
+        );
+      }
+      existingUserId = existingUser.id;
     }
-
-    if (existingUser.status !== "PENDING") {
-      return NextResponse.json(
-        { status: 0, message: "User already has an account with this email" },
-        { status: 409 }
-      );
-    }
-
     const hashedPassword = await bcrypt.hash(password, 10);
     const referrerId = await getReferrerId(referralCode);
-
+    
+    if (! referrerId) {
+      return NextResponse.json(
+        { status: 0, message: "Invalid invite code!" },
+        { status: 409 }
+      );
+    }
     const result = await prisma.$transaction(async (tx: any) => {
-      await tx.users.update({
-        where: { id: existingUser.id },
-        data: {
+      const user = await tx.users.upsert({
+        where: { id: existingUserId },
+        update: {
           passwordHash: hashedPassword,
           status: "ACTIVE",
           authProvider: "LOCAL",
           personaSelected: personaSelected ?? [],
           referralCode,
-          referrerId: referrerId ?? null,
-          inviteRequired: true,
+          referrerId: referrerId,
         },
+        create: {
+          email: email,
+          passwordHash: hashedPassword,
+          status: "ACTIVE",
+          authProvider: "LOCAL",
+          personaSelected: personaSelected ?? [],
+          referralCode,
+          referrerId: referrerId,
+        }
       });
-
       const newProfile = await tx.profiles.create({
         data: {
-          userId: existingUser.id,
+          userId: user.id,
           username: usernameDesired,
           displayName: `${firstName} ${lastName}`,
           role: "TRAVELER",
@@ -109,23 +112,32 @@ export async function POST(req: Request) {
       });
 
       if (!newProfile) throw new Error("Failed to create default profile.");
-
+      
       await tx.users.update({
-        where: { id: existingUser.id },
+        where: { id: user.id },
         data: { defaultProfileId: newProfile.id },
       });
 
-      if (referrerId) {
-        await tx.referrals.create({
-          data: {
-            referrerUserId: referrerId,
-            referredUserId: existingUser.id,
-            referredEmail: email,
-            referralCode: referralCode ?? null,
-            status: "SIGNED_UP",
-          },
-        });
-      }
+      await tx.referralCodes.create({
+        data: {
+          code: usernameDesired,
+          type: "USER",
+          active: true,
+          userId: user.id,
+        },
+      });
+
+      const addToReferrals = await tx.referrals.create({
+        data: {
+          referrerUserId: referrerId,
+          referredUserId: user.id,
+          referredEmail: email,
+          referralCode: referralCode ?? null,
+          status: "SIGNED_UP",
+        },
+      });
+
+      if (!addToReferrals) throw new Error("Failed to add user to referrals list.");
 
       await streamServerClient.upsertUser({
         id: String(newProfile.id),
@@ -133,7 +145,7 @@ export async function POST(req: Request) {
         name: `${firstName} ${lastName}`,
       });
 
-      return { userId: existingUser.id, profileId: newProfile.id };
+      return { userId: user.id, profileId: newProfile.id };
     });
 
     return NextResponse.json(
