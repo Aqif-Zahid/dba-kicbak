@@ -95,7 +95,7 @@ export const SigninModal = () => {
   };
 
   const handleGoogleLogin = async () => {
-    await signIn("google", { callbackUrl: "/profile" });
+    await signIn("google", { callbackUrl: "/" });
   };
 
   return (

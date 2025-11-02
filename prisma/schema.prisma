@@ -9,62 +9,73 @@ datasource db {
 }
 
 model Users {
-  id                  Int                @id @default(autoincrement()) @map("id")
-  email               String             @unique(map: "users_email_unique") @map("email")
-  status              UserStatus         @default(PENDING) @map("status")
-  positionNumber      Int?               @unique(map: "users_position_number_unique") @map("position_number")
-  passwordHash        String?            @map("password_hash")
-  authProvider        AuthProvider?      @default(LOCAL) @map("auth_provider")
-  createdAt           DateTime?          @default(now()) @map("created_at")
-  updatedAt           DateTime           @default(now()) @map("updated_at")
-  personaSelected     Json?              @default("[]") @map("persona_selected")
-  inviteRequired      Boolean?           @default(true) @map("invite_required")
-  points              Int?               @default(0) @map("points")
-  phoneNumber         String?            @map("phone_number")
-  dateOfBirth         String?            @map("date_of_birth")
-  referralCode        String?            @map("referral_code")
-  defaultProfileId    Int?               @map("default_profile_id")
-  referrerId          Int?               @map("referrer_id")
-  communities         Community[]
-  groups              Group[]
-  groupsToUsers       GroupsToUser[]
-  mentions            Mention[]
-  organizations       Organization[]
-  passwordResetOtps   PasswordResetOtp[]
-  profiles            Profiles[]         @relation("UserProfiles")
-  referralCodes       ReferralCodes?
-  referralsAsReferred Referrals?         @relation("referrals_referred_user_idTousers")
-  referralsAsReferrer Referrals[]        @relation("referrals_referrer_user_idTousers")
-  rewardsLedger       RewardsLedger[]
-  defaultProfile      Profiles?          @relation("DefaultProfile", fields: [defaultProfileId], references: [id])
-  referrer            Users?             @relation("UserReferrer", fields: [referrerId], references: [id])
-  referrals           Users[]            @relation("UserReferrer")
+  id               Int           @id @default(autoincrement()) @map("id")
+  email            String        @unique(map: "users_email_unique") @map("email")
+  status           UserStatus    @default(PENDING) @map("status")
+  positionNumber   Int?          @unique(map: "users_position_number_unique") @map("position_number")
+  passwordHash     String?       @map("password_hash")
+  authProvider     AuthProvider? @default(LOCAL) @map("auth_provider")
+  createdAt        DateTime?     @default(now()) @map("created_at")
+  updatedAt        DateTime      @default(now()) @map("updated_at")
+  personaSelected  Json?         @default("[]") @map("persona_selected")
+  inviteRequired   Boolean?      @default(true) @map("invite_required")
+  points           Int?          @default(0) @map("points")
+  phoneNumber      String?       @map("phone_number")
+  dateOfBirth      String?       @map("date_of_birth")
+  referralCode     String?       @map("referral_code")
+  defaultProfileId Int?          @map("default_profile_id")
+  profiles         Profiles[]    @relation("UserProfiles") // all profiles for the user
+  defaultProfile   Profiles?     @relation("DefaultProfile", fields: [defaultProfileId], references: [id])
+
+  groups        Group[]
+  groupsToUsers GroupsToUser[]
+  mentions      Mention[]
+  organizations Organization[]
+
+  referralCodes                           ReferralCodes?
+  referralsReferralsReferredUserIdToUsers Referrals?      @relation("referrals_referred_user_idTousers")
+  referralsReferralsReferrerUserIdToUsers Referrals?      @relation("referrals_referrer_user_idTousers")
+  rewardsLedger                           RewardsLedger[]
+  passwordResetOtps                       PasswordResetOtp[]
 
   @@map("users")
 }
 
 model Profiles {
-  id                    Int            @id @default(autoincrement()) @map("id")
-  userId                Int            @map("user_id")
-  role                  ProfileRole    @default(TRAVELER)
-  bio                   String?        @map("bio")
-  createdAt             DateTime?      @default(now()) @map("created_at")
-  updatedAt             DateTime       @default(now()) @map("updated_at")
-  username              String         @unique(map: "profiles_username_unique") @map("username")
-  displayName           String         @map("display_name")
-  profilePicture        String?        @map("profile_picture")
-  personaTags           Json?          @default("[]") @map("persona_tags")
-  bookmarks             Bookmark[]
-  votedComments         CommentVote[]  @relation("ProfileVotes")
-  comments              Comment[]
-  following             Follow[]       @relation("Following")
-  followers             Follow[]       @relation("Followers")
-  issuedNotifications   Notification[] @relation("Issuer")
+  id                   Int         @id @default(autoincrement()) @map("id")
+  userId               Int         @map("user_id")
+  user                 Users       @relation("UserProfiles", fields: [userId], references: [id])
+  defaultFor           Users[]     @relation("DefaultProfile")
+  role                 ProfileRole @default(TRAVELER)
+  bio                  String?     @map("bio")
+  createdAt            DateTime?   @default(now()) @map("created_at")
+  updatedAt            DateTime    @default(now()) @map("updated_at")
+  username             String      @unique(map: "profiles_username_unique") @map("username")
+  displayName          String      @map("display_name")
+  profilePicture       String?     @map("profile_picture")
+  personaTags          Json?       @default("[]") @map("persona_tags")
+  votes                Vote[]
+  comments             Comment[]
+  posts                Post[]
+  bookmarks            Bookmark[]
   receivedNotifications Notification[] @relation("Recipient")
-  posts                 Post[]
-  user                  Users          @relation("UserProfiles", fields: [userId], references: [id])
-  defaultFor            Users[]        @relation("DefaultProfile")
-  votes                 Vote[]
+  issuedNotifications   Notification[] @relation("Issuer")
+  followers            Follow[] @relation("Followers")
+  following            Follow[] @relation("Following")
+  votedComments        CommentVote[] @relation("ProfileVotes")
+  
+  // Communities **owned** by this profile
+  ownedCommunities     Community[] @relation("CommunityOwner")
+  
+  // Communities this profile is a **member** of
+  memberOfCommunities  Community[] @relation("CommunityMembers")
+  
+  // Favorite communities
+  favoriteCommunities  Community[] @relation("FavoriteCommunities")
+  
+  // Topics created by this profile
+  createdTopicGroups   TopicGroup[]
+  createdTopics        Topic[]
 
   @@map("profiles")
 }
@@ -93,17 +104,59 @@ model Organization {
 }
 
 model Community {
-  id          Int       @id @default(autoincrement()) @map("id")
-  name        String    @map("name")
-  slug        String    @unique(map: "communities_slug_unique") @map("slug")
-  description String?   @map("description")
-  ownerId     Int       @map("owner_id")
-  createdAt   DateTime? @default(now()) @map("created_at")
-  users       Users     @relation(fields: [ownerId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "communities_owner_id_users_id_fk")
-  posts       Post[]
+  id           Int        @id @default(autoincrement()) @map("id")
+  name         String     @map("name")
+  slug         String     @unique(map: "communities_slug_unique") @map("slug")
+  description  String?    @map("description")
+  // Owner relation
+  ownerId      Int @default(1)
+  owner        Profiles   @relation("CommunityOwner", fields: [ownerId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  // Members of this community (many-to-many)
+  members      Profiles[] @relation("CommunityMembers")
+  createdAt    DateTime?  @default(now()) @map("created_at")
+  posts        Post[]
+  // Favorite communities
+  favoredBy    Profiles[] @relation("FavoriteCommunities")
+  // Topics within this community
+  topics      Topic[] 
 
   @@map("communities")
 }
+
+
+
+model TopicGroup {
+  id           Int          @id @default(autoincrement())
+  name         String
+  description  String?
+  createdAt    DateTime?    @default(now())
+  topics       Topic[]
+  createdById  Int
+  createdBy    Profiles     @relation(fields: [createdById], references: [id])
+
+  @@map("topic_groups")
+}
+
+model Topic {
+  id           Int          @id @default(autoincrement())
+  communityId  Int? 
+  groupId      Int          // required
+  title        String
+  description  String?
+  createdAt    DateTime?    @default(now())
+  updatedAt    DateTime     @default(now())
+  createdById  Int
+  createdBy    Profiles     @relation(fields: [createdById], references: [id])
+
+  // Relation to group
+  group        TopicGroup   @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  community    Community?  @relation(fields: [communityId], references: [id], onDelete: SetNull)
+
+  @@map("topics")
+}
+
+
+
 
 model Group {
   id            Int            @id @default(autoincrement()) @map("id")
