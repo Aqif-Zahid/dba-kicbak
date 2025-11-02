@@ -43,40 +43,40 @@ model Users {
 }
 
 model Profiles {
-  id                   Int         @id @default(autoincrement()) @map("id")
-  userId               Int         @map("user_id")
-  user                 Users       @relation("UserProfiles", fields: [userId], references: [id])
-  defaultFor           Users[]     @relation("DefaultProfile")
-  role                 ProfileRole @default(TRAVELER)
-  bio                  String?     @map("bio")
-  createdAt            DateTime?   @default(now()) @map("created_at")
-  updatedAt            DateTime    @default(now()) @map("updated_at")
-  username             String      @unique(map: "profiles_username_unique") @map("username")
-  displayName          String      @map("display_name")
-  profilePicture       String?     @map("profile_picture")
-  personaTags          Json?       @default("[]") @map("persona_tags")
-  votes                Vote[]
-  comments             Comment[]
-  posts                Post[]
-  bookmarks            Bookmark[]
+  id                    Int            @id @default(autoincrement()) @map("id")
+  userId                Int            @map("user_id")
+  user                  Users          @relation("UserProfiles", fields: [userId], references: [id])
+  defaultFor            Users[]        @relation("DefaultProfile")
+  role                  ProfileRole    @default(TRAVELER)
+  bio                   String?        @map("bio")
+  createdAt             DateTime?      @default(now()) @map("created_at")
+  updatedAt             DateTime       @default(now()) @map("updated_at")
+  username              String         @unique(map: "profiles_username_unique") @map("username")
+  displayName           String         @map("display_name")
+  profilePicture        String?        @map("profile_picture")
+  personaTags           Json?          @default("[]") @map("persona_tags")
+  votes                 Vote[]
+  comments              Comment[]
+  posts                 Post[]
+  bookmarks             Bookmark[]
   receivedNotifications Notification[] @relation("Recipient")
   issuedNotifications   Notification[] @relation("Issuer")
-  followers            Follow[] @relation("Followers")
-  following            Follow[] @relation("Following")
-  votedComments        CommentVote[] @relation("ProfileVotes")
-  
+  followers             Follow[]       @relation("Followers")
+  following             Follow[]       @relation("Following")
+  votedComments         CommentVote[]  @relation("ProfileVotes")
+
   // Communities **owned** by this profile
-  ownedCommunities     Community[] @relation("CommunityOwner")
-  
+  ownedCommunities Community[] @relation("CommunityOwner")
+
   // Communities this profile is a **member** of
-  memberOfCommunities  Community[] @relation("CommunityMembers")
-  
+  memberOfCommunities Community[] @relation("CommunityMembers")
+
   // Favorite communities
-  favoriteCommunities  Community[] @relation("FavoriteCommunities")
-  
+  favoriteCommunities Community[] @relation("FavoriteCommunities")
+
   // Topics created by this profile
-  createdTopicGroups   TopicGroup[]
-  createdTopics        Topic[]
+  createdTopicGroups TopicGroup[]
+  createdTopics      Topic[]
 
   @@map("profiles")
 }
@@ -105,59 +105,54 @@ model Organization {
 }
 
 model Community {
-  id           Int        @id @default(autoincrement()) @map("id")
-  name         String     @map("name")
-  slug         String     @unique(map: "communities_slug_unique") @map("slug")
-  description  String?    @map("description")
+  id          Int        @id @default(autoincrement()) @map("id")
+  name        String     @map("name")
+  slug        String     @unique(map: "communities_slug_unique") @map("slug")
+  description String?    @map("description")
   // Owner relation
-  ownerId      Int @default(1)
-  owner        Profiles   @relation("CommunityOwner", fields: [ownerId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  ownerId     Int        @default(1)
+  owner       Profiles   @relation("CommunityOwner", fields: [ownerId], references: [id], onDelete: Cascade, onUpdate: NoAction)
   // Members of this community (many-to-many)
-  members      Profiles[] @relation("CommunityMembers")
-  createdAt    DateTime?  @default(now()) @map("created_at")
-  posts        Post[]
+  members     Profiles[] @relation("CommunityMembers")
+  createdAt   DateTime?  @default(now()) @map("created_at")
+  posts       Post[]
   // Favorite communities
-  favoredBy    Profiles[] @relation("FavoriteCommunities")
+  favoredBy   Profiles[] @relation("FavoriteCommunities")
   // Topics within this community
-  topics      Topic[] 
+  topics      Topic[]
 
   @@map("communities")
 }
 
-
-
 model TopicGroup {
-  id           Int          @id @default(autoincrement())
-  name         String
-  description  String?
-  createdAt    DateTime?    @default(now())
-  topics       Topic[]
-  createdById  Int
-  createdBy    Profiles     @relation(fields: [createdById], references: [id])
+  id          Int       @id @default(autoincrement())
+  name        String
+  description String?
+  createdAt   DateTime? @default(now())
+  topics      Topic[]
+  createdById Int
+  createdBy   Profiles  @relation(fields: [createdById], references: [id])
 
   @@map("topic_groups")
 }
 
 model Topic {
-  id           Int          @id @default(autoincrement())
-  communityId  Int? 
-  groupId      Int          // required
-  title        String
-  description  String?
-  createdAt    DateTime?    @default(now())
-  updatedAt    DateTime     @default(now())
-  createdById  Int
-  createdBy    Profiles     @relation(fields: [createdById], references: [id])
+  id          Int       @id @default(autoincrement())
+  communityId Int?
+  groupId     Int // required
+  title       String
+  description String?
+  createdAt   DateTime? @default(now())
+  updatedAt   DateTime  @default(now())
+  createdById Int
+  createdBy   Profiles  @relation(fields: [createdById], references: [id])
 
   // Relation to group
-  group        TopicGroup   @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  community    Community?  @relation(fields: [communityId], references: [id], onDelete: SetNull)
+  group     TopicGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  community Community? @relation(fields: [communityId], references: [id], onDelete: SetNull)
 
   @@map("topics")
 }
-
-
-
 
 model Group {
   id            Int            @id @default(autoincrement()) @map("id")
