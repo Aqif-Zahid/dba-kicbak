@@ -3,18 +3,22 @@ import prisma from "@/lib/prisma";
 // Infer the type directly from Prisma model
 export type ProfileDetails = Awaited<ReturnType<typeof getUserDetails>>;
 
-export const getUserDetails = async (username: string) => {
+export const getUserDetails = async (referralCode: string) => {
   try {
-    const profile = await prisma.profiles.findUnique({
-      where: { username },
+    const referral = await prisma.referralCodes.findUnique({
+      where: { code: referralCode },
+      include: {
+        users: true,
+      },
     });
 
-    return profile ?? null;
+    return referral?.users ?? null;
   } catch (e) {
-    console.error("Error fetching user details by username:", e);
+    console.error("Error fetching user details by referral code:", e);
     return null;
   }
 };
+
 
 export const checkUserMail = async (email: string) => {
   try {

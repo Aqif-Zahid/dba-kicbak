@@ -12,7 +12,6 @@ const signupSchema = z.object({
   usernameDesired: z.string().min(3).max(20),
   personaSelected: z.array(z.string()).optional(),
   referralCode: z.string().optional(),
-  source: z.string().optional(),
   password: z
     .string()
     .min(8, "Password must be at least 8 characters")
@@ -22,6 +21,19 @@ const signupSchema = z.object({
       "Password must include uppercase, lowercase, number, and special character"
     ),
 });
+
+// === Helper function to resolve referrer ID ===
+async function getReferrerId(referralCode?: string): Promise<number | null> {
+  if (!referralCode) return null;
+  const referralCodeRecord = await prisma.referralCodes.findUnique({
+    where: { code: referralCode },
+  });
+
+  if (referralCodeRecord?.userId) {
+    return referralCodeRecord.userId;
+  }
+  return null;
+}
 
 // === POST handler ===
 export async function POST(req: Request) {
@@ -43,53 +55,56 @@ export async function POST(req: Request) {
     usernameDesired,
     personaSelected,
     referralCode,
-    source,
   } = parse.data;
 
   try {
-    // 1️⃣ Check if email already exists
     const existingUser = await prisma.users.findUnique({
       where: { email },
     });
+    let existingUserId = 0;
 
-    if (!existingUser) {
-      return NextResponse.json(
-        { status: 0, message: "No user found with the invite code." },
-        { status: 409 }
-      );
+    if (existingUser) {
+      if (existingUser.status !== "PENDING") {
+        return NextResponse.json(
+          { status: 0, message: "User already has an account with this email" },
+          { status: 409 }
+        );
+      }
+      existingUserId = existingUser.id;
     }
-
-    if (existingUser.status !== "PENDING") {
-      return NextResponse.json(
-        { status: 0, message: "User has already an account with this email" },
-        { status: 409 }
-      );
-    }
-
-    // 2️⃣ Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
-
-    // 3️⃣ Transaction: Create user + default profile
+    const referrerId = await getReferrerId(referralCode);
+    
+    if (! referrerId) {
+      return NextResponse.json(
+        { status: 0, message: "Invalid invite code!" },
+        { status: 409 }
+      );
+    }
     const result = await prisma.$transaction(async (tx: any) => {
-      // 3a. Create User
-      await tx.users.update({
-        where: { id: existingUser.id },
-        data: {
-          email: existingUser.email,
+      const user = await tx.users.upsert({
+        where: { id: existingUserId },
+        update: {
           passwordHash: hashedPassword,
           status: "ACTIVE",
           authProvider: "LOCAL",
           personaSelected: personaSelected ?? [],
-          source,
           referralCode,
-          inviteRequired: true,
+          referrerId: referrerId,
         },
+        create: {
+          email: email,
+          passwordHash: hashedPassword,
+          status: "ACTIVE",
+          authProvider: "LOCAL",
+          personaSelected: personaSelected ?? [],
+          referralCode,
+          referrerId: referrerId,
+        }
       });
-
-      // 3b. Create Default Profile
       const newProfile = await tx.profiles.create({
         data: {
-          userId: existingUser.id,
+          userId: user.id,
           username: usernameDesired,
           displayName: `${firstName} ${lastName}`,
           role: "TRAVELER",
@@ -97,22 +112,42 @@ export async function POST(req: Request) {
       });
 
       if (!newProfile) throw new Error("Failed to create default profile.");
-
-      // 3c. Update User with defaultProfileId
+      
       await tx.users.update({
-        where: { id: existingUser.id },
+        where: { id: user.id },
         data: { defaultProfileId: newProfile.id },
       });
+
+      await tx.referralCodes.create({
+        data: {
+          code: usernameDesired,
+          type: "USER",
+          active: true,
+          userId: user.id,
+        },
+      });
+
+      const addToReferrals = await tx.referrals.create({
+        data: {
+          referrerUserId: referrerId,
+          referredUserId: user.id,
+          referredEmail: email,
+          referralCode: referralCode ?? null,
+          status: "SIGNED_UP",
+        },
+      });
+
+      if (!addToReferrals) throw new Error("Failed to add user to referrals list.");
 
       await streamServerClient.upsertUser({
         id: String(newProfile.id),
         username: usernameDesired,
         name: `${firstName} ${lastName}`,
       });
-      return { userId: existingUser.id, profileId: newProfile.id };
+
+      return { userId: user.id, profileId: newProfile.id };
     });
 
-    // 4️⃣ Return success
     return NextResponse.json(
       { status: 1, message: "Signed up successfully", userId: result.userId },
       { status: 200 }

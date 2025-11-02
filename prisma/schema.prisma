@@ -8,90 +8,86 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-//////////////////////////
-// USER & PROFILE MODELS
-//////////////////////////
-
 model Users {
-  id               Int           @id @default(autoincrement()) @map("id")
-  email            String        @unique(map: "users_email_unique") @map("email")
-  status           UserStatus    @default(PENDING) @map("status")
-  positionNumber   Int?          @unique(map: "users_position_number_unique") @map("position_number")
-  passwordHash     String?       @map("password_hash")
-  authProvider     AuthProvider? @default(LOCAL) @map("auth_provider")
-  createdAt        DateTime?     @default(now()) @map("created_at")
-  updatedAt        DateTime      @default(now()) @map("updated_at")
-  personaSelected  Json?         @default("[]") @map("persona_selected")
-  inviteRequired   Boolean?      @default(true) @map("invite_required")
-  points           Int?          @default(0) @map("points")
-  phoneNumber      String?       @map("phone_number")
-  dateOfBirth      String?       @map("date_of_birth")
-  referralCode     String?       @map("referral_code")
-  defaultProfileId Int?          @map("default_profile_id")
-  profiles         Profiles[]    @relation("UserProfiles") // all profiles for the user
-  defaultProfile   Profiles?     @relation("DefaultProfile", fields: [defaultProfileId], references: [id])
-
-  groups        Group[]
-  groupsToUsers GroupsToUser[]
-  mentions      Mention[]
-  organizations Organization[]
-
-  referralCodes                           ReferralCodes?
-  referralsReferralsReferredUserIdToUsers Referrals?      @relation("referrals_referred_user_idTousers")
-  referralsReferralsReferrerUserIdToUsers Referrals?      @relation("referrals_referrer_user_idTousers")
-  rewardsLedger                           RewardsLedger[]
-  passwordResetOtps                       PasswordResetOtp[]
+  id                  Int                @id @default(autoincrement()) @map("id")
+  email               String             @unique(map: "users_email_unique") @map("email")
+  status              UserStatus         @default(PENDING) @map("status")
+  positionNumber      Int?               @unique(map: "users_position_number_unique") @map("position_number")
+  passwordHash        String?            @map("password_hash")
+  authProvider        AuthProvider?      @default(LOCAL) @map("auth_provider")
+  createdAt           DateTime?          @default(now()) @map("created_at")
+  updatedAt           DateTime           @default(now()) @map("updated_at")
+  personaSelected     Json?              @default("[]") @map("persona_selected")
+  inviteRequired      Boolean?           @default(true) @map("invite_required")
+  points              Int?               @default(0) @map("points")
+  phoneNumber         String?            @map("phone_number")
+  dateOfBirth         String?            @map("date_of_birth")
+  referralCode        String?            @map("referral_code")
+  defaultProfileId    Int?               @map("default_profile_id")
+  referrerId          Int?               @map("referrer_id")
+  groups              Group[]
+  groupsToUsers       GroupsToUser[]
+  mentions            Mention[]
+  organizations       Organization[]
+  passwordResetOtps   PasswordResetOtp[]
+  profiles            Profiles[]         @relation("UserProfiles")
+  referralCodes       ReferralCodes?
+  referralsAsReferred Referrals?         @relation("referrals_referred_user_idTousers")
+  referralsAsReferrer Referrals[]        @relation("referrals_referrer_user_idTousers")
+  rewardsLedger       RewardsLedger[]
+  defaultProfile      Profiles?          @relation("DefaultProfile", fields: [defaultProfileId], references: [id])
+  referrer            Users?             @relation("UserReferrer", fields: [referrerId], references: [id])
+  referrals           Users[]            @relation("UserReferrer")
 
   @@map("users")
 }
 
 model Profiles {
-  id                   Int         @id @default(autoincrement()) @map("id")
-  userId               Int         @map("user_id")
-  user                 Users       @relation("UserProfiles", fields: [userId], references: [id])
-  defaultFor           Users[]     @relation("DefaultProfile")
-  role                 ProfileRole @default(TRAVELER)
-  bio                  String?     @map("bio")
-  createdAt            DateTime?   @default(now()) @map("created_at")
-  updatedAt            DateTime    @default(now()) @map("updated_at")
-  username             String      @unique(map: "profiles_username_unique") @map("username")
-  displayName          String      @map("display_name")
-  profilePicture       String?     @map("profile_picture")
-  personaTags          Json?       @default("[]") @map("persona_tags")
-  votes                Vote[]
-  comments             Comment[]
-  posts                Post[]
-  bookmarks            Bookmark[]
+  id                    Int            @id @default(autoincrement()) @map("id")
+  userId                Int            @map("user_id")
+  user                  Users          @relation("UserProfiles", fields: [userId], references: [id])
+  defaultFor            Users[]        @relation("DefaultProfile")
+  role                  ProfileRole    @default(TRAVELER)
+  bio                   String?        @map("bio")
+  createdAt             DateTime?      @default(now()) @map("created_at")
+  updatedAt             DateTime       @default(now()) @map("updated_at")
+  username              String         @unique(map: "profiles_username_unique") @map("username")
+  displayName           String         @map("display_name")
+  profilePicture        String?        @map("profile_picture")
+  personaTags           Json?          @default("[]") @map("persona_tags")
+  votes                 Vote[]
+  comments              Comment[]
+  posts                 Post[]
+  bookmarks             Bookmark[]
   receivedNotifications Notification[] @relation("Recipient")
   issuedNotifications   Notification[] @relation("Issuer")
-  followers            Follow[] @relation("Followers")
-  following            Follow[] @relation("Following")
-  votedComments        CommentVote[] @relation("ProfileVotes")
-  
+  followers             Follow[]       @relation("Followers")
+  following             Follow[]       @relation("Following")
+  votedComments         CommentVote[]  @relation("ProfileVotes")
+
   // Communities **owned** by this profile
-  ownedCommunities     Community[] @relation("CommunityOwner")
-  
+  ownedCommunities Community[] @relation("CommunityOwner")
+
   // Communities this profile is a **member** of
-  memberOfCommunities  Community[] @relation("CommunityMembers")
-  
+  memberOfCommunities Community[] @relation("CommunityMembers")
+
   // Favorite communities
-  favoriteCommunities  Community[] @relation("FavoriteCommunities")
-  
+  favoriteCommunities Community[] @relation("FavoriteCommunities")
+
   // Topics created by this profile
-  createdTopicGroups   TopicGroup[]
-  createdTopics        Topic[]
+  createdTopicGroups TopicGroup[]
+  createdTopics      Topic[]
 
   @@map("profiles")
 }
 
 model Follow {
-  
-  followerId    Int
-  follower      Profiles     @relation("Following", fields: [followerId] , references: [id] , onDelete:  Cascade)
-  followingId   Int
-  following     Profiles     @relation("Followers", fields: [followingId] , references: [id] , onDelete:  Cascade)
-  
-  @@unique([followerId , followingId])
+  followerId  Int
+  followingId Int
+  follower    Profiles @relation("Following", fields: [followerId], references: [id], onDelete: Cascade)
+  following   Profiles @relation("Followers", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followingId])
   @@map("follows")
 }
 
@@ -103,78 +99,67 @@ model Organization {
   ownerId   Int?      @map("owner_id")
   createdAt DateTime? @default(now()) @map("created_at")
   updatedAt DateTime  @default(now()) @map("updated_at")
-
-  users Users? @relation(fields: [ownerId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "organizations_owner_id_users_id_fk")
+  users     Users?    @relation(fields: [ownerId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "organizations_owner_id_users_id_fk")
 
   @@map("organizations")
 }
 
-//////////////////////////
-// COMMUNITY & CONTENT MODELS
-//////////////////////////
-
 model Community {
-  id           Int        @id @default(autoincrement()) @map("id")
-  name         String     @map("name")
-  slug         String     @unique(map: "communities_slug_unique") @map("slug")
-  description  String?    @map("description")
+  id          Int        @id @default(autoincrement()) @map("id")
+  name        String     @map("name")
+  slug        String     @unique(map: "communities_slug_unique") @map("slug")
+  description String?    @map("description")
   // Owner relation
-  ownerId      Int @default(1)
-  owner        Profiles   @relation("CommunityOwner", fields: [ownerId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  ownerId     Int        @default(1)
+  owner       Profiles   @relation("CommunityOwner", fields: [ownerId], references: [id], onDelete: Cascade, onUpdate: NoAction)
   // Members of this community (many-to-many)
-  members      Profiles[] @relation("CommunityMembers")
-  createdAt    DateTime?  @default(now()) @map("created_at")
-  posts        Post[]
+  members     Profiles[] @relation("CommunityMembers")
+  createdAt   DateTime?  @default(now()) @map("created_at")
+  posts       Post[]
   // Favorite communities
-  favoredBy    Profiles[] @relation("FavoriteCommunities")
+  favoredBy   Profiles[] @relation("FavoriteCommunities")
   // Topics within this community
-  topics      Topic[] 
+  topics      Topic[]
 
   @@map("communities")
 }
 
-
-
 model TopicGroup {
-  id           Int          @id @default(autoincrement())
-  name         String
-  description  String?
-  createdAt    DateTime?    @default(now())
-  topics       Topic[]
-  createdById  Int
-  createdBy    Profiles     @relation(fields: [createdById], references: [id])
+  id          Int       @id @default(autoincrement())
+  name        String
+  description String?
+  createdAt   DateTime? @default(now())
+  topics      Topic[]
+  createdById Int
+  createdBy   Profiles  @relation(fields: [createdById], references: [id])
 
   @@map("topic_groups")
 }
 
 model Topic {
-  id           Int          @id @default(autoincrement())
-  communityId  Int? 
-  groupId      Int          // required
-  title        String
-  description  String?
-  createdAt    DateTime?    @default(now())
-  updatedAt    DateTime     @default(now())
-  createdById  Int
-  createdBy    Profiles     @relation(fields: [createdById], references: [id])
+  id          Int       @id @default(autoincrement())
+  communityId Int?
+  groupId     Int // required
+  title       String
+  description String?
+  createdAt   DateTime? @default(now())
+  updatedAt   DateTime  @default(now())
+  createdById Int
+  createdBy   Profiles  @relation(fields: [createdById], references: [id])
 
   // Relation to group
-  group        TopicGroup   @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  community    Community?  @relation(fields: [communityId], references: [id], onDelete: SetNull)
+  group     TopicGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  community Community? @relation(fields: [communityId], references: [id], onDelete: SetNull)
 
   @@map("topics")
 }
 
-
-
-
 model Group {
-  id        Int       @id @default(autoincrement()) @map("id")
-  name      String    @map("name")
-  type      GroupType @map("type")
-  ownerId   Int?      @map("owner_id")
-  createdAt DateTime? @default(now()) @map("created_at")
-
+  id            Int            @id @default(autoincrement()) @map("id")
+  name          String         @map("name")
+  type          GroupType      @map("type")
+  ownerId       Int?           @map("owner_id")
+  createdAt     DateTime?      @default(now()) @map("created_at")
   users         Users?         @relation(fields: [ownerId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "groups_owner_id_users_id_fk")
   groupsToUsers GroupsToUser[]
 
@@ -182,42 +167,38 @@ model Group {
 }
 
 model Post {
-  id              Int        @id @default(autoincrement()) @map("id")
-  communityId     Int        @map("community_id")
-  title           String     @map("title")
-  content         String     @map("content")
-  status          PostStatus @default(DRAFT)
-  upvotes         Int?       @default(0)
-  downvotes       Int?       @default(0)
-  createdAt       DateTime  @default(now()) @map("created_at")
-  updatedAt       DateTime   @default(now()) @map("updated_at")
-  authorProfileId Int        @map("author_profile_id")
-  attachment                 Media[]
-
-  comments          Comment[]
-  mentions          Mention[]
-  authorProfile     Profiles          @relation(fields: [authorProfileId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "posts_author_profile_id_profiles_id_fk")
-  communities       Community         @relation(fields: [communityId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "posts_community_id_communities_id_fk")
-  postsToCategories PostsToCategory[]
-  votes             Vote[]
-  linkedNotifications    Notification[]
-  bookmarks              Bookmark[]
+  id                  Int               @id @default(autoincrement()) @map("id")
+  communityId         Int               @map("community_id")
+  title               String            @map("title")
+  content             String            @map("content")
+  status              PostStatus        @default(DRAFT)
+  upvotes             Int?              @default(0)
+  downvotes           Int?              @default(0)
+  createdAt           DateTime          @default(now()) @map("created_at")
+  updatedAt           DateTime          @default(now()) @map("updated_at")
+  authorProfileId     Int               @map("author_profile_id")
+  bookmarks           Bookmark[]
+  comments            Comment[]
+  mentions            Mention[]
+  linkedNotifications Notification[]
+  attachment          Media[]
+  authorProfile       Profiles          @relation(fields: [authorProfileId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "posts_author_profile_id_profiles_id_fk")
+  communities         Community         @relation(fields: [communityId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "posts_community_id_communities_id_fk")
+  postsToCategories   PostsToCategory[]
+  votes               Vote[]
 
   @@map("posts")
 }
 
-
 model Media {
-  id             String       @id  @default(cuid())
-  postId         Int?
-  post           Post?         @relation(fields: [postId] , references: [id] , onDelete:  SetNull)
-  type           MediaType
-  url            String
-
-  createdAt      DateTime @default(now())
+  id        String    @id @default(cuid())
+  postId    Int?
+  type      MediaType
+  url       String
+  createdAt DateTime  @default(now())
+  post      Post?     @relation(fields: [postId], references: [id])
 
   @@map("post_media")
-
 }
 
 model Category {
@@ -240,11 +221,11 @@ model Comment {
   updatedAt       DateTime      @default(now()) @map("updated_at")
   status          CommentStatus @default(VISIBLE)
   authorProfileId Int           @map("author_profile_id")
-  authorProfile                 Profiles  @relation(fields: [authorProfileId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "comments_author_profile_id_profiles_id_fk")
+  commentVotes    CommentVote[] @relation("CommentVotes")
+  authorProfile   Profiles      @relation(fields: [authorProfileId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "comments_author_profile_id_profiles_id_fk")
   posts           Post          @relation(fields: [postId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "comments_post_id_posts_id_fk")
-  mentions                      Mention[]
-  votes                         Vote[]
-  commentVotes                  CommentVote[]           @relation("CommentVotes")
+  mentions        Mention[]
+  votes           Vote[]
 
   @@map("comments")
 }
@@ -255,22 +236,16 @@ model Mention {
   postId    Int?      @map("post_id")
   commentId Int?      @map("comment_id")
   createdAt DateTime? @default(now()) @map("created_at")
-
-  comments Comment? @relation(fields: [commentId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "mentions_comment_id_comments_id_fk")
-  posts    Post?    @relation(fields: [postId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "mentions_post_id_posts_id_fk")
-  users    Users    @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "mentions_user_id_users_id_fk")
+  comments  Comment?  @relation(fields: [commentId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "mentions_comment_id_comments_id_fk")
+  posts     Post?     @relation(fields: [postId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "mentions_post_id_posts_id_fk")
+  users     Users     @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "mentions_user_id_users_id_fk")
 
   @@map("mentions")
 }
 
-//////////////////////////
-// JOIN TABLES
-//////////////////////////
-
 model PostsToCategory {
   postId     Int
   categoryId Int
-
   categories Category @relation(fields: [categoryId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "posts_to_categories_category_id_categories_id_fk")
   posts      Post     @relation(fields: [postId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "posts_to_categories_post_id_posts_id_fk")
 
@@ -281,17 +256,12 @@ model PostsToCategory {
 model GroupsToUser {
   groupId Int
   userId  Int
-
-  group Group @relation(fields: [groupId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "groups_to_users_group_id_groups_id_fk")
-  users Users @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "groups_to_users_user_id_users_id_fk")
+  group   Group @relation(fields: [groupId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "groups_to_users_group_id_groups_id_fk")
+  users   Users @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "groups_to_users_user_id_users_id_fk")
 
   @@id([groupId, userId], map: "groups_to_users_group_id_user_id_pk")
   @@map("groups_to_users")
 }
-
-//////////////////////////
-// CAMPAIGNS & REFERRALS
-//////////////////////////
 
 model Campaign {
   id           Int       @id @default(autoincrement()) @map("id")
@@ -312,26 +282,24 @@ model ReferralCodes {
   createdAt  DateTime?        @default(now()) @map("created_at")
   campaignId Int?             @map("campaign_id")
   userId     Int?             @unique(map: "referral_codes_user_id_unique") @map("user_id")
-
-  users     Users?      @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "referral_codes_user_id_users_id_fk")
-  referrals Referrals[]
+  users      Users?           @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "referral_codes_user_id_users_id_fk")
+  referrals  Referrals[]
 
   @@map("referral_codes")
 }
 
 model Referrals {
   id             Int            @id @default(autoincrement()) @map("id")
-  referrerUserId Int?           @unique(map: "referrals_referrer_user_id_unique") @map("referrer_user_id")
+  referrerUserId Int?           @map("referrer_user_id")
   referredEmail  String?        @map("referred_email")
   referredUserId Int?           @unique(map: "referrals_referred_user_id_unique") @map("referred_user_id")
   referralCode   String?        @map("referral_code")
   status         ReferralStatus @map("status")
   createdAt      DateTime?      @default(now()) @map("created_at")
   lastEventAt    DateTime?      @map("last_event_at")
-
-  referralCodes ReferralCodes? @relation(fields: [referralCode], references: [code], onDelete: NoAction, onUpdate: NoAction, map: "referrals_referral_code_referral_codes_code_fk")
-  usersReferred Users?         @relation("referrals_referred_user_idTousers", fields: [referredUserId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "referrals_referred_user_id_users_id_fk")
-  usersReferrer Users?         @relation("referrals_referrer_user_idTousers", fields: [referrerUserId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "referrals_referrer_user_id_users_id_fk")
+  referralCodes  ReferralCodes? @relation(fields: [referralCode], references: [code], onDelete: NoAction, onUpdate: NoAction, map: "referrals_referral_code_referral_codes_code_fk")
+  usersReferred  Users?         @relation("referrals_referred_user_idTousers", fields: [referredUserId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "referrals_referred_user_id_users_id_fk")
+  usersReferrer  Users?         @relation("referrals_referrer_user_idTousers", fields: [referrerUserId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "referrals_referrer_user_id_users_id_fk")
 
   @@map("referrals")
 }
@@ -343,15 +311,10 @@ model RewardsLedger {
   reason      RewardsReason @map("reason")
   refId       Int?          @map("ref_id")
   createdAt   DateTime?     @default(now()) @map("created_at")
-
-  users Users? @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "rewards_ledger_user_id_users_id_fk")
+  users       Users?        @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "rewards_ledger_user_id_users_id_fk")
 
   @@map("rewards_ledger")
 }
-
-//////////////////////////
-// SYSTEM & LOG MODELS
-//////////////////////////
 
 model SystemLog {
   id        Int       @id @default(autoincrement()) @map("id")
@@ -372,20 +335,16 @@ model SystemSettings {
   @@map("system_settings")
 }
 
-//////////////////////////
-// VOTES & EMAIL EVENTS
-//////////////////////////
-
 model Vote {
   id        Int       @id @default(autoincrement()) @map("id")
-  profileId  Int       @map("profile_id")
   postId    Int?      @map("post_id")
   commentId Int?      @map("comment_id")
   voteType  VoteType  @map("vote_type")
   createdAt DateTime? @default(now()) @map("created_at")
-  comments Comment? @relation(fields: [commentId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "votes_comment_id_comments_id_fk")
-  posts    Post?    @relation(fields: [postId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "votes_post_id_posts_id_fk")
-  profiles    Profiles @relation(fields: [profileId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "votes_profile_id_profiles_id_fk")
+  profileId Int       @map("profile_id")
+  comments  Comment?  @relation(fields: [commentId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "votes_comment_id_comments_id_fk")
+  posts     Post?     @relation(fields: [postId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "votes_post_id_posts_id_fk")
+  profiles  Profiles  @relation(fields: [profileId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "votes_profile_id_profiles_id_fk")
 
   @@unique([profileId, postId])
   @@map("votes")
@@ -402,46 +361,40 @@ model EmailEvent {
 }
 
 model Bookmark {
-  id         String     @id @default(cuid()) @map("id")
-  profileId  Int        @map("profile_id")
-  userProfile    Profiles   @relation(fields: [profileId], references: [id], onDelete: Cascade)
-  postId     Int        @map("post_id")
-  post       Post       @relation(fields: [postId], references: [id], onDelete: Cascade)
-  createdAt  DateTime   @default(now()) @map("created_at")
+  id          String   @id @default(cuid()) @map("id")
+  profileId   Int      @map("profile_id")
+  postId      Int      @map("post_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+  post        Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  userProfile Profiles @relation(fields: [profileId], references: [id], onDelete: Cascade)
 
   @@unique([profileId, postId])
   @@map("bookmarks")
 }
 
-
 model Notification {
-  id          String       @id @default(cuid()) @map("id")
-  recipientId Int          @map("recipient_id")
-  recipient   Profiles     @relation("Recipient", fields: [recipientId], references: [id], onDelete: Cascade)
-  issuerId    Int          @map("issuer_id")
-  issuer      Profiles     @relation("Issuer", fields: [issuerId], references: [id], onDelete: Cascade)
-  postId      Int?         @map("post_id")
-  post        Post?        @relation(fields: [postId], references: [id], onDelete: Cascade)
+  id          String           @id @default(cuid()) @map("id")
+  recipientId Int              @map("recipient_id")
+  issuerId    Int              @map("issuer_id")
+  postId      Int?             @map("post_id")
   type        NotificationType @map("type")
-  read        Boolean      @default(false) @map("read")
-  createdAt   DateTime     @default(now()) @map("created_at")
-  
+  read        Boolean          @default(false) @map("read")
+  createdAt   DateTime         @default(now()) @map("created_at")
+  issuer      Profiles         @relation("Issuer", fields: [issuerId], references: [id], onDelete: Cascade)
+  post        Post?            @relation(fields: [postId], references: [id], onDelete: Cascade)
+  recipient   Profiles         @relation("Recipient", fields: [recipientId], references: [id], onDelete: Cascade)
+
   @@map("notifications")
 }
 
-
-//////////////////////////
-// COMMENT LIKES
-//////////////////////////
-
 model CommentVote {
   id        Int      @id @default(autoincrement()) @map("id")
-  voteType  VoteType  @map("vote_type")
+  voteType  VoteType @map("vote_type")
   profileId Int      @map("profile_id")
   commentId Int      @map("comment_id")
   createdAt DateTime @default(now()) @map("created_at")
-  profile Profiles   @relation("ProfileVotes", fields: [profileId], references: [id], map: "comment_votes_profile_id_profiles_fk")
-  comment Comment    @relation("CommentVotes", fields: [commentId], references: [id], map: "comment_votes_comment_id_comments_fk")
+  comment   Comment  @relation("CommentVotes", fields: [commentId], references: [id], map: "comment_votes_comment_id_comments_fk")
+  profile   Profiles @relation("ProfileVotes", fields: [profileId], references: [id], map: "comment_votes_profile_id_profiles_fk")
 
   @@unique([profileId, commentId])
   @@map("comment_votes")
@@ -454,18 +407,12 @@ model PasswordResetOtp {
   usedAt    DateTime? @map("used_at")
   attempts  Int       @default(0)
   createdAt DateTime  @default(now()) @map("created_at")
-
-  userId Int   @map("user_id")
-  user   Users @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    Int       @map("user_id")
+  user      Users     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, expiresAt])
   @@map("password_reset_otp")
 }
-
-
-//////////////////////////
-// ENUMS
-//////////////////////////
 
 enum AuthProvider {
   LOCAL
@@ -540,7 +487,6 @@ enum VoteType {
 enum MediaType {
   IMAGE
   VIDEO
-
 }
 
 enum NotificationType {
