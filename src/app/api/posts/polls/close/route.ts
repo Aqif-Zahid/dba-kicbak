@@ -1,20 +1,17 @@
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "../../../auth/[...nextauth]/route";
+import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { z } from "zod";
 import { notifyChannel } from "@/lib/pg-listener";
+import { getUser } from "@/lib/auth";
 
 const closePollSchema = z.object({
   postId: z.number(),
 });
 
-export async function PATCH(req: Request) {
+export async function PATCH(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    const userId = Number(session?.user?.id);
-
-    if (!userId) {
+    const user = await getUser(req);
+    if (!user || !user.id || !user.defaultProfileId) {
       return NextResponse.json(
         { status: 0, message: "Unauthorized: No active session" },
         { status: 401 }
@@ -47,7 +44,7 @@ export async function PATCH(req: Request) {
       );
     }
 
-    if (pollPost.authorProfile.userId !== userId) {
+    if (pollPost.authorProfile.userId !== Number(user.id)) {
       return NextResponse.json(
         { status: 0, message: "Unauthorized: You are not the poll creator" },
         { status: 403 }

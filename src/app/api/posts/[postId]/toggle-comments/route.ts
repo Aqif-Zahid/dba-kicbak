@@ -19,7 +19,7 @@ export async function PATCH(
 
     const post = await prisma.post.findUnique({
       where: { id: Number(postId) },
-      select: { authorProfileId: true, allowComments: true },
+      select: { authorProfileId: true, allowComments: true, hasBestAnswer: true },
     });
 
     if (!post)
@@ -33,6 +33,18 @@ export async function PATCH(
         { status: 0, message: "Forbidden: Not your post" },
         { status: 403 }
       );
+
+    // Prevent enabling comments after marking best answer
+    if (post.hasBestAnswer && !post.allowComments) {
+      return NextResponse.json(
+        {
+          status: 0,
+          message:
+            "You cannot re-enable comments after marking a Best Answer. Unmark it first.",
+        },
+        { status: 403 }
+      );
+    }
 
     const updated = await prisma.post.update({
       where: { id: Number(postId) },

@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,11 +29,32 @@ export const PostMoreButton = ({ post, className }: PostMoreButtonProps) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isToggling, setIsToggling] = useState(false);
   const [allowCommentsLocal, setAllowCommentsLocal] = useState<boolean>(post.allowComments);
+  const [hasBestAnswerLocal, setHasBestAnswerLocal] = useState<boolean>(Boolean(post.hasBestAnswer));
   const [isClosedLocal, setIsClosedLocal] = useState<boolean | null>(null);
 
   const queryClient = useQueryClient();
 
-  // Query always returns a defined value (no undefined)
+  // Keep locals synced with post props (on navigation/refetch)
+  useEffect(() => {
+    setAllowCommentsLocal(post.allowComments);
+    setHasBestAnswerLocal(Boolean(post.hasBestAnswer));
+  }, [post.allowComments, post.hasBestAnswer, post.id]);
+
+  // 🔔 Listen for Best Answer changes (broadcast from comment-more-button)
+  useEffect(() => {
+    const onToggle = (e: any) => {
+      const d = e?.detail;
+      if (!d || String(d.postId) !== String(post.id)) return;
+      if (typeof d.hasBestAnswer === "boolean")
+        setHasBestAnswerLocal(d.hasBestAnswer);
+      if (typeof d.allowComments === "boolean")
+        setAllowCommentsLocal(d.allowComments);
+    };
+    window.addEventListener("kicbak:bestAnswerToggled", onToggle);
+    return () => window.removeEventListener("kicbak:bestAnswerToggled", onToggle);
+  }, [post.id]);
+
+  // Query for poll state (if post is a poll)
   const { data: pollData } = useQuery({
     queryKey: ["poll", post.id, "menu-status"],
     enabled: post.type === "POLL",
@@ -41,21 +62,21 @@ export const PostMoreButton = ({ post, className }: PostMoreButtonProps) => {
       try {
         const res = await fetch(`/api/posts/polls/${post.id}`, { cache: "no-store" });
         const json = await res.json();
-
         if (json?.status === 0 || !json?.data) {
           return { isClosed: false };
         }
         return json.data;
       } catch {
-        return { isClosed: false }; 
+        return { isClosed: false };
       }
     },
     staleTime: 10_000,
   });
 
-  const isPollClosed = post.type !== "POLL"
-    ? false
-    : (isClosedLocal ?? pollData?.isClosed ?? false);
+  const isPollClosed =
+    post.type !== "POLL"
+      ? false
+      : (isClosedLocal ?? pollData?.isClosed ?? false);
 
   const stop = (e: React.SyntheticEvent) => e.stopPropagation();
 
@@ -70,6 +91,7 @@ export const PostMoreButton = ({ post, className }: PostMoreButtonProps) => {
     try {
       setAllowCommentsLocal((v) => !v);
 
+      // Optimistically update local caches
       queryClient.setQueryData(postKey, (old: any) => {
         if (!old?.data) return old;
         return { ...old, data: { ...old.data, allowComments: !old.data.allowComments } };
@@ -109,8 +131,6 @@ export const PostMoreButton = ({ post, className }: PostMoreButtonProps) => {
     try {
       await axios.patch("/api/posts/polls/close", { postId: post.id });
       setIsClosedLocal(true);
-
-      // Optimistically mark closed in feed and poll cache
       queryClient.setQueriesData({ queryKey: ["for-you"] }, (old: any) => {
         if (!old?.pages) return old;
         return {
@@ -118,21 +138,20 @@ export const PostMoreButton = ({ post, className }: PostMoreButtonProps) => {
           pages: old.pages.map((page: any) => ({
             ...page,
             posts: page.posts.map((p: any) =>
-              p.id === post.id ? { ...p, poll: { ...(p.poll || {}), isClosed: true } } : p
+              p.id === post.id
+                ? { ...p, poll: { ...(p.poll || {}), isClosed: true } }
+                : p
             ),
           })),
         };
       });
-
       queryClient.setQueryData(["poll", post.id], (old: any) => {
         if (!old?.data) return old;
         return { ...old, data: { ...old.data, isClosed: true } };
       });
-
       queryClient.setQueryData(["poll", post.id, "menu-status"], (old: any) =>
         old ? { ...old, isClosed: true } : { isClosed: true }
       );
-
       toast.success("Poll closed");
       queryClient.invalidateQueries({ queryKey: ["poll", post.id] });
       queryClient.invalidateQueries({ queryKey: ["for-you"] });
@@ -165,7 +184,6 @@ export const PostMoreButton = ({ post, className }: PostMoreButtonProps) => {
           onMouseDown={stop}
           onPointerDown={stop}
         >
-          {/* Only show Close Poll if this is a poll and NOT closed */}
           {post.type === "POLL" && !isPollClosed && (
             <DropdownMenuItem onClick={handleClosePoll}>
               <span className="flex items-center gap-3">
@@ -175,21 +193,27 @@ export const PostMoreButton = ({ post, className }: PostMoreButtonProps) => {
             </DropdownMenuItem>
           )}
 
-          <DropdownMenuItem onClick={handleToggleComments} disabled={isToggling}>
-            <span className="flex items-center gap-3">
-              {allowCommentsLocal ? (
-                <>
-                  <MessageSquareOff className="size-4" />
-                  Disable Comments
-                </>
-              ) : (
-                <>
-                  <MessageSquare className="size-4" />
-                  Enable Comments
-                </>
-              )}
-            </span>
-          </DropdownMenuItem>
+          {/* 💬 Enable/Disable Comments — reactive with hasBestAnswerLocal */}
+          {!hasBestAnswerLocal && (
+            <DropdownMenuItem
+              onClick={handleToggleComments}
+              disabled={isToggling}
+            >
+              <span className="flex items-center gap-3">
+                {allowCommentsLocal ? (
+                  <>
+                    <MessageSquareOff className="size-4" />
+                    Disable Comments
+                  </>
+                ) : (
+                  <>
+                    <MessageSquare className="size-4" />
+                    Enable Comments
+                  </>
+                )}
+              </span>
+            </DropdownMenuItem>
+          )}
 
           <DropdownMenuItem
             onClick={(e) => {

@@ -19,18 +19,17 @@ export async function GET(
   }
 
   try {
-    const post = await prisma.post.findUnique({
-      where: { id: postIdNum },
+    const post = await prisma.post.findFirst({
+      where: {
+        id: postIdNum,
+        status: "PUBLISHED",
+      },
       include: {
         ...getPostsDataInclude(
           loggedInUser ? Number(loggedInUser.defaultProfileId) : null
         ),
-        // ensure counts are always present
         _count: {
-          select: {
-            comments: true,
-            votes: true,
-          },
+          select: { comments: true, votes: true },
         },
       },
     });
@@ -42,10 +41,10 @@ export async function GET(
       );
     }
 
-    return NextResponse.json({
-      status: 1,
-      data: post,
-    });
+    return NextResponse.json(
+      { status: 1, message: "Post fetched successfully", data: post },
+      { status: 200 }
+    );
   } catch (error: any) {
     console.error("Post GET error:", error);
     return NextResponse.json(

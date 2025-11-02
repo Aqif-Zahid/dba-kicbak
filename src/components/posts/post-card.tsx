@@ -49,7 +49,15 @@ export const PostCard = ({ post, from }: PostDataProps) => {
 
   // Fallbacks for deleted posts
   const isDeleted = post.status === "DELETED";
-  const displayTitle = isDeleted ? "[Deleted]" : post.title;
+
+  // Display logic for answered questions
+  const isAnswered = post.type === "QUESTION" && post.hasBestAnswer;
+  const displayTitle = isDeleted
+    ? "[Deleted]"
+    : isAnswered
+    ? `${post.title} (Answered)`
+    : post.title;
+
   const displayContent = isDeleted ? "[Deleted]" : post.content;
 
   return (
@@ -100,10 +108,10 @@ export const PostCard = ({ post, from }: PostDataProps) => {
           )}
         </div>
 
-        {/* Deleted post display */}
+        {/* Deleted or answered display */}
         <h2
           className={cn(
-            "whitespace-pre-line break-words px-5 mb-4 font-bold text-lg",
+            "whitespace-pre-line break-words px-5 mb-4 font-bold text-lg text-foreground",
             isDeleted && "italic text-muted-foreground"
           )}
         >

@@ -13,7 +13,11 @@ interface CommentProps {
 
 export const Comment = ({ comment }: CommentProps) => {
   const { user } = useUser();
-  const isAuthor = comment.authorProfileId === user?.defaultProfileId;
+
+  const currentProfileId = user?.defaultProfileId;
+  const isCommentAuthor = comment.authorProfileId === currentProfileId;
+  const isPostAuthor =
+    comment.posts?.authorProfileId === currentProfileId;
 
   return (
     <div className="flex flex-col gap-2 border-b border-gray-200 py-3">
@@ -65,13 +69,20 @@ export const Comment = ({ comment }: CommentProps) => {
               initialState={{
                 votes: comment._count.commentVotes,
                 isVotedByUser: comment.commentVotes.some(
-                  (vote) => vote.profileId === user?.defaultProfileId
+                  (vote) => vote.profileId === currentProfileId
                 ),
               }}
             />
 
-            {isAuthor && (
-              <CommentMoreButton comment={comment} className="ml-auto" />
+            {/* Show menu if comment owner or post owner */}
+            {(isCommentAuthor || isPostAuthor) && (
+              <CommentMoreButton
+                comment={comment}
+                postId={comment.postId}
+                postType={comment.posts?.type}
+                isAuthor={isPostAuthor} // Only post author sees pin option
+                className="ml-auto"
+              />
             )}
           </div>
         </div>

@@ -4,14 +4,13 @@ import { CommentsPage, getCommentDataInclude } from "@/types/types";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
-// ---------- GET: fetch comments (always visible even if comments are disabled) ----------
+// ---------- GET: fetch comments (includes pinned & post info) ----------
 export async function GET(
   req: NextRequest,
   context: { params: Promise<{ postId: string }> }
 ) {
   try {
     const { postId } = await context.params;
-
     const postIdNum = Number(postId);
     if (!Number.isFinite(postIdNum)) {
       return NextResponse.json(
@@ -22,28 +21,46 @@ export async function GET(
 
     const cursor = req.nextUrl.searchParams.get("cursor") || undefined;
     const pageSize = 5;
-
     const user = await getUser(req);
 
-    // Fetch allowComments so UI can hide composer but still show existing comments
+    // Fetch post info
     const post = await prisma.post.findUnique({
       where: { id: postIdNum },
       select: { allowComments: true },
     });
 
+    // Fetch pinned comment
+    const pinnedComment = await prisma.comment.findFirst({
+      where: { postId: postIdNum, isPinned: true },
+      include: getCommentDataInclude(
+        user ? Number(user.defaultProfileId) : null,
+        true
+      ),
+    });
+
+    // Fetch normal comments (excluding pinned)
     const comments = await prisma.comment.findMany({
-      where: { postId: postIdNum },
-      include: getCommentDataInclude(user ? Number(user.defaultProfileId) : null),
+      where: { postId: postIdNum, isPinned: false },
+      include: getCommentDataInclude(
+        user ? Number(user.defaultProfileId) : null,
+        true
+      ),
       orderBy: { createdAt: "asc" },
-      take: -pageSize - 1,
-      cursor: cursor ? { id: Number(cursor) } : undefined,
+      take: pageSize + 1,
+      ...(cursor && { cursor: { id: Number(cursor) }, skip: 1 }),
     });
 
     const previousCursor =
-      comments.length > pageSize ? String(comments[0].id) : null;
+      comments.length > pageSize ? String(comments[pageSize - 1].id) : null;
+
+    // Merge pinned + normal comments
+    const allComments = [
+      ...(pinnedComment ? [pinnedComment] : []),
+      ...(comments.length > pageSize ? comments.slice(0, pageSize) : comments),
+    ];
 
     const data: CommentsPage = {
-      comments: comments.length > pageSize ? comments.slice(1) : comments,
+      comments: allComments,
       previousCursor,
     };
 
@@ -53,7 +70,7 @@ export async function GET(
       commentsDisabled: post ? !post.allowComments : false,
     });
   } catch (error) {
-    console.error(error);
+    console.error("Error fetching comments:", error);
     return NextResponse.json(
       { status: 0, message: "Internal server error" },
       { status: 500 }
@@ -61,7 +78,7 @@ export async function GET(
   }
 }
 
-// ---------- POST: create a comment (blocked if comments disabled) ----------
+// ---------- POST: create a comment ----------
 const CreateCommentSchema = z.object({
   content: z.string().trim().min(1, "Content is required"),
 });
@@ -72,7 +89,6 @@ export async function POST(
 ) {
   try {
     const { postId } = await context.params;
-
     const loggedInUser = await getUser(req);
     if (!loggedInUser) {
       return NextResponse.json(
@@ -125,7 +141,7 @@ export async function POST(
         postId: postIdNum,
         authorProfileId: Number(loggedInUser.defaultProfileId),
       },
-      include: getCommentDataInclude(Number(loggedInUser.defaultProfileId)),
+      include: getCommentDataInclude(Number(loggedInUser.defaultProfileId), true),
     });
 
     return NextResponse.json(
@@ -133,7 +149,7 @@ export async function POST(
       { status: 201 }
     );
   } catch (error) {
-    console.error(error);
+    console.error("Error creating comment:", error);
     return NextResponse.json(
       { status: 0, message: "Internal server error" },
       { status: 500 }
