@@ -8,6 +8,7 @@ import { Post } from "@/types/types";
 import { useCreateComment } from "@/services/comments/use-create-comment";
 import { useUser } from "@/providers/auth-provider";
 import { useSigninModal } from "@/hooks/use-signin-modal";
+import { useQueryClient } from "@tanstack/react-query";
 
 // Dynamically import emoji picker
 const Picker = dynamic(() => import("emoji-picker-react"), { ssr: false });
@@ -19,6 +20,7 @@ interface CommentInputProps {
 export const CommentInput = ({ post }: CommentInputProps) => {
   const { user } = useUser();
   const { open } = useSigninModal();
+  const queryClient = useQueryClient();
 
   const [input, setInput] = useState("");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
@@ -27,6 +29,7 @@ export const CommentInput = ({ post }: CommentInputProps) => {
   );
   const pickerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLDivElement>(null);
+
   const mutation = useCreateComment(post.id);
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
@@ -37,7 +40,59 @@ export const CommentInput = ({ post }: CommentInputProps) => {
       mutation.mutate(
         { post, content: input },
         {
-          onSuccess: () => setInput(""),
+          onSuccess: (res: any) => {
+            setInput("");
+
+            // ✅ Create temporary unique ID for React key
+            const tempId =
+              res?.data?.id || `temp-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
+            // ✅ Add full safe fallback structure for new comment
+            const newComment = {
+              ...res?.data,
+              id: tempId,
+              content: input,
+              postId: post.id,
+              isPinned: false,
+              authorProfileId: user.defaultProfileId,
+              authorProfile: {
+                id: user.defaultProfileId,
+                username: user.username || "unknown",
+                displayName: user.displayName || "You",
+                profilePicture:
+                  (user as any).profilePicture ??
+                  (user as any).image ??
+                  null,
+              },
+              commentVotes: [], // 🧩 avoid undefined
+              _count: { commentVotes: 0 }, // 🧩 avoid undefined
+            };
+
+            // ✅ Inject new comment optimistically into cache
+            queryClient.setQueryData(["comments", post.id], (oldData: any) => {
+              if (!oldData) return oldData;
+
+              const updatedPages = oldData.pages.map(
+                (page: any, idx: number) => {
+                  if (idx === oldData.pages.length - 1) {
+                    return {
+                      ...page,
+                      data: {
+                        ...page.data,
+                        comments: [...page.data.comments, newComment],
+                      },
+                    };
+                  }
+                  return page;
+                }
+              );
+
+              return { ...oldData, pages: updatedPages };
+            });
+
+            // ✅ Background refresh to replace temp with actual DB data
+            queryClient.invalidateQueries({ queryKey: ["comments", post.id] });
+          },
         }
       );
     } else {
