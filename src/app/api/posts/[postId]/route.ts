@@ -11,12 +11,13 @@ export async function GET(
   const loggedInUser = await getUser(req);
 
   const postIdNum = Number(postId);
-  if (Number.isNaN(postIdNum)) {
+  if (!Number.isFinite(postIdNum)) {
     return NextResponse.json(
       { status: 0, message: "Invalid post id" },
       { status: 400 }
-    );
-  }
+   );
+ }
+
 
   try {
     const post = await prisma.post.findFirst({

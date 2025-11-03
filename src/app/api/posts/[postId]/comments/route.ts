@@ -23,44 +23,45 @@ export async function GET(
     const pageSize = 5;
     const user = await getUser(req);
 
-    // Fetch post info
+    // Fetch post info (for comment availability)
     const post = await prisma.post.findUnique({
       where: { id: postIdNum },
       select: { allowComments: true },
     });
 
-    // Fetch pinned comment
-    const pinnedComment = await prisma.comment.findFirst({
-      where: { postId: postIdNum, isPinned: true },
+    // ────────────────────────────────
+    // Fetch comments (Pinned First)
+    // ────────────────────────────────
+    const allComments = await prisma.comment.findMany({
+      where: { postId: postIdNum },
       include: getCommentDataInclude(
         user ? Number(user.defaultProfileId) : null,
         true
       ),
-    });
-
-    // Fetch normal comments (excluding pinned)
-    const comments = await prisma.comment.findMany({
-      where: { postId: postIdNum, isPinned: false },
-      include: getCommentDataInclude(
-        user ? Number(user.defaultProfileId) : null,
-        true
-      ),
-      orderBy: { createdAt: "asc" },
+      orderBy: [
+        { isPinned: "desc" },
+        { createdAt: "asc" },
+      ],
       take: pageSize + 1,
       ...(cursor && { cursor: { id: Number(cursor) }, skip: 1 }),
     });
 
-    const previousCursor =
-      comments.length > pageSize ? String(comments[pageSize - 1].id) : null;
+    // Separate pinned + normal (for frontend clarity)
+    const pinnedComment = allComments.find((c) => c.isPinned);
+    const normalComments = allComments.filter((c) => !c.isPinned);
 
-    // Merge pinned + normal comments
-    const allComments = [
-      ...(pinnedComment ? [pinnedComment] : []),
-      ...(comments.length > pageSize ? comments.slice(0, pageSize) : comments),
-    ];
+    const previousCursor =
+      normalComments.length > pageSize
+        ? String(normalComments[pageSize - 1].id)
+        : null;
 
     const data: CommentsPage = {
-      comments: allComments,
+      comments: [
+        ...(pinnedComment ? [pinnedComment] : []),
+        ...(normalComments.length > pageSize
+          ? normalComments.slice(0, pageSize)
+          : normalComments),
+      ],
       previousCursor,
     };
 

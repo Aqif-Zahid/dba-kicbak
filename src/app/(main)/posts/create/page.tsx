@@ -23,12 +23,10 @@ import { AttachmentPreviews } from "@/components/posts/attachment-previews";
 import { AttachmentButton } from "@/components/posts/attachment-button";
 import { useMediaUpload } from "@/hooks/use-media-upload";
 import { useCreatePost } from "@/services/posts/use-create-post";
-import axios from "axios";
 import { PollFields } from "@/components/posts/poll-fields";
 
-
 // ─────────────────────────────
-// Main: CreatePostPage
+// Schema
 // ─────────────────────────────
 const createPostSchema = z.object({
   title: z
@@ -42,6 +40,9 @@ const createPostSchema = z.object({
 
 type FormValues = z.infer<typeof createPostSchema>;
 
+// ─────────────────────────────
+// Component
+// ─────────────────────────────
 const CreatePostPage = () => {
   const router = useRouter();
   const mutation = useCreatePost();
@@ -78,11 +79,15 @@ const CreatePostPage = () => {
     reset: resetMediaUploads,
   } = useMediaUpload();
 
+  // ─────────────────────────────
+  // Unified onSubmit
+  // ─────────────────────────────
   const onSubmit = async (values: FormValues) => {
     try {
       setLoading(true);
       setError(null);
 
+      // Validate poll logic (frontend only)
       if (values.type === "POLL") {
         const opts = pollOptions.filter((o) => o.trim() !== "");
         const totalMinutes =
@@ -100,37 +105,32 @@ const CreatePostPage = () => {
           setLoading(false);
           return;
         }
-
-        await axios.post("/api/posts/polls/create", {
-          communityId: 1,
-          title: values.title,
-          content: pollContent ?? "",
-          options: opts,
-          duration: pollDuration,
-          allowMultiple,
-        });
-
-        toast.success("Poll created successfully!");
-        setPollOptions(["", ""]);
-        setPollDuration({ days: 0, hours: 0, minutes: 5 });
-        setPollContent("");
-        setAllowMultiple(false);
-        resetMediaUploads();
-        router.push("/");
-        return;
       }
 
+      // Unified mutation for all post types
       mutation.mutate(
         {
           title: values.title,
-          content: values.content ?? "",
-          mediaIds: attachments.map((a) => a.mediaId).filter(Boolean) as string[],
+          content:
+            values.type === "POLL"
+              ? pollContent ?? ""
+              : values.content ?? "",
+          mediaIds: attachments
+            .map((a) => a.mediaId)
+            .filter(Boolean) as string[],
           type: values.type,
           allowComments: values.allowComments,
+          options: values.type === "POLL" ? pollOptions : undefined,
+          duration: values.type === "POLL" ? pollDuration : undefined,
+          allowMultiple: values.type === "POLL" ? allowMultiple : undefined,
         },
         {
           onSuccess: () => {
             toast.success("Post created successfully!");
+            setPollOptions(["", ""]);
+            setPollDuration({ days: 0, hours: 0, minutes: 5 });
+            setPollContent("");
+            setAllowMultiple(false);
             resetMediaUploads();
             router.push("/");
           },
@@ -147,6 +147,9 @@ const CreatePostPage = () => {
     }
   };
 
+  // ─────────────────────────────
+  // Render
+  // ─────────────────────────────
   return (
     <section className="pb-20 max-w-2xl mx-auto">
       <div className="flex flex-col gap-y-4 w-full">

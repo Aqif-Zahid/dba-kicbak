@@ -17,6 +17,11 @@ type CreatePostInput = {
   communityId?: number;
   type: "POLL" | "QUESTION" | "DISCUSSION";
   allowComments: boolean;
+
+  // 👇 added for poll posts
+  options?: string[]; // poll options
+  duration?: { days: number; hours: number; minutes: number }; // poll duration
+  allowMultiple?: boolean; // allow multiple selections
 };
 
 export function useCreatePost() {
