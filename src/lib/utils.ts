@@ -7,33 +7,46 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export const getErrorMessage = (err: unknown): string => {
-  // First, check if `err` is an object and not null
-  if (typeof err === "object" && err !== null) {
-    // Now, narrow the type of `err` by checking for the `errors` property
-    if ("errors" in err) {
-      const errors = (err as { errors?: Record<string, string[]> }).errors;
-      if (errors) {
-        return Object.values(errors)[0][0] || "An unknown error occurred";
-      }
+  try {
+    if (!err) return "An unknown error occurred";
+
+    // Handle Axios-style wrapped errors
+    const e = (err as any)?.response?.data ?? err;
+
+    // Handle Zod errors returned as array
+    if (Array.isArray(e)) {
+      const firstError = e[0];
+      if (firstError?.message) return firstError.message;
     }
 
-    // Check if `err` has a `message` property
-    if ("message" in err) {
-      const message = (err as { message?: string | Record<string, string[]> })
-        .message;
-
-      if (typeof message === "object" && message !== null) {
-        return Object.values(message)[0][0] || "An unknown error occurred";
-      }
-
-      if (typeof message === "string") {
-        return message;
-      }
+    // Handle Zod errors returned as object with fieldErrors
+    if (e.errors && typeof e.errors === "object") {
+      const firstField = Object.values(e.errors)[0];
+      if (Array.isArray(firstField)) return firstField[0];
     }
+
+    // Handle case where backend sends structured Zod error as stringified JSON
+    if (typeof e.message === "string") {
+      try {
+        const parsed = JSON.parse(e.message);
+        if (Array.isArray(parsed) && parsed[0]?.message) {
+          return parsed[0].message;
+        }
+      } catch {
+        // not JSON, just return it directly
+      }
+      return e.message;
+    }
+
+    // Handle deeply nested message
+    if (e.response?.data?.message) return e.response.data.message;
+
+    return "An unknown error occurred";
+  } catch {
+    return "Unexpected error occurred";
   }
-  // If `err` doesn't have the expected structure, return a default message
-  return "An unknown error occurred";
 };
+
 
 export const formatNumber = (n: number): string => {
   return Intl.NumberFormat("en-US", {

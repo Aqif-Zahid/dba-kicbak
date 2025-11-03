@@ -10,14 +10,29 @@ import { getPostsDataInclude } from "@/types/types";
 // ─────────────────────────────
 // Validation Schema
 // ─────────────────────────────
-const basePostSchema = z.object({
-  title: z.string().min(3, "Title must be at least 3 characters"),
-  content: z.string().max(500).optional(),
-  communityId: z.number().optional(),
-  mediaIds: z.array(z.string()).max(5, "Cannot have more than 5 attachments"),
-  type: z.enum(["POLL", "QUESTION", "DISCUSSION"]).default("DISCUSSION"),
-  allowComments: z.boolean().default(true),
-});
+const basePostSchema = z
+  .object({
+    title: z.string().min(3, "Title must be at least 3 characters"),
+    content: z.string().max(500).optional(),
+    communityId: z.number().optional(),
+    mediaIds: z.array(z.string()).max(5, "Cannot have more than 5 attachments"),
+    type: z.enum(["POLL", "QUESTION", "DISCUSSION"]).default("DISCUSSION"),
+    allowComments: z.boolean().default(true),
+  })
+  .refine(
+    (data) => {
+      // content required for QUESTION or DISCUSSION
+      if (data.type !== "POLL") {
+        return data.content && data.content.trim().length >= 3;
+      }
+      // for POLL, content can be optional or non-empty
+      return true;
+    },
+    {
+      message: "Content must be at least 3 characters long",
+      path: ["content"],
+    }
+  );
 
 const pollFieldsSchema = z.object({
   options: z.array(z.string()).min(2, "Poll must have at least 2 options"),
@@ -56,8 +71,8 @@ export async function createPost(input: {
 
   // find or create default "general" community if none provided
   const selectedCommunity =
-    communityId &&
-    (await prisma.community.findUnique({ where: { id: communityId } })) ||
+    (communityId &&
+      (await prisma.community.findUnique({ where: { id: communityId } }))) ||
     (await prisma.community.upsert({
       where: { slug: "general" },
       update: {},
@@ -115,7 +130,6 @@ export async function createPost(input: {
       },
     });
 
-    // attach poll info to return value
     return {
       ...newPost,
       poll,

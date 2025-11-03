@@ -135,7 +135,16 @@ const CreatePostPage = () => {
             router.push("/");
           },
           onError: (err: any) => {
-            setError(getErrorMessage(err) || "Failed to create post");
+            const message = getErrorMessage(err);
+
+            // Map backend validation errors to specific form fields
+            if (message.includes("Content must be")) {
+              form.setError("content", { message });
+            } else if (message.includes("Title must")) {
+              form.setError("title", { message });
+            } else {
+              setError(message);
+            }
           },
         }
       );
