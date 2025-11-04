@@ -13,6 +13,7 @@ import {
   MessageSquareOff,
   MessageSquare,
   Lock,
+  Pencil,
 } from "lucide-react";
 import { Post } from "@/types/types";
 import { DeletePostModal } from "./delete-post-modal";
@@ -23,9 +24,10 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 interface PostMoreButtonProps {
   post: Post;
   className?: string;
+  onEdit?: () => void;
 }
 
-export const PostMoreButton = ({ post, className }: PostMoreButtonProps) => {
+export const PostMoreButton = ({ post, className, onEdit }: PostMoreButtonProps) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isToggling, setIsToggling] = useState(false);
   const [allowCommentsLocal, setAllowCommentsLocal] = useState<boolean>(post.allowComments);
@@ -40,7 +42,7 @@ export const PostMoreButton = ({ post, className }: PostMoreButtonProps) => {
     setHasBestAnswerLocal(Boolean(post.hasBestAnswer));
   }, [post.allowComments, post.hasBestAnswer, post.id]);
 
-  // 🔔 Listen for Best Answer changes (broadcast from comment-more-button)
+  // Listen for Best Answer changes (broadcast from comment-more-button)
   useEffect(() => {
     const onToggle = (e: any) => {
       const d = e?.detail;
@@ -193,7 +195,7 @@ export const PostMoreButton = ({ post, className }: PostMoreButtonProps) => {
             </DropdownMenuItem>
           )}
 
-          {/* 💬 Enable/Disable Comments — reactive with hasBestAnswerLocal */}
+          {/* Enable/Disable Comments — reactive with hasBestAnswerLocal */}
           {!hasBestAnswerLocal && (
             <DropdownMenuItem
               onClick={handleToggleComments}
@@ -214,6 +216,19 @@ export const PostMoreButton = ({ post, className }: PostMoreButtonProps) => {
               </span>
             </DropdownMenuItem>
           )}
+
+          {/* Edit Post */}
+          <DropdownMenuItem
+            onClick={(e) => {
+              stop(e);
+              if (onEdit) onEdit();
+            }}
+          >
+            <span className="flex items-center gap-3">
+              <Pencil className="size-4" />
+              Edit
+            </span>
+          </DropdownMenuItem>
 
           <DropdownMenuItem
             onClick={(e) => {

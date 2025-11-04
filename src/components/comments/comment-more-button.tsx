@@ -13,6 +13,7 @@ import {
   Trash2Icon,
   PinIcon,
   PinOffIcon,
+  PencilIcon,
 } from "lucide-react";
 import { CommentData } from "@/types/types";
 import { DeleteCommentModal } from "./delete-comment-modal";
@@ -27,6 +28,7 @@ interface CommentMoreButtonProps {
   postType?: "DISCUSSION" | "POLL" | "QUESTION";
   isAuthor?: boolean;
   className?: string;
+  onEdit?: () => void;
 }
 
 export const CommentMoreButton = ({
@@ -35,6 +37,7 @@ export const CommentMoreButton = ({
   postType,
   isAuthor = false,
   className,
+  onEdit,
 }: CommentMoreButtonProps) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState<boolean>(false);
   const queryClient = useQueryClient();
@@ -60,13 +63,11 @@ export const CommentMoreButton = ({
     onSuccess: (res) => {
       if (res.status === 1) {
         toast.success(res.message);
-
         const newHasBest =
           postType === "QUESTION" ? !comment.isPinned : undefined;
         const newAllow =
           postType === "QUESTION" ? comment.isPinned : undefined;
 
-        // ✅ Update cache (both string & number keys)
         for (const keyId of [String(postId), Number(postId)]) {
           queryClient.setQueryData(["post", keyId], (oldData: any) => {
             if (!oldData?.data) return oldData;
@@ -87,7 +88,6 @@ export const CommentMoreButton = ({
           });
         }
 
-        // ✅ Update feed cards
         queryClient.setQueriesData({ queryKey: ["for-you"] }, (old: any) => {
           if (!old?.pages) return old;
           return {
@@ -111,7 +111,6 @@ export const CommentMoreButton = ({
           };
         });
 
-        // ✅ Broadcast to PostMoreButton so it hides instantly
         try {
           window.dispatchEvent(
             new CustomEvent("kicbak:bestAnswerToggled", {
@@ -122,11 +121,8 @@ export const CommentMoreButton = ({
               },
             })
           );
-        } catch {
-          /* no-op for SSR safety */
-        }
+        } catch {}
 
-        // Invalidate background queries
         queryClient.invalidateQueries({ queryKey: ["comments", postId] });
         queryClient.invalidateQueries({ queryKey: ["post", postId] });
       } else {
@@ -148,6 +144,14 @@ export const CommentMoreButton = ({
         </DropdownMenuTrigger>
 
         <DropdownMenuContent>
+          {/* Edit Comment */}
+          <DropdownMenuItem onClick={() => onEdit?.()}>
+            <span className="flex items-center gap-3">
+              <PencilIcon className="size-4 text-muted-foreground" />
+              Edit
+            </span>
+          </DropdownMenuItem>
+
           {/* Delete Comment */}
           <DropdownMenuItem onClick={() => setShowDeleteDialog(true)}>
             <span className="flex items-center gap-3 text-destructive">
@@ -156,7 +160,7 @@ export const CommentMoreButton = ({
             </span>
           </DropdownMenuItem>
 
-          {/* Pin / Unpin Comment (only for post author) */}
+          {/* Pin / Unpin Comment */}
           {isAuthor && (
             <DropdownMenuItem
               disabled={isPending}

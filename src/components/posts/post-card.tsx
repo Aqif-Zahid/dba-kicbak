@@ -16,6 +16,10 @@ import { VoteButton } from "@/components/votes/vote-button";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { PollSection } from "@/components/posts/poll-section";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { useEditPost } from "@/services/posts/use-edit-post";
 
 interface PostDataProps {
   post: Post;
@@ -27,6 +31,17 @@ export const PostCard = ({ post, from }: PostDataProps) => {
   const { user } = useUser();
   const [showComments, setShowComments] = useState(false);
 
+  // Inline editing state
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedTitle, setEditedTitle] = useState(post.title);
+  const [editedContent, setEditedContent] = useState(post.content || "");
+  const { mutate: editPost, isPending } = useEditPost();
+
+  // Local view state so UI updates instantly
+  const [viewTitle, setViewTitle] = useState(post.title);
+  const [viewContent, setViewContent] = useState(post.content || "");
+  const [viewEdited, setViewEdited] = useState<boolean>(Boolean(post.edited));
+
   const handleCommentClick = () => {
     setShowComments((v) => !v);
     if (!post.allowComments) {
@@ -34,16 +49,30 @@ export const PostCard = ({ post, from }: PostDataProps) => {
     }
   };
 
+  const handleSave = () => {
+    editPost(
+      { postId: post.id, title: editedTitle, content: editedContent },
+      {
+        onSuccess: () => {
+          // ✨ Update local values immediately
+          setViewTitle(editedTitle);
+          setViewContent(editedContent);
+          setViewEdited(true);
+          toast.success("Post updated successfully");
+          setIsEditing(false);
+        },
+      }
+    );
+  };
+
   // prevent navigation when clicking on interactive elements
   const handleCardClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (from) return;
-
     const target = e.target as HTMLElement;
     const isInteractive = target.closest(
       "button, a, input, textarea, select, [role='menu'], [role='dialog'], [data-no-nav]"
     );
     if (isInteractive) return;
-
     router.push(`/posts/${post.id}`);
   };
 
@@ -55,10 +84,10 @@ export const PostCard = ({ post, from }: PostDataProps) => {
   const displayTitle = isDeleted
     ? "[Deleted]"
     : isAnswered
-    ? `${post.title} (Answered)`
-    : post.title;
+    ? `${viewTitle} (Answered)`
+    : viewTitle;
 
-  const displayContent = isDeleted ? "[Deleted]" : post.content;
+  const displayContent = isDeleted ? "[Deleted]" : viewContent;
 
   return (
     <article className="group/post space-y-3 rounded-2xl bg-card shadow-sm">
@@ -104,30 +133,67 @@ export const PostCard = ({ post, from }: PostDataProps) => {
             <PostMoreButton
               post={post}
               className="opacity-0 transition-opacity group-hover/post:opacity-100 mx-5"
+              onEdit={() => setIsEditing(true)}
             />
           )}
         </div>
 
-        {/* Deleted or answered display */}
-        <h2
-          className={cn(
-            "whitespace-pre-line break-words px-5 mb-4 font-bold text-lg text-foreground",
-            isDeleted && "italic text-muted-foreground"
-          )}
-        >
-          {displayTitle}
-        </h2>
-
-        <Linkify>
-          <div
-            className={cn(
-              "whitespace-pre-line break-words px-5 mb-4",
-              isDeleted && "italic text-muted-foreground"
-            )}
-          >
-            {displayContent}
+        {/* Inline Edit Mode */}
+        {isEditing ? (
+          <div className="px-5 mb-4 space-y-3">
+            <Input
+              value={editedTitle}
+              onChange={(e) => setEditedTitle(e.target.value)}
+              disabled={isPending}
+            />
+            <Textarea
+              value={editedContent}
+              onChange={(e) => setEditedContent(e.target.value)}
+              disabled={isPending}
+              className="min-h-[100px]"
+            />
+            <div className="flex justify-end gap-2">
+              <Button onClick={handleSave} disabled={isPending}>
+                {isPending ? "Saving..." : "Save"}
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setEditedTitle(viewTitle);
+                  setEditedContent(viewContent);
+                  setIsEditing(false);
+                }}
+              >
+                Cancel
+              </Button>
+            </div>
           </div>
-        </Linkify>
+        ) : (
+          <>
+            <h2
+              className={cn(
+                "whitespace-pre-line break-words px-5 mb-4 font-bold text-lg text-foreground",
+                isDeleted && "italic text-muted-foreground"
+              )}
+            >
+              {displayTitle}
+              {viewEdited && (
+                <span className="ml-2 text-sm text-muted-foreground">(edited)</span>
+              )}
+            </h2>
+
+            <Linkify>
+              <div
+                className={cn(
+                  "whitespace-pre-line break-words px-5 mb-4",
+                  isDeleted && "italic text-muted-foreground"
+                )}
+              >
+                {displayContent}
+              </div>
+            </Linkify>
+          </>
+        )}
 
         {!!post.attachment.length && !isDeleted && (
           <MediaPreview attachment={post.attachment} />
