@@ -1,10 +1,8 @@
 import { NextResponse } from "next/server";
-import { getSessionUser, getUserLedgerSummary, AppError } from "@/lib/ledger";
 import { z } from "zod";
+import { getUserLedgerSummary, AppError } from "@/actions/ledger/ledger-actions";
+import { getUser } from "@/lib/auth";
 
-/**
- * Zod schema for query validation
- */
 const querySchema = z.object({
   userId: z
     .string()
@@ -13,21 +11,18 @@ const querySchema = z.object({
     .optional(),
 });
 
-/**
- * GET /api/ledger/summary
- * - Normal users: only their own ledger
- * - Admins: may pass ?userId=<id> to view someone else's
- */
 export const GET = async (req: Request) => {
   try {
-    const { userId: sessionUserId, role } = await getSessionUser(req);
+    const token = await getUser(req as any);
+    if (!token || !token.id) {
+      return NextResponse.json(
+        { status: 0, message: "Unauthorized: No active session" },
+        { status: 401 }
+      );
+    }
 
     const { searchParams } = new URL(req.url);
-    const queryObject: Record<string, string | undefined> = {
-      userId: searchParams.get("userId") ?? undefined,
-    };
-
-    const parsed = querySchema.safeParse(queryObject);
+    const parsed = querySchema.safeParse(Object.fromEntries(searchParams));
     if (!parsed.success) {
       return NextResponse.json(
         { status: 0, message: parsed.error.errors[0].message },
@@ -35,12 +30,11 @@ export const GET = async (req: Request) => {
       );
     }
 
-    let targetUserId = sessionUserId;
-    const requestedUserId = parsed.data.userId;
+    const role = (token.role as string | null) ?? null;
+    let targetUserId = Number(token.id);
 
-    // Admin can override userId
-    if (role === "ADMIN" && requestedUserId) {
-      targetUserId = requestedUserId;
+    if (role === "ADMIN" && parsed.data.userId) {
+      targetUserId = parsed.data.userId;
     }
 
     const summary = await getUserLedgerSummary(targetUserId);
@@ -55,7 +49,6 @@ export const GET = async (req: Request) => {
     if (error instanceof AppError) {
       return NextResponse.json({ status: 0, message: error.message }, { status: error.status });
     }
-
     return NextResponse.json(
       { status: 0, message: error?.message || "Something went wrong" },
       { status: 500 }
