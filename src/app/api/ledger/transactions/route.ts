@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import { AppError } from "@/actions/ledger/ledger-actions";
+import { z } from "zod";
+import { RewardsReason } from "@prisma/client";
 import { getUser } from "@/lib/auth";
 import prisma from "@/lib/prisma";
-import { RewardsReason } from "@prisma/client";
-import { z } from "zod";
+import { AppError } from "@/lib/ledger";
 
 const querySchema = z.object({
   userId: z.string().regex(/^\d+$/).transform(Number).optional(),

@@ -271,6 +271,9 @@ model Poll {
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
   options       PollOption[]
+
+  @@map("polls")
+  
 }
 
 model PollOption {
@@ -279,6 +282,8 @@ model PollOption {
   poll   Poll       @relation(fields: [pollId], references: [id], onDelete: Cascade)
   text   String
   votes  PollVote[]
+
+  @@map("poll_options")
 }
 
 model PollVote {
@@ -290,6 +295,8 @@ model PollVote {
   createdAt DateTime   @default(now())
 
   @@unique([optionId, profileId]) // one vote per option per user
+
+  @@map("poll_votes")
 }
 
 //////////////////////////
