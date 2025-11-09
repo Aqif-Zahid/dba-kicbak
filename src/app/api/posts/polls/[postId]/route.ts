@@ -20,7 +20,7 @@ export async function GET(
     const user = await getUser(req);
     const profileId = user?.defaultProfileId ?? null;
 
-    // Fetch post with poll, including allowMultiple
+    // Fetch post and poll in a single query
     const post = await prisma.post.findUnique({
       where: { id: postIdNum },
       include: {
@@ -47,30 +47,43 @@ export async function GET(
     }
 
     const poll = post.poll;
-
-    // Expiration logic
     const now = new Date();
+
+    // Compute expiration and closure dynamically
     const expired = poll.expiresAt < now;
+    const isClosed = poll.isClosed || expired;
     const timeLeftMs = Math.max(0, poll.expiresAt.getTime() - now.getTime());
 
-    // Aggregate options
-    const totalVotes = poll.options.reduce(
+    // Aggregate options safely
+    const totalVotes = poll.options?.reduce(
       (sum, opt) => sum + opt.votes.length,
       0
-    );
+    ) ?? 0;
 
-    const options = poll.options.map((opt) => ({
+    const options = poll.options?.map((opt) => ({
       id: opt.id,
       text: opt.text,
       voteCount: opt.votes.length,
       votedByUser: !!opt.votes.find((v) => v.profileId === profileId),
       percentage:
         totalVotes === 0 ? 0 : Math.round((opt.votes.length / totalVotes) * 100),
-    }));
+    })) ?? [];
 
     const userHasVoted = options.some((opt) => opt.votedByUser);
-    const isClosed = poll.isClosed || expired;
     const canViewResults = isClosed || userHasVoted;
+
+    // Optional sync update: if poll expired but not yet marked closed, mark it now
+    if (expired && !poll.isClosed) {
+      // Don't block the response — fire and forget
+      prisma.poll
+        .update({
+          where: { id: poll.id },
+          data: { isClosed: true },
+        })
+        .catch((err) =>
+          console.warn("Non-critical: failed to auto-close expired poll:", err)
+        );
+    }
 
     return NextResponse.json(
       {

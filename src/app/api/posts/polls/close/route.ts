@@ -58,13 +58,40 @@ export async function PATCH(req: NextRequest) {
       );
     }
 
-    const closedPoll = await prisma.poll.update({
-      where: { id: pollPost.poll.id },
-      data: { isClosed: true },
-      include: {
-        options: { include: { votes: true } },
-      },
-    });
+    // ─────────────────────────────
+    // Concurrency-safe closing
+    // ─────────────────────────────
+    let closedPoll = null;
+    try {
+      // Atomic update to prevent race between concurrent requests
+      await prisma.poll.updateMany({
+        where: { id: pollPost.poll.id, isClosed: false },
+        data: { isClosed: true },
+      });
+
+      closedPoll = await prisma.poll.findUnique({
+        where: { id: pollPost.poll.id },
+        include: {
+          options: { include: { votes: true } },
+        },
+      });
+
+      // If poll was already closed by another request
+      if (!closedPoll?.isClosed) {
+        return NextResponse.json(
+          { status: 0, message: "Poll is already closed" },
+          { status: 409 }
+        );
+      }
+    } catch (err: any) {
+      if (err.code === "P2025") {
+        return NextResponse.json(
+          { status: 0, message: "Poll was already closed or not found" },
+          { status: 409 }
+        );
+      }
+      throw err;
+    }
 
     // Broadcast to SSE stream
     await notifyChannel("poll_updates", { pollId: pollPost.poll.id });
