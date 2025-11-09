@@ -72,41 +72,75 @@ export async function POST(req: NextRequest) {
     const allowMultiple = Boolean(option.poll.allowMultiple);
 
     const result = await prisma.$transaction(async (tx) => {
-      // Is the clicked option already voted by this profile?
-      const existingOnClicked = await tx.pollVote.findUnique({
+      // Check if this user already voted for this option
+      const existingVote = await tx.pollVote.findUnique({
         where: {
           optionId_profileId: {
-            optionId: Number(pollOptionId), // ✅ numeric cast fix #1
-            profileId: Number(profile.id),  // ✅ numeric cast fix #2
+            optionId: Number(pollOptionId),
+            profileId: Number(profile.id),
           },
         },
       });
 
       if (allowMultiple) {
-        // Toggle only the clicked one
-        if (existingOnClicked) {
-          await tx.pollVote.delete({ where: { id: existingOnClicked.id } });
+        // ─────────────────────────────
+        // Multi-choice poll logic
+        // ─────────────────────────────
+        if (existingVote) {
+          // Toggle off (remove)
+          try {
+            await tx.pollVote.delete({
+              where: { id: existingVote.id },
+            });
+          } catch (err: any) {
+            if (err.code !== "P2025") throw err; // Ignore if already deleted
+          }
         } else {
-          await tx.pollVote.create({
-            data: { optionId: Number(pollOptionId), profileId: Number(profile.id) }, // ✅ numeric cast fix #3
-          });
+          // Toggle on (add)
+          try {
+            await tx.pollVote.create({
+              data: {
+                optionId: Number(pollOptionId),
+                profileId: Number(profile.id),
+              },
+            });
+          } catch (err: any) {
+            if (err.code !== "P2002") throw err; // Ignore duplicate insertion
+          }
         }
       } else {
-        // Single choice:
-        // If clicking the already-selected option → unvote it.
-        // Else remove all other votes in the same poll, then add this one.
-        if (existingOnClicked) {
-          await tx.pollVote.delete({ where: { id: existingOnClicked.id } });
+        // ─────────────────────────────
+        // Single-choice poll logic
+        // ─────────────────────────────
+        if (existingVote) {
+          // Unvote current option
+          try {
+            await tx.pollVote.delete({
+              where: { id: existingVote.id },
+            });
+          } catch (err: any) {
+            if (err.code !== "P2025") throw err;
+          }
         } else {
+          // Remove all other votes from same poll (if any)
           await tx.pollVote.deleteMany({
             where: {
               profileId: Number(profile.id),
               option: { pollId: Number(option.pollId) },
             },
           });
-          await tx.pollVote.create({
-            data: { optionId: Number(pollOptionId), profileId: Number(profile.id) },
-          });
+
+          // Try to insert safely
+          try {
+            await tx.pollVote.create({
+              data: {
+                optionId: Number(pollOptionId),
+                profileId: Number(profile.id),
+              },
+            });
+          } catch (err: any) {
+            if (err.code !== "P2002") throw err; // ignore duplicate if concurrent
+          }
         }
       }
 
