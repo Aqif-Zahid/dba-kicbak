@@ -21,3 +21,12 @@ export const profileSchema = z.object({
     ])
     .optional(),
 });
+
+export const CreatePostSchema = z.object({
+  title: z.string().min(1, "Title is required"),
+  content: z.string().min(1, "Content is required"),
+  type: z.enum(["POLL", "QUESTION", "DISCUSSION"]).default("DISCUSSION"),
+  allowComments: z.boolean().default(true),
+});
+
+export type CreatePostInput = z.infer<typeof CreatePostSchema>;

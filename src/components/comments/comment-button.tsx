@@ -11,7 +11,7 @@ export const CommentButton = ({ post, onClick }: CommentButtonProps) => {
     <button onClick={onClick} className="flex items-center gap-2">
       <MessageSquare className="size-5" />
       <span className="text-sm font-medium tabular-nums">
-        {post._count.comments}{" "}
+        {post._count?.comments ?? 0}{" "}
         <span className="hidden sm:inline">Comments</span>
       </span>
     </button>

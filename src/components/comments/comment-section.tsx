@@ -1,6 +1,9 @@
-import { useInfiniteQuery } from "@tanstack/react-query";
+"use client";
+
+import { useEffect, useMemo } from "react";
+import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
+import { Loader2, PinIcon, CheckCircle2 } from "lucide-react";
 import { Post } from "@/types/types";
 import axios from "axios";
 import { CommentInput } from "./comment-input";
@@ -11,30 +14,66 @@ interface CommentSectionProps {
 }
 
 export const CommentSection = ({ post }: CommentSectionProps) => {
-  const { data, fetchNextPage, hasNextPage, isFetching, status } =
-    useInfiniteQuery({
-      queryKey: ["comments", post.id],
-      queryFn: async ({ pageParam }) => {
-        const res = await axios.get(
-          `/api/posts/${post.id}/comments`,
-          pageParam ? { params: { cursor: pageParam } } : {}
-        );
-        return res.data;
-      },
+  const queryClient = useQueryClient();
 
-      initialPageParam: null as string | null,
-      getNextPageParam: (firstPage) => firstPage.previousCursor,
-      select: (data) => ({
-        pages: [...data.pages].reverse(),
-        pageParams: [...data.pageParams].reverse(),
-      }),
-    });
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetching,
+    status,
+    refetch,
+  } = useInfiniteQuery({
+    queryKey: ["comments", post.id],
+    queryFn: async ({ pageParam }) => {
+      const res = await axios.get(
+        `/api/posts/${post.id}/comments`,
+        pageParam ? { params: { cursor: pageParam } } : {}
+      );
+      return res.data;
+    },
+    initialPageParam: null as string | null,
+    getNextPageParam: (firstPage) => firstPage?.data?.previousCursor ?? null,
+    select: (data) => ({
+      pages: [...data.pages].reverse(),
+      pageParams: [...data.pageParams].reverse(),
+    }),
+  });
 
-  const comments = data?.pages.flatMap((page) => page.comments) || [];
+  useEffect(() => {
+    refetch();
+  }, [post.allowComments, post.id, refetch, queryClient]);
+
+  // flatten comments
+  const comments =
+    data?.pages?.flatMap((page) => page?.data?.comments ?? []) ?? [];
+
+  const commentsDisabled =
+    data?.pages?.[data.pages.length - 1]?.commentsDisabled ?? false;
+
+  // separate pinned comment
+  const { pinnedComment, otherComments } = useMemo(() => {
+    const pinned = comments.find((c) => c.isPinned);
+    const rest = comments.filter((c) => !c.isPinned);
+    return { pinnedComment: pinned, otherComments: rest };
+  }, [comments]);
+
+  const answered = post.type === "QUESTION" && post.hasBestAnswer;
 
   return (
-    <div>
-      <CommentInput post={post} />
+    <div className="mt-4">
+      {/* Comment input or disabled message */}
+      {!commentsDisabled ? (
+        <CommentInput post={post} />
+      ) : (
+        <p className="text-sm text-muted-foreground italic mb-4">
+          {answered
+            ? "This question has been answered."
+            : "Commenting is disabled for this post."}
+        </p>
+      )}
+
+      {/* Load older comments */}
       {hasNextPage && (
         <Button
           variant="link"
@@ -42,11 +81,13 @@ export const CommentSection = ({ post }: CommentSectionProps) => {
           disabled={isFetching}
           onClick={() => fetchNextPage()}
         >
-          Load previous comment
+          Load previous comments
         </Button>
       )}
+
+      {/* States */}
       {status === "pending" && <Loader2 className="mx-auto animate-spin" />}
-      {status === "success" && !comments.length && (
+      {status === "success" && comments.length === 0 && (
         <p className="text-center text-muted-foreground">No comments yet.</p>
       )}
       {status === "error" && (
@@ -54,10 +95,32 @@ export const CommentSection = ({ post }: CommentSectionProps) => {
           An error occurred while loading comments.
         </p>
       )}
+
+      {/* Render pinned comment at top */}
       <div className="divide-y">
-        {comments.map((comment) => (
-          <Comment key={comment.id} comment={comment} />
-        ))}
+        {pinnedComment && (
+          <div className="bg-muted/40 rounded-md p-2 mb-2">
+            {/* Label with icon */}
+            {post.type === "QUESTION" ? (
+              <div className="flex items-center gap-1 text-xs font-medium text-green-600 mb-1 ml-1">
+                <CheckCircle2 className="w-3.5 h-3.5 text-green-600" />
+                <span>Best Answer</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-1 text-xs font-medium text-muted-foreground mb-1 ml-1">
+                <PinIcon className="w-3.5 h-3.5 text-muted-foreground" />
+                <span>Pinned Comment</span>
+              </div>
+            )}
+
+            <Comment comment={pinnedComment} />
+          </div>
+        )}
+
+        {/* Render rest */}
+        {otherComments.map((comment) =>
+          comment ? <Comment key={comment.id} comment={comment} /> : null
+        )}
       </div>
     </div>
   );

@@ -1,4 +1,6 @@
 import { submitComment } from "@/actions/comments/create-comment-actions";
+// NOTE: The API now returns an envelope { status, data: { comments, previousCursor }, commentsDisabled }.
+// We’ll update the cache mutation accordingly while keeping the rest intact.
 import { CommentsPage } from "@/types/types";
 import {
   InfiniteData,
@@ -17,24 +19,88 @@ export function useCreateComment(postId: number) {
 
       await queryClient.cancelQueries({ queryKey });
 
-      queryClient.setQueryData<InfiniteData<CommentsPage, string | null>>(
+      // The query now stores pages shaped like:
+      // { status: 1, data: { comments: Comment[], previousCursor: string | null }, commentsDisabled?: boolean }
+      queryClient.setQueryData<InfiniteData<any, string | null>>( // <- use 'any' to accept the envelope
         queryKey,
         (oldData) => {
-          const firstPage = oldData?.pages[0];
-          if (firstPage) {
+          // If no cache exists yet, create a first page with the new comment
+          if (!oldData || !oldData.pages?.length) {
             return {
-              pageParams: oldData.pageParams,
+              pageParams: [null],
               pages: [
                 {
-                  previousCursor: firstPage.previousCursor,
-                  comments: [...firstPage.comments, newComment],
+                  status: 1,
+                  data: {
+                    comments: [newComment],
+                    previousCursor: null,
+                  },
+                  commentsDisabled: false,
                 },
-                ...oldData.pages.slice(1),
               ],
-            };
+            } as InfiniteData<any, string | null>;
           }
+
+          const firstPage = oldData.pages[0];
+          const prevComments = firstPage?.data?.comments ?? [];
+
+          // Return the same structure, just append the new comment to the first page
+          return {
+            pageParams: oldData.pageParams,
+            pages: [
+              {
+                ...firstPage,
+                data: {
+                  ...firstPage.data,
+                  comments: [...prevComments, newComment],
+                  previousCursor: firstPage.data?.previousCursor ?? null,
+                },
+              },
+              ...oldData.pages.slice(1),
+            ],
+          } as InfiniteData<any, string | null>;
         }
       );
+
+      // 🔼 Increment comments count in the single-post cache (PostDetails/PostCard)
+      const postKey = ["post", String(postId)];
+      queryClient.setQueryData(postKey, (old: any) => {
+        if (!old?.data) return old;
+        const prev = old.data?._count?.comments ?? 0;
+        return {
+          ...old,
+          data: {
+            ...old.data,
+            _count: {
+              ...old.data._count,
+              comments: prev + 1,
+            },
+          },
+        };
+      });
+
+      // 🔼 Increment comments count in the feed cache (For You)
+      queryClient.setQueriesData({ queryKey: ["for-you"] }, (old: any) => {
+        if (!old?.pages) return old;
+        return {
+          ...old,
+          pages: old.pages.map((page: any) => ({
+            ...page,
+            posts: page.posts.map((p: any) =>
+              p.id === postId
+                ? {
+                    ...p,
+                    _count: {
+                      ...p._count,
+                      comments: (p._count?.comments ?? 0) + 1,
+                    },
+                  }
+                : p
+            ),
+          })),
+        };
+      });
+
       queryClient.invalidateQueries({
         queryKey,
         predicate(query) {

@@ -9,52 +9,58 @@ datasource db {
 }
 
 model Users {
-  id                  Int                @id @default(autoincrement()) @map("id")
-  email               String             @unique(map: "users_email_unique") @map("email")
-  status              UserStatus         @default(PENDING) @map("status")
-  positionNumber      Int?               @unique(map: "users_position_number_unique") @map("position_number")
-  passwordHash        String?            @map("password_hash")
-  authProvider        AuthProvider?      @default(LOCAL) @map("auth_provider")
-  createdAt           DateTime?          @default(now()) @map("created_at")
-  updatedAt           DateTime           @default(now()) @map("updated_at")
-  personaSelected     Json?              @default("[]") @map("persona_selected")
-  inviteRequired      Boolean?           @default(true) @map("invite_required")
-  points              Int?               @default(0) @map("points")
-  phoneNumber         String?            @map("phone_number")
-  dateOfBirth         String?            @map("date_of_birth")
-  referralCode        String?            @map("referral_code")
-  defaultProfileId    Int?               @map("default_profile_id")
-  referrerId          Int?               @map("referrer_id")
-  groups              Group[]
-  groupsToUsers       GroupsToUser[]
-  mentions            Mention[]
-  organizations       Organization[]
-  passwordResetOtps   PasswordResetOtp[]
-  profiles            Profiles[]         @relation("UserProfiles")
+  id               Int           @id @default(autoincrement()) @map("id")
+  email            String        @unique(map: "users_email_unique") @map("email")
+  status           UserStatus    @default(PENDING) @map("status")
+  positionNumber   Int?          @unique(map: "users_position_number_unique") @map("position_number")
+  passwordHash     String?       @map("password_hash")
+  authProvider     AuthProvider? @default(LOCAL) @map("auth_provider")
+  createdAt        DateTime?     @default(now()) @map("created_at")
+  updatedAt        DateTime      @default(now()) @map("updated_at")
+  personaSelected  Json?         @default("[]") @map("persona_selected")
+  inviteRequired   Boolean?      @default(true) @map("invite_required")
+  points           Int?          @default(0) @map("points")
+  phoneNumber      String?       @map("phone_number")
+  dateOfBirth      String?       @map("date_of_birth")
+  referralCode     String?       @map("referral_code")
+  defaultProfileId Int?          @map("default_profile_id")
+  referrerId       Int?          @map("referrer_id")
+
+  profiles       Profiles[] @relation("UserProfiles") // all profiles for the user
+  defaultProfile Profiles?  @relation("DefaultProfile", fields: [defaultProfileId], references: [id])
+
+  groups            Group[]
+  groupsToUsers     GroupsToUser[]
+  mentions          Mention[]
+  organizations     Organization[]
+  passwordResetOtps PasswordResetOtp[]
+
   referralCodes       ReferralCodes?
-  referralsAsReferred Referrals?         @relation("referrals_referred_user_idTousers")
-  referralsAsReferrer Referrals[]        @relation("referrals_referrer_user_idTousers")
+  referralsAsReferred Referrals?      @relation("referrals_referred_user_idTousers")
+  referralsAsReferrer Referrals[]     @relation("referrals_referrer_user_idTousers")
   rewardsLedger       RewardsLedger[]
-  defaultProfile      Profiles?          @relation("DefaultProfile", fields: [defaultProfileId], references: [id])
-  referrer            Users?             @relation("UserReferrer", fields: [referrerId], references: [id])
-  referrals           Users[]            @relation("UserReferrer")
+
+  // user–referrer chain
+  referrer  Users?  @relation("UserReferrer", fields: [referrerId], references: [id])
+  referrals Users[] @relation("UserReferrer")
 
   @@map("users")
 }
 
 model Profiles {
-  id                    Int            @id @default(autoincrement()) @map("id")
-  userId                Int            @map("user_id")
-  user                  Users          @relation("UserProfiles", fields: [userId], references: [id])
-  defaultFor            Users[]        @relation("DefaultProfile")
-  role                  ProfileRole    @default(TRAVELER)
-  bio                   String?        @map("bio")
-  createdAt             DateTime?      @default(now()) @map("created_at")
-  updatedAt             DateTime       @default(now()) @map("updated_at")
-  username              String         @unique(map: "profiles_username_unique") @map("username")
-  displayName           String         @map("display_name")
-  profilePicture        String?        @map("profile_picture")
-  personaTags           Json?          @default("[]") @map("persona_tags")
+  id             Int         @id @default(autoincrement()) @map("id")
+  userId         Int         @map("user_id")
+  user           Users       @relation("UserProfiles", fields: [userId], references: [id])
+  defaultFor     Users[]     @relation("DefaultProfile")
+  role           ProfileRole @default(TRAVELER)
+  bio            String?     @map("bio")
+  createdAt      DateTime?   @default(now()) @map("created_at")
+  updatedAt      DateTime    @default(now()) @map("updated_at")
+  username       String      @unique(map: "profiles_username_unique") @map("username")
+  displayName    String      @map("display_name")
+  profilePicture String?     @map("profile_picture")
+  personaTags    Json?       @default("[]") @map("persona_tags")
+
   votes                 Vote[]
   comments              Comment[]
   posts                 Post[]
@@ -78,11 +84,15 @@ model Profiles {
   createdTopicGroups TopicGroup[]
   createdTopics      Topic[]
 
+  // Poll votes (added from poll branch)
+  PollVote PollVote[]
+
   @@map("profiles")
 }
 
 model Follow {
   followerId  Int
+  followingId Int
   follower    Profiles @relation("Following", fields: [followerId], references: [id], onDelete: Cascade)
   following   Profiles @relation("Followers", fields: [followingId], references: [id], onDelete: Cascade)
 
@@ -171,21 +181,26 @@ model Post {
   title           String     @map("title")
   content         String     @map("content")
   status          PostStatus @default(DRAFT)
+  edited          Boolean    @default(false)
   upvotes         Int?       @default(0)
   downvotes       Int?       @default(0)
   createdAt       DateTime   @default(now()) @map("created_at")
   updatedAt       DateTime   @default(now()) @map("updated_at")
   authorProfileId Int        @map("author_profile_id")
-  attachment      Media[]
+  type            PostType   @default(DISCUSSION)
+  allowComments   Boolean    @default(true)
+  hasBestAnswer   Boolean    @default(false) @map("has_best_answer")
 
-  comments            Comment[]
-  mentions            Mention[]
   authorProfile       Profiles          @relation(fields: [authorProfileId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "posts_author_profile_id_profiles_id_fk")
   communities         Community         @relation(fields: [communityId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "posts_community_id_communities_id_fk")
-  postsToCategories   PostsToCategory[]
+  attachment          Media[]
+  comments            Comment[]
+  mentions            Mention[]
   votes               Vote[]
-  linkedNotifications Notification[]
   bookmarks           Bookmark[]
+  linkedNotifications Notification[]
+  postsToCategories   PostsToCategory[]
+  poll                Poll?             @relation("PostPoll")
 
   @@map("posts")
 }
@@ -196,7 +211,7 @@ model Media {
   type      MediaType
   url       String
   createdAt DateTime  @default(now())
-  post      Post?     @relation(fields: [postId], references: [id])
+  post      Post?     @relation(fields: [postId], references: [id], onDelete: SetNull)
 
   @@map("post_media")
 }
@@ -214,6 +229,7 @@ model Comment {
   id              Int           @id @default(autoincrement()) @map("id")
   postId          Int           @map("post_id")
   content         String        @map("content")
+  edited          Boolean       @default(false)
   upvotes         Int?          @default(0) @map("upvotes")
   downvotes       Int?          @default(0) @map("downvotes")
   parentId        Int?          @map("parent_id")
@@ -221,11 +237,13 @@ model Comment {
   updatedAt       DateTime      @default(now()) @map("updated_at")
   status          CommentStatus @default(VISIBLE)
   authorProfileId Int           @map("author_profile_id")
-  authorProfile   Profiles      @relation(fields: [authorProfileId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "comments_author_profile_id_profiles_id_fk")
-  posts           Post          @relation(fields: [postId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "comments_post_id_posts_id_fk")
-  mentions        Mention[]
-  votes           Vote[]
-  commentVotes    CommentVote[] @relation("CommentVotes")
+  isPinned        Boolean       @default(false) @map("is_pinned")
+
+  authorProfile Profiles      @relation(fields: [authorProfileId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "comments_author_profile_id_profiles_id_fk")
+  posts         Post          @relation(fields: [postId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "comments_post_id_posts_id_fk")
+  mentions      Mention[]
+  votes         Vote[]
+  commentVotes  CommentVote[] @relation("CommentVotes")
 
   @@map("comments")
 }
@@ -242,6 +260,41 @@ model Mention {
 
   @@map("mentions")
 }
+
+model Poll {
+  id            Int          @id @default(autoincrement())
+  postId        Int          @unique
+  post          Post         @relation("PostPoll", fields: [postId], references: [id], onDelete: Cascade)
+  expiresAt     DateTime
+  isClosed      Boolean      @default(false)
+  allowMultiple Boolean      @default(false)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  options       PollOption[]
+}
+
+model PollOption {
+  id     Int        @id @default(autoincrement())
+  pollId Int
+  poll   Poll       @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  text   String
+  votes  PollVote[]
+}
+
+model PollVote {
+  id        Int        @id @default(autoincrement())
+  optionId  Int
+  option    PollOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  profileId Int
+  profile   Profiles   @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  createdAt DateTime   @default(now())
+
+  @@unique([optionId, profileId]) // one vote per option per user
+}
+
+//////////////////////////
+// JOIN TABLES
+//////////////////////////
 
 model PostsToCategory {
   postId     Int
@@ -305,13 +358,13 @@ model Referrals {
 }
 
 model RewardsLedger {
-  id             Int            @id @default(autoincrement()) @map("id")
-  userId         Int?           @map("user_id")
-  deltaPoints    Int            @map("delta_points")
-  reason         RewardsReason  @map("reason")
-  refId          Int?           @map("ref_id")
-  transactionType  TransactionType @map("transaction_type")
-  createdAt      DateTime?      @default(now()) @map("created_at")
+  id              Int             @id @default(autoincrement()) @map("id")
+  userId          Int?            @map("user_id")
+  deltaPoints     Int             @map("delta_points")
+  reason          RewardsReason   @map("reason")
+  refId           Int?            @map("ref_id")
+  transactionType TransactionType @map("transaction_type")
+  createdAt       DateTime?       @default(now()) @map("created_at")
 
   users Users? @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "rewards_ledger_user_id_users_id_fk")
 
@@ -505,8 +558,13 @@ enum NotificationType {
   COMMENT
 }
 
+enum PostType {
+  POLL
+  QUESTION
+  DISCUSSION
+}
+
 enum TransactionType {
   CREDIT
   DEBIT
 }
-

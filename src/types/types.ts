@@ -71,7 +71,6 @@ export const getPostsDataInclude = (loggedInUserId: number | null) => {
         },
       },
     },
-
     attachment: true,
     votes: {
       where: {
@@ -115,7 +114,6 @@ export type Bookmark = {
   postId: number;
   createdAt: Date;
 
-  // Relations (optional)
   userProfile?: Profile;
   post?: Post;
 };
@@ -132,7 +130,6 @@ export type Comment = {
   status: string;
   authorProfileId: number;
 
-  // Relations
   authorProfile?: Profile;
   posts?: Post;
   mentions?: Mention[];
@@ -150,6 +147,7 @@ export type Mention = {
   posts?: Post | null;
   users?: User;
 };
+
 export type Vote = {
   id: number;
   userId: number;
@@ -201,14 +199,18 @@ export const getProfileDataSelect = (loggedInUserId: number | null) => {
   } satisfies Prisma.ProfilesSelect;
 };
 
-export const getCommentDataInclude = (loggedInUserId: number | null) => {
+// Now supports including parent Post info safely
+export const getCommentDataInclude = (
+  loggedInUserId: number | null,
+  includePost: boolean = false
+) => {
   return {
     authorProfile: {
       select: getProfileDataSelect(loggedInUserId),
     },
     commentVotes: {
       where: {
-        profileId: loggedInUserId ?? undefined, // check if logged-in user voted
+        profileId: loggedInUserId ?? undefined,
       },
       select: {
         profileId: true,
@@ -220,9 +222,19 @@ export const getCommentDataInclude = (loggedInUserId: number | null) => {
         commentVotes: true,
       },
     },
-  } satisfies Prisma.CommentInclude;
+    ...(includePost && {
+      posts: {
+        select: {
+          id: true,
+          type: true,
+          authorProfileId: true,
+        },
+      },
+    }),
+  } as const;
 };
 
+// Safer inference for CommentData
 export type CommentData = Prisma.CommentGetPayload<{
   include: ReturnType<typeof getCommentDataInclude>;
 }>;
@@ -232,7 +244,7 @@ export interface CommentsPage {
   previousCursor: string | null;
 }
 
-//Notifications
+// Notifications
 export const notificationsInclude = {
   issuer: {
     select: {
