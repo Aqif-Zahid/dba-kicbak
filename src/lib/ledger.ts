@@ -14,7 +14,11 @@ export class AppError extends Error {
   }
 }
 
-export const wrapError = (e: unknown, fallbackMessage: string, code: string): never => {
+export const wrapError = (
+  e: unknown,
+  fallbackMessage: string,
+  code: string
+): never => {
   if (e instanceof AppError) throw e;
   if (e instanceof z.ZodError) {
     throw new AppError(400, "VALIDATION_ERROR", e.message);
@@ -54,7 +58,11 @@ export const toNumberSafe = (v: unknown): number => {
   if (typeof v === "number") return v;
   if (typeof v === "bigint") return Number(v);
   if (typeof v === "string") return Number(v);
-  if (typeof v === "object" && "toNumber" in (v as any) && typeof (v as any).toNumber === "function") {
+  if (
+    typeof v === "object" &&
+    "toNumber" in (v as any) &&
+    typeof (v as any).toNumber === "function"
+  ) {
     return (v as any).toNumber();
   }
   return Number(v);

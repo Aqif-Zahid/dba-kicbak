@@ -12,11 +12,6 @@ import {
 } from "@/lib/ledger";
 
 /**
- * Re-export shared error classes/utilities so API routes can import from this module
- */
-export { AppError, wrapError } from "@/lib/ledger";
-
-/**
  * Creates a double-entry transaction in the rewards ledger.
  */
 export const createLedgerTransaction = async (
@@ -27,10 +22,20 @@ export const createLedgerTransaction = async (
   refId?: number
 ) => {
   try {
-    const parsed = transactionSchema.safeParse({ debitId, creditId, amount, reason, refId });
+    const parsed = transactionSchema.safeParse({
+      debitId,
+      creditId,
+      amount,
+      reason,
+      refId,
+    });
     if (!parsed.success) throw parsed.error;
     if (debitId === creditId) {
-      throw new AppError(400, "INVALID_LEDGER_PAIR", "Debit and credit IDs must be different");
+      throw new AppError(
+        400,
+        "INVALID_LEDGER_PAIR",
+        "Debit and credit IDs must be different"
+      );
     }
 
     return await prisma.$transaction(async (tx) => {
@@ -57,7 +62,11 @@ export const createLedgerTransaction = async (
       return { debitEntry, creditEntry };
     });
   } catch (e) {
-    throw wrapError(e, "Failed to create ledger transaction", "LEDGER_TRANSACTION_FAILED");
+    throw wrapError(
+      e,
+      "Failed to create ledger transaction",
+      "LEDGER_TRANSACTION_FAILED"
+    );
   }
 };
 
@@ -96,7 +105,11 @@ export const getUserLedgerSummary = async (userId: number) => {
 /**
  * Returns ledger data (debit, credit, balance + transaction list) for a user within a date range.
  */
-export const getUserLedgerData = async (userId: number, startDate?: Date, endDate?: Date) => {
+export const getUserLedgerData = async (
+  userId: number,
+  startDate?: Date,
+  endDate?: Date
+) => {
   try {
     const parsedUserId = userIdSchema.safeParse(userId);
     if (!parsedUserId.success) throw parsedUserId.error;
@@ -108,7 +121,10 @@ export const getUserLedgerData = async (userId: number, startDate?: Date, endDat
     const finalStart = startDate ?? defaultStart;
     const finalEnd = endDate ?? now;
 
-    const parsedDates = dateRangeSchema.safeParse({ startDate: finalStart, endDate: finalEnd });
+    const parsedDates = dateRangeSchema.safeParse({
+      startDate: finalStart,
+      endDate: finalEnd,
+    });
     if (!parsedDates.success) throw parsedDates.error;
 
     const summaryResult = await prisma.$queryRaw<

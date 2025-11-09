@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
-import { createLedgerTransaction, AppError } from "@/actions/ledger/ledger-actions";
+import { z } from "zod";
 import { RewardsReason } from "@prisma/client";
 import { getUser } from "@/lib/auth";
-import { z } from "zod";
+import { AppError } from "@/lib/ledger";
+import { createLedgerTransaction } from "@/actions/ledger/ledger-actions";
 
 const TREASURY_ID = 1;
 

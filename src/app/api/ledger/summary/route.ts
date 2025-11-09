@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { getUserLedgerSummary, AppError } from "@/actions/ledger/ledger-actions";
+import { AppError } from "@/lib/ledger";
 import { getUser } from "@/lib/auth";
+import { getUserLedgerSummary } from "@/actions/ledger/ledger-actions";
 
 const querySchema = z.object({
   userId: z
@@ -47,7 +48,10 @@ export const GET = async (req: Request) => {
   } catch (error: any) {
     console.error("Ledger summary error:", error);
     if (error instanceof AppError) {
-      return NextResponse.json({ status: 0, message: error.message }, { status: error.status });
+      return NextResponse.json(
+        { status: 0, message: error.message },
+        { status: error.status }
+      );
     }
     return NextResponse.json(
       { status: 0, message: error?.message || "Something went wrong" },
