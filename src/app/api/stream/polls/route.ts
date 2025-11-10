@@ -4,7 +4,6 @@ export async function GET(request: Request) {
   const { readable, writable } = new TransformStream();
   const encoder = new TextEncoder();
 
-  // Signal for client disconnects
   const signal = (request as any).signal as AbortSignal | undefined;
 
   const headers = {
@@ -21,26 +20,44 @@ export async function GET(request: Request) {
     try {
       await writer.write(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
     } catch {
-      // writer is closed or errored
       closed = true;
       try { await writer.close(); } catch {}
       clearInterval(keepAliveId);
+      clearTimeout(timeoutId);
     }
   };
 
-  // Initial greeting
+  // ─────────────────────────────
+  // Initial event
+  // ─────────────────────────────
   await safeSend({ ok: true, event: "connected" });
 
-  // Keep-alive ping every 20s to avoid proxies killing the stream
+  // ─────────────────────────────
+  // Keep-alive ping (every 20s)
+  // ─────────────────────────────
   const keepAliveId = setInterval(() => {
     void safeSend({ event: "ping", ts: Date.now() });
   }, 20000);
 
-  // Handle client abort
+  // ─────────────────────────────
+  // Auto-close before Vercel timeout (≈290s)
+  // ─────────────────────────────
+  const timeoutId = setTimeout(async () => {
+    if (closed) return;
+    closed = true;
+    clearInterval(keepAliveId);
+    await safeSend({ event: "disconnect", reason: "timeout" });
+    try { await writer.close(); } catch {}
+  }, 290000); // 4m 50s
+
+  // ─────────────────────────────
+  // Handle client disconnects
+  // ─────────────────────────────
   const onAbort = () => {
     if (closed) return;
     closed = true;
     clearInterval(keepAliveId);
+    clearTimeout(timeoutId);
     writer.close().catch(() => {});
   };
   signal?.addEventListener("abort", onAbort, { once: true });

@@ -171,29 +171,65 @@ const CreatePostPage = () => {
               <h2 className="font-bold text-2xl">Create a New Post</h2>
 
               <div className="flex flex-col gap-6">
-                <FormField
-                  name="title"
-                  control={form.control}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>
-                        Title <span className="text-red-900">*</span>
-                      </FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder="Enter title" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                {/* Title + Post Type Row */}
+                <div className="flex justify-between items-start gap-6">
+                  {/* Title field */}
+                  <div className="flex-1">
+                    <FormField
+                      name="title"
+                      control={form.control}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>
+                            Title <span className="text-red-900">*</span>
+                          </FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="Enter title" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
 
+                  {/* Post Type (top-right corner) */}
+                  <div className="w-44">
+                    <FormField
+                      name="type"
+                      control={form.control}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Post Type</FormLabel>
+                          <FormControl>
+                            <select
+                              {...field}
+                              className="border rounded-md px-3 py-2 text-sm w-full"
+                            >
+                              <option value="DISCUSSION">Discussion</option>
+                              <option value="QUESTION">Question</option>
+                              <option value="POLL">Poll</option>
+                            </select>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
+
+                {/* Description field (for non-poll posts) */}
                 {form.watch("type") !== "POLL" && (
                   <FormField
                     name="content"
                     control={form.control}
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Content</FormLabel>
+                        <FormLabel>
+                          {form.watch("type") === "DISCUSSION" ||
+                          form.watch("type") === "QUESTION"
+                            ? "Description"
+                            : "Content"}
+                        </FormLabel>
                         <FormControl>
                           <Textarea
                             {...field}
@@ -207,27 +243,7 @@ const CreatePostPage = () => {
                   />
                 )}
 
-                <FormField
-                  name="type"
-                  control={form.control}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Post Type</FormLabel>
-                      <FormControl>
-                        <select
-                          {...field}
-                          className="border rounded-md px-3 py-2 text-sm"
-                        >
-                          <option value="DISCUSSION">Discussion</option>
-                          <option value="QUESTION">Question</option>
-                          <option value="POLL">Poll</option>
-                        </select>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
+                {/* Poll fields */}
                 {form.watch("type") === "POLL" && (
                   <PollFields
                     pollOptions={pollOptions}
@@ -241,6 +257,7 @@ const CreatePostPage = () => {
                   />
                 )}
 
+                {/* Allow/Disable comments */}
                 <FormField
                   name="allowComments"
                   control={form.control}
@@ -259,6 +276,7 @@ const CreatePostPage = () => {
                   )}
                 />
 
+                {/* Attachments */}
                 <p className="text-sm font-medium">Attachments</p>
                 {!!attachments.length && (
                   <AttachmentPreviews
@@ -280,12 +298,14 @@ const CreatePostPage = () => {
                 </div>
               </div>
 
+              {/* Error Message */}
               {error && (
                 <div className="flex items-center text-red-600 text-sm gap-2">
                   <AlertTriangle size={16} /> {error}
                 </div>
               )}
 
+              {/* Submit Button */}
               <div className="flex items-center justify-center">
                 <Button
                   type="submit"
