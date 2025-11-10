@@ -22,7 +22,7 @@ export async function GET(
     }
 
     const cursor = req.nextUrl.searchParams.get("cursor") || undefined;
-    const pageSize = 9; // ⬅️ show 9 latest comments on initial load
+    const pageSize = 10; // ⬅️ show 10 latest comments on initial load
     const user = await getUser(req);
 
     // Fetch post info for comment availability
