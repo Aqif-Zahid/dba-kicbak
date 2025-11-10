@@ -13,7 +13,10 @@ import { getPostsDataInclude } from "@/types/types";
 const basePostSchema = z
   .object({
     title: z.string().min(3, "Title must be at least 3 characters"),
-    content: z.string().max(500).optional(),
+    content: z
+      .string()
+      .max(500, "Description cannot exceed 500 characters")
+      .optional(),
     communityId: z.number().optional(),
     mediaIds: z.array(z.string()).max(5, "Cannot have more than 5 attachments"),
     type: z.enum(["POLL", "QUESTION", "DISCUSSION"]).default("DISCUSSION"),
@@ -21,15 +24,14 @@ const basePostSchema = z
   })
   .refine(
     (data) => {
-      // content required for QUESTION or DISCUSSION
       if (data.type !== "POLL") {
+        // Require at least 3 characters for non-poll posts
         return data.content && data.content.trim().length >= 3;
       }
-      // for POLL, content can be optional or non-empty
       return true;
     },
     {
-      message: "Content must be at least 3 characters long",
+      message: "Description must be at least 3 characters long",
       path: ["content"],
     }
   );
@@ -54,90 +56,153 @@ export async function createPost(input: {
   mediaIds: string[];
   type?: "POLL" | "QUESTION" | "DISCUSSION";
   allowComments?: boolean;
-  // optional poll fields
   options?: string[];
   duration?: { days: number; hours: number; minutes: number };
   allowMultiple?: boolean;
 }) {
-  const session = await getServerSession(authOptions);
-  const currentProfileId = getCurrentProfileId(session);
-  if (!currentProfileId) {
-    throw new Error("Unauthorized");
-  }
+  try {
+    const session = await getServerSession(authOptions);
+    const currentProfileId = getCurrentProfileId(session);
+    if (!currentProfileId) {
+      return {
+        status: 0,
+        message: "Unauthorized",
+      };
+    }
 
-  // parse base schema
-  const baseData = basePostSchema.parse(input);
-  const { title, content, communityId, mediaIds, type, allowComments } = baseData;
-
-  // find or create default "general" community if none provided
-  const selectedCommunity =
-    (communityId &&
-      (await prisma.community.findUnique({ where: { id: communityId } }))) ||
-    (await prisma.community.upsert({
-      where: { slug: "general" },
-      update: {},
-      create: {
-        name: "General",
-        slug: "general",
-        description: "Default community for general discussions",
-        ownerId: currentProfileId,
-      },
-    }));
-
-  // ─────────────────────────────
-  // Create the base post first
-  // ─────────────────────────────
-  const newPost = await prisma.post.create({
-    data: {
-      title,
-      content: content ?? "",
-      authorProfileId: currentProfileId,
-      communityId: selectedCommunity.id,
-      attachment: {
-        connect: mediaIds.map((id) => ({ id })),
-      },
-      status: "PUBLISHED",
-      type,
-      allowComments,
-    },
-    include: getPostsDataInclude(currentProfileId),
-  });
-
-  // ─────────────────────────────
-  // Handle poll-specific logic
-  // ─────────────────────────────
-  if (type === "POLL") {
-    const { options, duration, allowMultiple } = pollFieldsSchema.parse({
-      options: input.options,
-      duration: input.duration,
-      allowMultiple: input.allowMultiple,
+    // ─────────────────────────────
+    // Safe schema validation
+    // ─────────────────────────────
+    const parsed = basePostSchema.safeParse({
+      ...input,
+      title: input.title?.trim(),
+      content: input.content?.trim(),
     });
 
-    // calculate expiration
-    const expiresAt = new Date();
-    const totalMinutes =
-      duration.days * 24 * 60 + duration.hours * 60 + duration.minutes;
-    expiresAt.setMinutes(expiresAt.getMinutes() + totalMinutes);
+    if (!parsed.success) {
+      const firstIssue = parsed.error.issues[0];
+      return {
+        status: 0,
+        message: firstIssue?.message || "Invalid post data. Please check all fields.",
+      };
+    }
 
-    const poll = await prisma.poll.create({
-      data: {
-        postId: newPost.id,
-        expiresAt,
-        allowMultiple,
-        options: {
-          create: options.map((opt) => ({ text: opt })),
+    const { title, content, communityId, mediaIds, type, allowComments } = parsed.data;
+
+    // ─────────────────────────────
+    // Strict backend guard
+    // ─────────────────────────────
+    if (type !== "POLL" && (!content || content.trim().length < 3)) {
+      return {
+        status: 0,
+        message: "Description must be at least 3 characters long",
+      };
+    }
+
+    // ─────────────────────────────
+    // For Polls: validate BEFORE post creation
+    // ─────────────────────────────
+    let pollData: z.infer<typeof pollFieldsSchema> | null = null;
+
+    if (type === "POLL") {
+      const pollParsed = pollFieldsSchema.safeParse({
+        options: input.options,
+        duration: input.duration,
+        allowMultiple: input.allowMultiple,
+      });
+
+      if (!pollParsed.success) {
+        const firstIssue = pollParsed.error.issues[0];
+        return {
+          status: 0,
+          message: firstIssue?.message || "Invalid poll data.",
+        };
+      }
+
+      pollData = pollParsed.data;
+    }
+
+    // ─────────────────────────────
+    // Find or create default "general" community
+    // ─────────────────────────────
+    const selectedCommunity =
+      (communityId &&
+        (await prisma.community.findUnique({ where: { id: communityId } }))) ||
+      (await prisma.community.upsert({
+        where: { slug: "general" },
+        update: {},
+        create: {
+          name: "General",
+          slug: "general",
+          description: "Default community for general discussions",
+          ownerId: currentProfileId,
         },
+      }));
+
+    // ─────────────────────────────
+    // Create the base post first
+    // ─────────────────────────────
+    const newPost = await prisma.post.create({
+      data: {
+        title,
+        content: content ?? "",
+        authorProfileId: currentProfileId,
+        communityId: selectedCommunity.id,
+        attachment: {
+          connect: mediaIds.map((id) => ({ id })),
+        },
+        status: "PUBLISHED",
+        type,
+        allowComments,
       },
+      include: getPostsDataInclude(currentProfileId),
     });
 
+    // ─────────────────────────────
+    // Handle Poll creation
+    // ─────────────────────────────
+    if (type === "POLL" && pollData) {
+      const { options, duration, allowMultiple } = pollData;
+
+      const expiresAt = new Date();
+      const totalMinutes =
+        duration.days * 24 * 60 + duration.hours * 60 + duration.minutes;
+      expiresAt.setMinutes(expiresAt.getMinutes() + totalMinutes);
+
+      const poll = await prisma.poll.create({
+        data: {
+          postId: newPost.id,
+          expiresAt,
+          allowMultiple,
+          options: {
+            create: options.map((opt) => ({ text: opt })),
+          },
+        },
+      });
+
+      return {
+        status: 1,
+        message: "Poll created successfully",
+        data: {
+          ...newPost,
+          poll,
+        },
+      };
+    }
+
+    // ─────────────────────────────
+    // Normal post return
+    // ─────────────────────────────
     return {
-      ...newPost,
-      poll,
+      status: 1,
+      message: "Post created successfully",
+      data: newPost,
+    };
+  } catch (error) {
+    console.error("Error creating post:", error);
+    return {
+      status: 0,
+      message: "Internal server error while creating post",
     };
   }
-
-  // ─────────────────────────────
-  // Return final post
-  // ─────────────────────────────
-  return newPost;
 }

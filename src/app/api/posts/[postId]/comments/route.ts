@@ -4,7 +4,9 @@ import { CommentsPage, getCommentDataInclude } from "@/types/types";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
-// ---------- GET: fetch comments (includes pinned & post info) ----------
+// ===============================
+// GET: Fetch latest 9 comments (auto on post open)
+// ===============================
 export async function GET(
   req: NextRequest,
   context: { params: Promise<{ postId: string }> }
@@ -20,18 +22,16 @@ export async function GET(
     }
 
     const cursor = req.nextUrl.searchParams.get("cursor") || undefined;
-    const pageSize = 5;
+    const pageSize = 9; // ⬅️ show 9 latest comments on initial load
     const user = await getUser(req);
 
-    // Fetch post info (for comment availability)
+    // Fetch post info for comment availability
     const post = await prisma.post.findUnique({
       where: { id: postIdNum },
       select: { allowComments: true },
     });
 
-    // ────────────────────────────────
-    // Fetch comments (Pinned First)
-    // ────────────────────────────────
+    // Fetch latest comments (pinned first, then recent)
     const allComments = await prisma.comment.findMany({
       where: { postId: postIdNum },
       include: getCommentDataInclude(
@@ -40,27 +40,29 @@ export async function GET(
       ),
       orderBy: [
         { isPinned: "desc" },
-        { createdAt: "asc" },
+        { createdAt: "desc" }, // ⬅️ show newest first
       ],
-      take: pageSize + 1,
+      take: pageSize + 1, // fetch one extra for pagination
       ...(cursor && { cursor: { id: Number(cursor) }, skip: 1 }),
     });
 
-    // Separate pinned + normal (for frontend clarity)
-    const pinnedComment = allComments.find((c) => c.isPinned);
-    const normalComments = allComments.filter((c) => !c.isPinned);
+    const hasMore = allComments.length > pageSize;
+    const visibleComments = hasMore
+      ? allComments.slice(0, pageSize)
+      : allComments;
 
-    const previousCursor =
-      normalComments.length > pageSize
-        ? String(normalComments[pageSize - 1].id)
-        : null;
+    const previousCursor = hasMore
+      ? String(visibleComments[visibleComments.length - 1].id)
+      : null;
+
+    // Split pinned comment (if any)
+    const pinnedComment = visibleComments.find((c) => c.isPinned);
+    const normalComments = visibleComments.filter((c) => !c.isPinned);
 
     const data: CommentsPage = {
       comments: [
         ...(pinnedComment ? [pinnedComment] : []),
-        ...(normalComments.length > pageSize
-          ? normalComments.slice(0, pageSize)
-          : normalComments),
+        ...normalComments,
       ],
       previousCursor,
     };
@@ -79,7 +81,9 @@ export async function GET(
   }
 }
 
-// ---------- POST: create a comment ----------
+// ===============================
+// POST: Create a comment
+// ===============================
 const CreateCommentSchema = z.object({
   content: z.string().trim().min(1, "Content is required"),
 });
@@ -110,7 +114,11 @@ export async function POST(
     const parsed = CreateCommentSchema.safeParse(json);
     if (!parsed.success) {
       return NextResponse.json(
-        { status: 0, message: "Invalid input", errors: parsed.error.flatten() },
+        {
+          status: 0,
+          message: "Invalid input",
+          errors: parsed.error.flatten(),
+        },
         { status: 400 }
       );
     }

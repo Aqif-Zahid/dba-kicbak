@@ -7,6 +7,11 @@ export async function GET(
   context: { params: Promise<{ postId: string }> }
 ) {
   try {
+    // Ensure Prisma is connected (handles Vercel cold starts)
+    await prisma.$connect().catch((err) =>
+      console.warn("Prisma connect retry:", err)
+    );
+
     const { postId } = await context.params;
     const postIdNum = Number(postId);
 
@@ -20,7 +25,7 @@ export async function GET(
     const user = await getUser(req);
     const profileId = user?.defaultProfileId ?? null;
 
-    // Fetch post and poll in a single query
+    // Fetch post and poll in one go
     const post = await prisma.post.findUnique({
       where: { id: postIdNum },
       include: {
@@ -49,32 +54,31 @@ export async function GET(
     const poll = post.poll;
     const now = new Date();
 
-    // Compute expiration and closure dynamically
     const expired = poll.expiresAt < now;
     const isClosed = poll.isClosed || expired;
     const timeLeftMs = Math.max(0, poll.expiresAt.getTime() - now.getTime());
 
-    // Aggregate options safely
-    const totalVotes = poll.options?.reduce(
-      (sum, opt) => sum + opt.votes.length,
-      0
-    ) ?? 0;
+    // Aggregate votes safely
+    const totalVotes =
+      poll.options?.reduce((sum, opt) => sum + opt.votes.length, 0) ?? 0;
 
-    const options = poll.options?.map((opt) => ({
-      id: opt.id,
-      text: opt.text,
-      voteCount: opt.votes.length,
-      votedByUser: !!opt.votes.find((v) => v.profileId === profileId),
-      percentage:
-        totalVotes === 0 ? 0 : Math.round((opt.votes.length / totalVotes) * 100),
-    })) ?? [];
+    const options =
+      poll.options?.map((opt) => ({
+        id: opt.id,
+        text: opt.text,
+        voteCount: opt.votes.length,
+        votedByUser: !!opt.votes.find((v) => v.profileId === profileId),
+        percentage:
+          totalVotes === 0
+            ? 0
+            : Math.round((opt.votes.length / totalVotes) * 100),
+      })) ?? [];
 
     const userHasVoted = options.some((opt) => opt.votedByUser);
     const canViewResults = isClosed || userHasVoted;
 
-    // Optional sync update: if poll expired but not yet marked closed, mark it now
+    // Auto-close expired polls
     if (expired && !poll.isClosed) {
-      // Don't block the response — fire and forget
       prisma.poll
         .update({
           where: { id: poll.id },

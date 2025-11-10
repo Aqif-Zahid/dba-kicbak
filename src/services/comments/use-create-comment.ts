@@ -80,7 +80,7 @@ export function useCreateComment(postId: number) {
       });
 
       // 🔼 Increment comments count in the feed cache (For You)
-      queryClient.setQueriesData({ queryKey: ["for-you"] }, (old: any) => {
+      queryClient.setQueriesData({ queryKey: ["post-feed", "for-you"] }, (old: any) => {
         if (!old?.pages) return old;
         return {
           ...old,

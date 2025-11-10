@@ -38,6 +38,7 @@ export const ForYouFeed = () => {
   if (status === "pending") {
     return <LoadingSkeleton />;
   }
+
   if (status === "success" && !posts.length && !hasNextPage) {
     return (
       <Card className="mx-auto mt-10 max-w-md text-center shadow-sm">
@@ -70,13 +71,14 @@ export const ForYouFeed = () => {
       </div>
     );
   }
+
   return (
     <InfiniteScrollContainer
-      className="space-y-5 "
+      className="space-y-5"
       onBottomReached={() => hasNextPage && !isFetching && fetchNextPage()}
     >
-      {posts.map((post) => (
-        <PostCard key={post.id} post={post} />
+      {posts.map((post, index) => (
+        <PostCard key={post.id ?? `post-${index}`} post={post} />
       ))}
 
       {isFetchingNextPage && <LoadingSkeleton />}

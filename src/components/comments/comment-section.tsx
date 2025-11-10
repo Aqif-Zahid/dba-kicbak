@@ -33,11 +33,8 @@ export const CommentSection = ({ post }: CommentSectionProps) => {
       return res.data;
     },
     initialPageParam: null as string | null,
-    getNextPageParam: (firstPage) => firstPage?.data?.previousCursor ?? null,
-    select: (data) => ({
-      pages: [...data.pages].reverse(),
-      pageParams: [...data.pageParams].reverse(),
-    }),
+    // keep comment order natural: newest first, older below
+    getNextPageParam: (lastPage) => lastPage?.data?.previousCursor ?? null,
   });
 
   useEffect(() => {
@@ -73,18 +70,6 @@ export const CommentSection = ({ post }: CommentSectionProps) => {
         </p>
       )}
 
-      {/* Load older comments */}
-      {hasNextPage && (
-        <Button
-          variant="link"
-          className="mx-auto block"
-          disabled={isFetching}
-          onClick={() => fetchNextPage()}
-        >
-          Load previous comments
-        </Button>
-      )}
-
       {/* States */}
       {status === "pending" && <Loader2 className="mx-auto animate-spin" />}
       {status === "success" && comments.length === 0 && (
@@ -100,7 +85,6 @@ export const CommentSection = ({ post }: CommentSectionProps) => {
       <div className="divide-y">
         {pinnedComment && (
           <div className="bg-muted/40 rounded-md p-2 mb-2">
-            {/* Label with icon */}
             {post.type === "QUESTION" ? (
               <div className="flex items-center gap-1 text-xs font-medium text-green-600 mb-1 ml-1">
                 <CheckCircle2 className="w-3.5 h-3.5 text-green-600" />
@@ -112,16 +96,28 @@ export const CommentSection = ({ post }: CommentSectionProps) => {
                 <span>Pinned Comment</span>
               </div>
             )}
-
             <Comment comment={pinnedComment} />
           </div>
         )}
 
-        {/* Render rest */}
+        {/* Render rest of comments */}
         {otherComments.map((comment) =>
           comment ? <Comment key={comment.id} comment={comment} /> : null
         )}
       </div>
+
+      {/* Move “Load previous comments” BELOW all comments */}
+      {hasNextPage && (
+        <div className="flex justify-center mt-4">
+          <Button
+            variant="link"
+            disabled={isFetching}
+            onClick={() => fetchNextPage()}
+          >
+            {isFetching ? "Loading..." : "Load previous comments"}
+          </Button>
+        </div>
+      )}
     </div>
   );
 };
