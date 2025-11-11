@@ -15,6 +15,14 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectTrigger,
+  SelectContent,
+  SelectItem,
+  SelectValue,
+} from "@/components/ui/select";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
@@ -44,10 +52,9 @@ const createPostSchema = z
   .refine(
     (data) => {
       if (data.type !== "POLL") {
-        // Require at least 3 chars for Question/Discussion
         return data.content && data.content.trim().length >= 3;
       }
-      return true; // Polls can have empty description
+      return true;
     },
     {
       message: "Description must be at least 3 characters long",
@@ -67,7 +74,6 @@ const CreatePostPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Poll-specific state
   const [pollOptions, setPollOptions] = useState<string[]>(["", ""]);
   const [pollDuration, setPollDuration] = useState({
     days: 0,
@@ -96,15 +102,11 @@ const CreatePostPage = () => {
     reset: resetMediaUploads,
   } = useMediaUpload();
 
-  // ─────────────────────────────
-  // Unified onSubmit
-  // ─────────────────────────────
   const onSubmit = async (values: FormValues) => {
     try {
       setLoading(true);
       setError(null);
 
-      // Validate poll logic (frontend only)
       if (values.type === "POLL") {
         const opts = pollOptions.filter((o) => o.trim() !== "");
         const totalMinutes =
@@ -124,7 +126,6 @@ const CreatePostPage = () => {
         }
       }
 
-      // Unified mutation for all post types
       mutation.mutate(
         {
           title: values.title,
@@ -153,7 +154,6 @@ const CreatePostPage = () => {
           },
           onError: (err: any) => {
             const message = getErrorMessage(err);
-
             if (message.includes("Description must be")) {
               form.setError("content", { message });
             } else if (message.includes("Title must")) {
@@ -172,9 +172,6 @@ const CreatePostPage = () => {
     }
   };
 
-  // ─────────────────────────────
-  // Render
-  // ─────────────────────────────
   return (
     <section className="pb-20 max-w-2xl mx-auto">
       <div className="flex flex-col gap-y-4 w-full">
@@ -187,10 +184,10 @@ const CreatePostPage = () => {
               <h2 className="font-bold text-2xl">Create a New Post</h2>
 
               <div className="flex flex-col gap-6">
-                {/* Title + Post Type Row */}
-                <div className="flex justify-between items-start gap-6">
+                {/* Title + Post Type side by side */}
+                <div className="flex flex-col md:flex-row gap-4">
                   {/* Title field */}
-                  <div className="flex-1">
+                  <div className="w-full md:w-1/2">
                     <FormField
                       name="title"
                       control={form.control}
@@ -200,7 +197,11 @@ const CreatePostPage = () => {
                             Title <span className="text-red-900">*</span>
                           </FormLabel>
                           <FormControl>
-                            <Input {...field} placeholder="Enter title" />
+                            <Input
+                              {...field}
+                              placeholder="Enter title"
+                              className="h-10 text-sm"
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -208,24 +209,31 @@ const CreatePostPage = () => {
                     />
                   </div>
 
-                  {/* Post Type (top-right corner) */}
-                  <div className="w-44">
+                  {/* Post Type using Shadcn Select */}
+                  <div className="w-full md:w-1/2">
                     <FormField
                       name="type"
                       control={form.control}
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Post Type</FormLabel>
-                          <FormControl>
-                            <select
-                              {...field}
-                              className="border rounded-md px-3 py-2 text-sm w-full"
-                            >
-                              <option value="DISCUSSION">Discussion</option>
-                              <option value="QUESTION">Question</option>
-                              <option value="POLL">Poll</option>
-                            </select>
-                          </FormControl>
+                          <Select
+                            onValueChange={field.onChange}
+                            value={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger className="h-10 text-sm">
+                                <SelectValue placeholder="Select type" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="DISCUSSION">
+                                Discussion
+                              </SelectItem>
+                              <SelectItem value="QUESTION">Question</SelectItem>
+                              <SelectItem value="POLL">Poll</SelectItem>
+                            </SelectContent>
+                          </Select>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -233,19 +241,14 @@ const CreatePostPage = () => {
                   </div>
                 </div>
 
-                {/* Description field (for non-poll posts) */}
+                {/* Description */}
                 {form.watch("type") !== "POLL" && (
                   <FormField
                     name="content"
                     control={form.control}
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>
-                          {form.watch("type") === "DISCUSSION" ||
-                          form.watch("type") === "QUESTION"
-                            ? "Description"
-                            : "Content"}
-                        </FormLabel>
+                        <FormLabel>Description</FormLabel>
                         <FormControl>
                           <Textarea
                             {...field}
@@ -259,7 +262,7 @@ const CreatePostPage = () => {
                   />
                 )}
 
-                {/* Poll fields */}
+                {/* Poll Fields */}
                 {form.watch("type") === "POLL" && (
                   <PollFields
                     pollOptions={pollOptions}
@@ -273,18 +276,23 @@ const CreatePostPage = () => {
                   />
                 )}
 
-                {/* Allow/Disable comments */}
+                {/* Disable comments (Shadcn checkbox) */}
                 <FormField
                   name="allowComments"
                   control={form.control}
                   render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
+                    <FormItem className="flex flex-row items-center space-x-2">
+                      <FormControl>
+                        <Checkbox
                           checked={!field.value}
-                          onChange={(e) => field.onChange(!e.target.checked)}
+                          onCheckedChange={(val) => field.onChange(!val)}
+                          id="disableComments"
                         />
+                      </FormControl>
+                      <FormLabel
+                        htmlFor="disableComments"
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                      >
                         Disable comments
                       </FormLabel>
                       <FormMessage />
