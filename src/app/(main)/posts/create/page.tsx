@@ -28,15 +28,32 @@ import { PollFields } from "@/components/posts/poll-fields";
 // ─────────────────────────────
 // Schema
 // ─────────────────────────────
-const createPostSchema = z.object({
-  title: z
-    .string()
-    .min(3, "Title must be at least 3 characters long")
-    .max(100, "Title must not be 100 characters long"),
-  content: z.string().max(500).optional(),
-  type: z.enum(["POLL", "QUESTION", "DISCUSSION"]).default("DISCUSSION"),
-  allowComments: z.boolean().default(true),
-});
+const createPostSchema = z
+  .object({
+    title: z
+      .string()
+      .min(3, "Title must be at least 3 characters long")
+      .max(100, "Title must not be 100 characters long"),
+    content: z
+      .string()
+      .max(500, "Description cannot exceed 500 characters")
+      .optional(),
+    type: z.enum(["POLL", "QUESTION", "DISCUSSION"]).default("DISCUSSION"),
+    allowComments: z.boolean().default(true),
+  })
+  .refine(
+    (data) => {
+      if (data.type !== "POLL") {
+        // Require at least 3 chars for Question/Discussion
+        return data.content && data.content.trim().length >= 3;
+      }
+      return true; // Polls can have empty description
+    },
+    {
+      message: "Description must be at least 3 characters long",
+      path: ["content"],
+    }
+  );
 
 type FormValues = z.infer<typeof createPostSchema>;
 
@@ -137,8 +154,7 @@ const CreatePostPage = () => {
           onError: (err: any) => {
             const message = getErrorMessage(err);
 
-            // Map backend validation errors to specific form fields
-            if (message.includes("Content must be")) {
+            if (message.includes("Description must be")) {
               form.setError("content", { message });
             } else if (message.includes("Title must")) {
               form.setError("title", { message });

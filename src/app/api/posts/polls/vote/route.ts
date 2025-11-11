@@ -9,8 +9,10 @@ const voteSchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
-  // Reset broken connection (Vercel fix)
-  await prisma.$disconnect().catch(() => {});
+  // Ensure Prisma is connected (prevents "Engine not connected" on cold starts)
+  await prisma.$connect().catch((err) =>
+    console.warn("Prisma connect retry:", err)
+  );
 
   try {
     const user = await getUser(req);
@@ -33,7 +35,7 @@ export async function POST(req: NextRequest) {
 
     const { pollOptionId } = parsed.data;
 
-    // Profile
+    // Get profile
     const profile = await prisma.profiles.findFirst({
       where: { userId },
       select: { id: true },
@@ -46,7 +48,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Option + Poll
+    // Get poll option + parent poll
     const option = await prisma.pollOption.findUnique({
       where: { id: pollOptionId },
       include: { poll: true },
@@ -77,79 +79,64 @@ export async function POST(req: NextRequest) {
     const profileId = Number(profile.id);
     const pollId = Number(option.pollId);
 
+    // Transaction-safe voting logic
     async function executeTransaction() {
       return prisma.$transaction(async (tx) => {
         const existingVote = await tx.pollVote.findUnique({
           where: {
-            optionId_profileId: {
-              optionId: pollOptionId,
-              profileId,
-            },
+            optionId_profileId: { optionId: pollOptionId, profileId },
           },
         });
 
         if (allowMultiple) {
+          // Multi-vote polls: toggle this option
           if (existingVote) {
-            try {
-              await tx.pollVote.delete({ where: { id: existingVote.id } });
-            } catch (err: any) {
+            await tx.pollVote.delete({ where: { id: existingVote.id } }).catch((err: any) => {
               if (err.code !== "P2025") throw err;
-            }
+            });
           } else {
-            try {
-              await tx.pollVote.create({
-                data: { optionId: pollOptionId, profileId },
-              });
-            } catch (err: any) {
+            await tx.pollVote.create({ data: { optionId: pollOptionId, profileId } }).catch((err: any) => {
               if (err.code !== "P2002") throw err;
-            }
+            });
           }
         } else {
+          // Single-vote polls: remove others first
           if (existingVote) {
-            try {
-              await tx.pollVote.delete({ where: { id: existingVote.id } });
-            } catch (err: any) {
+            await tx.pollVote.delete({ where: { id: existingVote.id } }).catch((err: any) => {
               if (err.code !== "P2025") throw err;
-            }
+            });
           } else {
             await tx.pollVote.deleteMany({
               where: { profileId, option: { pollId } },
             });
-            try {
-              await tx.pollVote.create({
-                data: { optionId: pollOptionId, profileId },
-              });
-            } catch (err: any) {
+            await tx.pollVote.create({ data: { optionId: pollOptionId, profileId } }).catch((err: any) => {
               if (err.code !== "P2002") throw err;
-            }
+            });
           }
         }
 
-        const updatedPoll = await tx.poll.findUnique({
+        return tx.poll.findUnique({
           where: { id: pollId },
-          include: {
-            options: {
-              include: { votes: true },
-            },
-          },
+          include: { options: { include: { votes: true } } },
         });
-        return updatedPoll;
       });
     }
 
+    // Attempt + retry logic for transaction aborts
     let result;
     try {
       result = await executeTransaction();
     } catch (err: any) {
       if (err.message?.includes("aborted") || err.code === "25P02") {
         console.warn("Retrying poll transaction after aborted state:", err);
-        await prisma.$disconnect().catch(() => {});
+        await prisma.$connect().catch(() => {}); // reconnect if needed
         result = await executeTransaction();
       } else {
         throw err;
       }
     }
 
+    // Realtime update broadcast
     await notifyChannel("poll_updates", { pollId });
 
     return NextResponse.json(

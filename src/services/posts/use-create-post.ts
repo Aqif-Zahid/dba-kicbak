@@ -9,7 +9,14 @@ import {
 } from "@tanstack/react-query";
 import { toast } from "sonner";
 
-// Inputs your server action now accepts
+// Backend returns this
+type CreatePostResponse = {
+  status: number; // 0 or 1
+  message: string;
+  data?: any;
+};
+
+// Inputs your server action accepts
 type CreatePostInput = {
   title: string;
   content: string;
@@ -17,23 +24,40 @@ type CreatePostInput = {
   communityId?: number;
   type: "POLL" | "QUESTION" | "DISCUSSION";
   allowComments: boolean;
-
-  // 👇 added for poll posts
-  options?: string[]; // poll options
-  duration?: { days: number; hours: number; minutes: number }; // poll duration
-  allowMultiple?: boolean; // allow multiple selections
+  options?: string[];
+  duration?: { days: number; hours: number; minutes: number };
+  allowMultiple?: boolean;
 };
 
 export function useCreatePost() {
   const queryClient = useQueryClient();
   const { user } = useUser();
 
-  const mutation = useMutation({
-    // pass the input through to the server action
-    mutationFn: (input: CreatePostInput) => createPost(input),
+  const mutation = useMutation<CreatePostResponse, Error, CreatePostInput>({
+    mutationFn: async (input) => {
+      const res = await createPost(input);
+      // Force cast to ensure consistent shape
+      return {
+        status: res.status ?? 0,
+        message: res.message ?? "Unexpected response",
+        data: res.data,
+      };
+    },
 
-    onSuccess: async (newPost) => {
-      // keep your existing feed cache update behavior
+    onSuccess: async (response) => {
+      // Handle validation or failure response
+      if (response.status === 0) {
+        toast.error(response.message);
+        return;
+      }
+
+      // Only proceed for successful posts
+      const newPost = response.data;
+      if (!newPost) {
+        toast.error("Something went wrong. Post data missing.");
+        return;
+      }
+
       const queryFilter = {
         queryKey: ["post-feed"],
         predicate(query) {
@@ -50,8 +74,11 @@ export function useCreatePost() {
       queryClient.setQueriesData<InfiniteData<PostsPage, string | null>>(
         queryFilter,
         (oldData) => {
-          const firstPage = oldData?.pages[0];
+          if (!oldData) return oldData;
+
+          const firstPage = oldData.pages[0];
           if (!firstPage) return oldData;
+
           return {
             pageParams: oldData.pageParams,
             pages: [
@@ -65,7 +92,6 @@ export function useCreatePost() {
         }
       );
 
-      // re-fetch for queries that had no data yet
       queryClient.invalidateQueries({
         queryKey: queryFilter.queryKey,
         predicate(q) {
@@ -73,7 +99,7 @@ export function useCreatePost() {
         },
       });
 
-      toast.success("Post created successfully");
+      toast.success(response.message || "Post created successfully!");
     },
 
     onError(error) {

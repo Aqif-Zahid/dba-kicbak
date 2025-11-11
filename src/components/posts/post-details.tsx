@@ -4,6 +4,7 @@ import PageError from "../common/error-page";
 import Loader from "../common/loader";
 import { PostCard } from "./post-card";
 import { useQuery } from "@tanstack/react-query";
+
 interface PostDetailsProps {
   postId: string;
 }
@@ -24,9 +25,11 @@ export const PostDetails = ({ postId }: PostDetailsProps) => {
   if (status === "error") {
     return <PageError message="Unable to fetch post at this moment" />;
   }
+
+  // Pass a prop to tell PostCard to auto-open comments on the post details page
   return (
     <div className="mx-auto max-w-2xl px-5 space-y-5">
-      <PostCard post={data.data} from={"details"} />
+      <PostCard post={data.data} from="details" autoOpenComments />
     </div>
   );
 };

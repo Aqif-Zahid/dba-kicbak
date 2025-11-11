@@ -1,4 +1,5 @@
 "use client";
+
 import { useUser } from "@/providers/auth-provider";
 import { Post } from "@/types/types";
 import Link from "next/link";
@@ -24,12 +25,15 @@ import { useEditPost } from "@/services/posts/use-edit-post";
 interface PostDataProps {
   post: Post;
   from?: string;
+  autoOpenComments?: boolean; // 👈 added
 }
 
-export const PostCard = ({ post, from }: PostDataProps) => {
+export const PostCard = ({ post, from, autoOpenComments = false }: PostDataProps) => {
   const router = useRouter();
   const { user } = useUser();
-  const [showComments, setShowComments] = useState(false);
+
+  // 👇 initialize from prop so comments are open on the post details page only
+  const [showComments, setShowComments] = useState(autoOpenComments);
 
   // Inline editing state
   const [isEditing, setIsEditing] = useState(false);
@@ -37,7 +41,7 @@ export const PostCard = ({ post, from }: PostDataProps) => {
   const [editedContent, setEditedContent] = useState(post.content || "");
   const { mutate: editPost, isPending } = useEditPost();
 
-  // Local view state so UI updates instantly
+  // Local view state
   const [viewTitle, setViewTitle] = useState(post.title);
   const [viewContent, setViewContent] = useState(post.content || "");
   const [viewEdited, setViewEdited] = useState<boolean>(Boolean(post.edited));
@@ -54,7 +58,6 @@ export const PostCard = ({ post, from }: PostDataProps) => {
       { postId: post.id, title: editedTitle, content: editedContent },
       {
         onSuccess: () => {
-          // ✨ Update local values immediately
           setViewTitle(editedTitle);
           setViewContent(editedContent);
           setViewEdited(true);
@@ -65,7 +68,7 @@ export const PostCard = ({ post, from }: PostDataProps) => {
     );
   };
 
-  // prevent navigation when clicking on interactive elements
+  // prevent navigation when clicking interactive elements
   const handleCardClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (from) return;
     const target = e.target as HTMLElement;
@@ -76,17 +79,13 @@ export const PostCard = ({ post, from }: PostDataProps) => {
     router.push(`/posts/${post.id}`);
   };
 
-  // Fallbacks for deleted posts
   const isDeleted = post.status === "DELETED";
-
-  // Display logic for answered questions
   const isAnswered = post.type === "QUESTION" && post.hasBestAnswer;
   const displayTitle = isDeleted
     ? "[Deleted]"
     : isAnswered
     ? `${viewTitle} (Answered)`
     : viewTitle;
-
   const displayContent = isDeleted ? "[Deleted]" : viewContent;
 
   return (
@@ -100,36 +99,43 @@ export const PostCard = ({ post, from }: PostDataProps) => {
       >
         <div className="flex justify-between gap-3 p-5">
           <div className="flex flex-wrap gap-3">
-            <UserTooltip profile={post.authorProfile}>
-              <Link href={`/${post.authorProfile.username}`} data-no-nav>
-                <UserAvatar
-                  avatarUrl={post.authorProfile.profilePicture}
-                  avatarFallback={post.authorProfile.username
-                    .toUpperCase()
-                    .charAt(0)}
-                />
-              </Link>
-            </UserTooltip>
-            <div>
-              <UserTooltip profile={post.authorProfile}>
-                <Link
-                  href={`/${post.authorProfile.username}`}
-                  className="block font-medium hover:underline"
-                  data-no-nav
-                >
-                  {post.authorProfile.displayName}
-                </Link>
-              </UserTooltip>
-              <Link
-                href={`/posts/${post.id}`}
-                className="block text-sm text-muted-foreground hover:underline"
-                data-no-nav
-              >
-                {formatRelativeDate(post.createdAt)}
-              </Link>
-            </div>
+            {post.authorProfile ? (
+              <>
+                <UserTooltip profile={post.authorProfile}>
+                  <Link href={`/${post.authorProfile.username}`} data-no-nav>
+                    <UserAvatar
+                      avatarUrl={post.authorProfile.profilePicture}
+                      avatarFallback={post.authorProfile.username
+                        .toUpperCase()
+                        .charAt(0)}
+                    />
+                  </Link>
+                </UserTooltip>
+                <div>
+                  <UserTooltip profile={post.authorProfile}>
+                    <Link
+                      href={`/${post.authorProfile.username}`}
+                      className="block font-medium hover:underline"
+                      data-no-nav
+                    >
+                      {post.authorProfile.displayName}
+                    </Link>
+                  </UserTooltip>
+                  <Link
+                    href={`/posts/${post.id}`}
+                    className="block text-sm text-muted-foreground hover:underline"
+                    data-no-nav
+                  >
+                    {formatRelativeDate(post.createdAt)}
+                  </Link>
+                </div>
+              </>
+            ) : (
+              <div className="text-sm text-muted-foreground">[Deleted user]</div>
+            )}
           </div>
-          {post.authorProfile.id === user?.defaultProfileId && (
+
+          {post.authorProfile?.id === user?.defaultProfileId && (
             <PostMoreButton
               post={post}
               className="opacity-0 transition-opacity group-hover/post:opacity-100 mx-5"
@@ -203,7 +209,7 @@ export const PostCard = ({ post, from }: PostDataProps) => {
           <div className="px-5 pb-5">
             <PollSection
               postId={post.id}
-              isAuthor={post.authorProfile.id === user?.defaultProfileId}
+              isAuthor={post.authorProfile?.id === user?.defaultProfileId}
             />
           </div>
         )}
