@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/form";
 import { useEffect, useMemo } from "react";
 import { toast } from "sonner";
+import { Checkbox } from "@/components/ui/checkbox";
 
 // ─────────────────────────────
 // Validation Schema (options as objects for RHF field arrays)
@@ -308,16 +309,18 @@ export const PollFields = ({
           control={form.control}
           name="allowMultiple"
           render={({ field }) => (
-            <FormItem className="flex items-center gap-2">
+            <FormItem className="flex flex-row items-center space-x-2">
               <FormControl>
-                <input
-                  type="checkbox"
-                  id="allow-multiple"
+                <Checkbox
                   checked={Boolean(field.value)}
-                  onChange={(e) => field.onChange(e.target.checked)}
+                  onCheckedChange={(val) => field.onChange(Boolean(val))}
+                  id="allow-multiple"
                 />
               </FormControl>
-              <FormLabel htmlFor="allow-multiple" className="text-sm text-gray-700">
+              <FormLabel
+                htmlFor="allow-multiple"
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+              >
                 Allow users to vote for multiple options
               </FormLabel>
               <FormMessage />
