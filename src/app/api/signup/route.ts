@@ -3,6 +3,7 @@ import { z } from "zod";
 import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import streamServerClient from "@/lib/stream";
+import { rewardOnReferralSignup } from "@/actions/referrals/reward-on-signup"; // 🪙 new import
 
 // === Zod validation ===
 const signupSchema = z.object({
@@ -72,15 +73,17 @@ export async function POST(req: Request) {
       }
       existingUserId = existingUser.id;
     }
+
     const hashedPassword = await bcrypt.hash(password, 10);
     const referrerId = await getReferrerId(referralCode);
-    
-    if (! referrerId) {
+
+    if (!referrerId) {
       return NextResponse.json(
         { status: 0, message: "Invalid invite code!" },
         { status: 409 }
       );
     }
+
     const result = await prisma.$transaction(async (tx: any) => {
       const user = await tx.users.upsert({
         where: { id: existingUserId },
@@ -100,8 +103,9 @@ export async function POST(req: Request) {
           personaSelected: personaSelected ?? [],
           referralCode,
           referrerId: referrerId,
-        }
+        },
       });
+
       const newProfile = await tx.profiles.create({
         data: {
           userId: user.id,
@@ -112,7 +116,7 @@ export async function POST(req: Request) {
       });
 
       if (!newProfile) throw new Error("Failed to create default profile.");
-      
+
       await tx.users.update({
         where: { id: user.id },
         data: { defaultProfileId: newProfile.id },
@@ -137,7 +141,8 @@ export async function POST(req: Request) {
         },
       });
 
-      if (!addToReferrals) throw new Error("Failed to add user to referrals list.");
+      if (!addToReferrals)
+        throw new Error("Failed to add user to referrals list.");
 
       await streamServerClient.upsertUser({
         id: String(newProfile.id),
@@ -145,8 +150,13 @@ export async function POST(req: Request) {
         name: `${firstName} ${lastName}`,
       });
 
-      return { userId: user.id, profileId: newProfile.id };
+      return { userId: user.id, profileId: newProfile.id, referrerId };
     });
+
+    // Reward both referrer and referred users after successful signup
+    if (result.referrerId) {
+      await rewardOnReferralSignup(result.referrerId, result.userId);
+    }
 
     return NextResponse.json(
       { status: 1, message: "Signed up successfully", userId: result.userId },

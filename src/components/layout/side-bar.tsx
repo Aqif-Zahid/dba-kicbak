@@ -9,6 +9,7 @@ import {
   ListTree,
   MessageCircle,
   Plus,
+  GiftIcon,
 } from "lucide-react";
 import { Button } from "../ui/button";
 import Link from "next/link";
@@ -39,6 +40,8 @@ export const Sidebar = async ({ className, user }: MenubarProps) => {
       <div className="hidden md:block">
         {user && <SwitchProfile user={user} />}
       </div>
+
+      {/* ================= Home ================= */}
       <Button
         variant="ghost"
         className="flex items-center justify-start gap-3 mb-2 hover:bg-primary hover:text-white"
@@ -51,6 +54,7 @@ export const Sidebar = async ({ className, user }: MenubarProps) => {
         </Link>
       </Button>
 
+      {/* ================= Posts ================= */}
       <Button
         variant={url.includes("/posts") ? "default" : "ghost"}
         className="flex items-center justify-start gap-3 mb-2 hover:bg-primary hover:text-white"
@@ -63,8 +67,10 @@ export const Sidebar = async ({ className, user }: MenubarProps) => {
         </Link>
       </Button>
 
+      {/* ================= Admin Section ================= */}
       {isAdmin && (
         <>
+          {/* Manage Users */}
           <Button
             variant={url.includes("/admin/users") ? "default" : "ghost"}
             className="flex items-center justify-start gap-3 mb-2 hover:bg-primary hover:text-white"
@@ -77,10 +83,9 @@ export const Sidebar = async ({ className, user }: MenubarProps) => {
             </Link>
           </Button>
 
+          {/* Pending Invites */}
           <Button
-            variant={
-              url.includes("/admin/pending-invites") ? "default" : "ghost"
-            }
+            variant={url.includes("/admin/pending-invites") ? "default" : "ghost"}
             className="flex items-center justify-start gap-3 mb-2 hover:bg-primary hover:text-white"
             title="Pending Invites"
             asChild
@@ -90,22 +95,34 @@ export const Sidebar = async ({ className, user }: MenubarProps) => {
               <span className="hidden lg:inline">Pending Invites</span>
             </Link>
           </Button>
+
+          {/* Configure Rewards */}
+          <Button
+            variant={url.includes("/admin/configure-rewards") ? "default" : "ghost"}
+            className="flex items-center justify-start gap-3 mb-2 hover:bg-primary hover:text-white"
+            title="Configure Rewards"
+            asChild
+          >
+            <Link href="/admin/configure-rewards">
+              <GiftIcon className="w-16 h-16 flex-shrink-0" />
+              <span className="hidden lg:inline">Configure Rewards</span>
+            </Link>
+          </Button>
         </>
       )}
 
+      {/* ================= Communities ================= */}
       <Accordion type="single" collapsible className="w-full">
         <AccordionItem value="community">
-          <AccordionTrigger className=" px-3 py-2 rounded-lg hover:no-underline">
+          <AccordionTrigger className="px-3 py-2 rounded-lg hover:no-underline">
             <div className="flex items-center gap-3">
               <LayoutGrid className="w-4 h-4 flex-shrink-0" />
-              <span className="hidden lg:inline"> Communities</span>
+              <span className="hidden lg:inline">Communities</span>
             </div>
           </AccordionTrigger>
           <AccordionContent className="pl-10 flex flex-col space-y-2">
             <Button
-              variant={
-                url.includes("/communities/create") ? "default" : "ghost"
-              }
+              variant={url.includes("/communities/create") ? "default" : "ghost"}
               className="justify-start hover:bg-primary hover:text-white"
               asChild
             >
@@ -127,9 +144,7 @@ export const Sidebar = async ({ className, user }: MenubarProps) => {
             {isAdmin && (
               <>
                 <Button
-                  variant={
-                    url.includes("/admin/topic-groups") ? "default" : "ghost"
-                  }
+                  variant={url.includes("/admin/topic-groups") ? "default" : "ghost"}
                   className="justify-start hover:bg-primary hover:text-white"
                   asChild
                 >
@@ -154,6 +169,7 @@ export const Sidebar = async ({ className, user }: MenubarProps) => {
         </AccordionItem>
       </Accordion>
 
+      {/* ================= User Section ================= */}
       {user && (
         <>
           <div className="md:pt-4 border-t border-gray-200">
@@ -162,6 +178,7 @@ export const Sidebar = async ({ className, user }: MenubarProps) => {
                 User ID: {user.id}
               </span>
             </div>
+
             <Button
               variant={url.includes("/user/profiles") ? "default" : "ghost"}
               className="flex items-center justify-start gap-3 my-2 hover:bg-primary hover:text-white"
@@ -173,12 +190,11 @@ export const Sidebar = async ({ className, user }: MenubarProps) => {
                 <span className="hidden lg:inline">Manage Profiles</span>
               </Link>
             </Button>
+
             <Button
-              variant={
-                url.includes("/user/change-password") ? "default" : "ghost"
-              }
+              variant={url.includes("/user/change-password") ? "default" : "ghost"}
               className="flex items-center justify-start gap-3 my-2 hover:bg-primary hover:text-white"
-              title="Profiles"
+              title="Change Password"
               asChild
             >
               <Link href="/user/change-password">
@@ -186,6 +202,7 @@ export const Sidebar = async ({ className, user }: MenubarProps) => {
                 <span className="hidden lg:inline">Change Password</span>
               </Link>
             </Button>
+
             <LogOutButton />
           </div>
         </>

@@ -1,39 +1,56 @@
 import { PrismaClient, TransactionType } from "@prisma/client";
-
 const prisma = new PrismaClient();
 
-/**
- * Seeds the database with the Treasury user and its initial DEBIT ledger entry.
- */
 export const runSeed = async () => {
   try {
-    console.log("Seeding Treasury user and initial ledger entry...");
+    console.log("Seeding Treasury user, ledger entry, and reward settings...");
 
-    // Ensure treasury user exists
-    await prisma.users.upsert({
-      where: { id: 1 },
+    const treasuryEmail = process.env.TREASURY_EMAIL;
+    if (!treasuryEmail) {
+      throw new Error("TREASURY_EMAIL environment variable is missing.");
+    }
+
+    // Ensure Treasury user exists
+    const treasury = await prisma.users.upsert({
+      where: { email: treasuryEmail },
       update: {},
       create: {
-        id: 1,
-        email: "treasury@system.local",
+        email: treasuryEmail,
         status: "ACTIVE",
         points: 1_000_000,
         inviteRequired: false,
       },
     });
 
-    // 🧾 Ensure opening ledger entry exists
+    // Ensure opening ledger entry exists for Treasury
     const existingEntry = await prisma.rewardsLedger.findFirst({
-      where: { userId: 1, reason: "MANUAL_ADJUST" },
+      where: { userId: treasury.id, reason: "MANUAL_ADJUST" },
     });
 
     if (!existingEntry) {
       await prisma.rewardsLedger.create({
         data: {
-          userId: 1,
+          userId: treasury.id,
           deltaPoints: 1_000_000,
           reason: "MANUAL_ADJUST",
           transactionType: TransactionType.DEBIT,
+        },
+      });
+    }
+
+    // Ensure default reward configuration entries exist
+    const rewardSettings = [
+      { key: "referrer_reward_points", value: "100" },
+      { key: "referred_reward_points", value: "50" },
+    ];
+
+    for (const setting of rewardSettings) {
+      await prisma.systemSettings.upsert({
+        where: { key: setting.key },
+        update: {},
+        create: {
+          key: setting.key,
+          value: setting.value,
         },
       });
     }
@@ -47,5 +64,4 @@ export const runSeed = async () => {
   }
 };
 
-// Run the seed when executed directly
 runSeed();
