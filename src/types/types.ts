@@ -284,6 +284,12 @@ export type Topic = {
   communityId?: number;
   groupId?: number;
   createdById: number;
+  createdBy: {
+    id: number;
+    displayName: string;
+    username: string;
+    profilePicture: string;
+  };
   createdAt: string;
   updatedAt: string;
 };
