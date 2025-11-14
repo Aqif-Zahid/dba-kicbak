@@ -1,99 +1,49 @@
-"use client";
-
-import { useEffect, useState } from "react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
-import axios from "axios";
-import Loader from "@/components/common/loader";
+import prisma from "@/lib/prisma";
 import PageError from "@/components/common/error-page";
-import { getErrorMessage } from "@/lib/utils";
+import { ConfigureRewardsForm } from "@/components/admin/configure-rewards/configure-rewards-form";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
-export const dynamic = "force-dynamic";
+export default async function ConfigureRewardsPage() {
+  // -------------------------
+  // Authenticate user (server-safe)
+  // -------------------------
+  const session = await getServerSession(authOptions);
 
-export default function ConfigureRewardsPage() {
-  const [referrerPoints, setReferrerPoints] = useState<number>(0);
-  const [referredPoints, setReferredPoints] = useState<number>(0);
-  const [lastUpdated, setLastUpdated] = useState<string>("");
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  if (!session || session.user.role !== "ADMIN") {
+    return <PageError message="Unauthorized" />;
+  }
 
-  useEffect(() => {
-    const fetchSettings = async () => {
-      try {
-        const res = await axios.get("/api/admin/rewards");
-        if (res.data.status === 1) {
-          setReferrerPoints(res.data.data.referrer_reward_points);
-          setReferredPoints(res.data.data.referred_reward_points);
-          setLastUpdated(res.data.data.lastUpdated);
-        } else {
-          setError(res.data.message);
-        }
-      } catch (err) {
-        setError(getErrorMessage(err));
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchSettings();
-  }, []);
+  // -------------------------
+  // Fetch reward settings
+  // -------------------------
+  const settings = await prisma.systemSettings.findMany({
+    where: {
+      key: { in: ["referrer_reward_points", "referred_reward_points"] },
+    },
+  });
 
-  const handleSave = async () => {
-    try {
-      const res = await axios.post("/api/admin/rewards", {
-        referrer_reward_points: referrerPoints,
-        referred_reward_points: referredPoints,
-      });
+  const data: Record<string, any> = {};
+  settings.forEach((s) => (data[s.key] = Number(s.value)));
 
-      if (res.data.status === 1) {
-        toast.success("Reward settings updated successfully");
-        setLastUpdated(new Date().toISOString());
-      } else {
-        toast.error(res.data.message);
-      }
-    } catch (err) {
-      toast.error(getErrorMessage(err));
-    }
-  };
+  const lastUpdated =
+    settings.reduce(
+      (latest, s) => (s.updatedAt > latest ? s.updatedAt : latest),
+      new Date(0)
+    ) || null;
 
-  if (loading) return <Loader />;
-  if (error) return <PageError message={error} />;
-
+  // -------------------------
+  // Render component
+  // -------------------------
   return (
     <div className="max-w-lg mx-auto p-6 bg-white shadow rounded-2xl space-y-6">
       <h1 className="text-2xl font-bold text-center">Configure Rewards</h1>
 
-      <div className="space-y-4">
-        <div>
-          <label className="font-semibold">Referrer Reward Points</label>
-          <Input
-            type="number"
-            min={0}
-            value={referrerPoints}
-            onChange={(e) => setReferrerPoints(Number(e.target.value))}
-          />
-        </div>
-
-        <div>
-          <label className="font-semibold">Referred User Reward Points</label>
-          <Input
-            type="number"
-            min={0}
-            value={referredPoints}
-            onChange={(e) => setReferredPoints(Number(e.target.value))}
-          />
-        </div>
-
-        {lastUpdated && (
-          <p className="text-sm text-muted-foreground">
-            Last updated on: {new Date(lastUpdated).toLocaleString()}
-          </p>
-        )}
-
-        <Button onClick={handleSave} className="w-full">
-          Save Changes
-        </Button>
-      </div>
+      <ConfigureRewardsForm
+        referrerPoints={data.referrer_reward_points || 0}
+        referredPoints={data.referred_reward_points || 0}
+        lastUpdated={lastUpdated ? lastUpdated.toISOString() : null}
+      />
     </div>
   );
 }
