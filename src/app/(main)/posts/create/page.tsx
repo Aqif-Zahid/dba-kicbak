@@ -32,12 +32,14 @@ import { AttachmentButton } from "@/components/posts/attachment-button";
 import { useMediaUpload } from "@/hooks/use-media-upload";
 import { useCreatePost } from "@/services/posts/use-create-post";
 import { PollFields } from "@/components/posts/poll-fields";
+import { useGetCommunities } from "@/services/communities/use-get-communities";
 
 // ─────────────────────────────
 // Schema
 // ─────────────────────────────
 const createPostSchema = z
   .object({
+    communityId: z.string().min(0, "Community is required"),
     title: z
       .string()
       .min(3, "Title must be at least 3 characters long")
@@ -69,8 +71,11 @@ type FormValues = z.infer<typeof createPostSchema>;
 // ─────────────────────────────
 const CreatePostPage = () => {
   const router = useRouter();
-  const mutation = useCreatePost();
 
+  // Fetch communities
+  const { data: communities, isLoading } = useGetCommunities();
+
+  const mutation = useCreatePost();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -130,13 +135,12 @@ const CreatePostPage = () => {
         {
           title: values.title,
           content:
-            values.type === "POLL"
-              ? pollContent ?? ""
-              : values.content ?? "",
+            values.type === "POLL" ? pollContent ?? "" : values.content ?? "",
           mediaIds: attachments
             .map((a) => a.mediaId)
             .filter(Boolean) as string[],
           type: values.type,
+          communityId: Number(values.communityId),
           allowComments: values.allowComments,
           options: values.type === "POLL" ? pollOptions : undefined,
           duration: values.type === "POLL" ? pollDuration : undefined,
@@ -185,6 +189,40 @@ const CreatePostPage = () => {
 
               <div className="flex flex-col gap-6">
                 {/* Title + Post Type side by side */}
+
+                <FormField
+                  name="communityId"
+                  control={form.control}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        Community <span className="text-red-500">*</span>
+                      </FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="h-10 text-sm">
+                            <SelectValue placeholder="Select type" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {communities &&
+                            communities.data.map((item) => (
+                              <SelectItem
+                                key={item.id}
+                                value={item.id.toString()}
+                              >
+                                {item.name}
+                              </SelectItem>
+                            ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 <div className="flex flex-col md:flex-row gap-4">
                   {/* Title field */}
                   <div className="w-full md:w-1/2">

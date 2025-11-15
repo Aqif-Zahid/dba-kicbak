@@ -308,3 +308,14 @@ export type TopicGroup = {
     profilePicture: string;
   };
 };
+
+export type Community = {
+  id: number;
+  name: string;
+  description: string;
+  slug: string;
+  icon?: string;
+  ownerId: number;
+  topics?: { id: number; title: string }[];
+  members: { id: number }[];
+};

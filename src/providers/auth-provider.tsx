@@ -39,7 +39,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         displayName: (session.user as any).displayName ?? "",
         role: (session.user as any).role,
         username: (session.user as any).username ?? "",
-        image: session.user.image ?? "",
+        image: session.user.profilePicture ?? "",
         defaultProfileId: (session.user as any).defaultProfileId ?? 0,
       });
     } else {
