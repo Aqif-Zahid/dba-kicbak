@@ -95,7 +95,7 @@ export const getUserLedgerSummary = async (userId: number) => {
     return {
       totalDebit,
       totalCredit,
-      balance: totalDebit - totalCredit,
+      balance: totalCredit - totalDebit,
     };
   } catch (e) {
     throw wrapError(e, "Failed to fetch ledger summary", "LEDGER_SUMMARY_FAILED");
@@ -160,7 +160,7 @@ export const getUserLedgerData = async (
     return {
       totalDebit,
       totalCredit,
-      balance: totalDebit - totalCredit,
+      balance: totalCredit - totalDebit,
       transactions,
       startDate: finalStart,
       endDate: finalEnd,

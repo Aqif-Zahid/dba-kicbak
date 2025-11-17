@@ -1,124 +1,90 @@
 "use server";
 
 import prisma from "@/lib/prisma";
-import { RewardsReason, TransactionType } from "@prisma/client";
+import { RewardsReason, PendingRewardStatus } from "@prisma/client";
 
+/**
+ * Create UNCLAIMED pending rewards for referrer + referred user.
+ * No ledger updates, no treasury deductions, no direct point changes here.
+ */
 export const rewardOnReferralSignup = async (
   referrerUserId: number,
   referredUserId: number
 ) => {
   try {
-    if (!referrerUserId || !referredUserId || referrerUserId === referredUserId)
+    if (!referrerUserId || !referredUserId || referrerUserId === referredUserId) {
       throw new Error("Invalid referrer/referred user pair");
+    }
 
-    const treasuryEmail = process.env.TREASURY_EMAIL;
-    if (!treasuryEmail) throw new Error("TREASURY_EMAIL not configured");
-
-    const treasury = await prisma.users.findUnique({
-      where: { email: treasuryEmail },
-    });
-    if (!treasury) throw new Error("Treasury user not found");
-
+    // Load reward settings
     const settings = await prisma.systemSettings.findMany({
       where: {
-        key: { in: ["referrer_reward_points", "referred_reward_points"] },
+        key: {
+          in: ["referrer_reward_points", "referred_reward_points"],
+        },
       },
     });
 
     const referrerReward = Number(
-      settings.find((s) => s.key === "referrer_reward_points")?.value || 0
+      settings.find((s) => s.key === "referrer_reward_points")?.value ?? 0
     );
+
     const referredReward = Number(
-      settings.find((s) => s.key === "referred_reward_points")?.value || 0
+      settings.find((s) => s.key === "referred_reward_points")?.value ?? 0
     );
 
-    const totalDebit = referrerReward + referredReward;
-
-    const treasuryPoints = Number(treasury.points ?? 0);
-    if (treasuryPoints < totalDebit) {
-      throw new Error(
-        `Insufficient Treasury balance. Available: ${treasuryPoints}, required: ${totalDebit}`
-      );
-    }
-
-    const existingReward = await prisma.rewardsLedger.findFirst({
+    // Prevent duplicate reward creation for same referred user
+    const existingPendingReward = await prisma.pendingReward.findFirst({
       where: {
         userId: referredUserId,
         reason: RewardsReason.REFERRAL_SIGNUP,
       },
     });
-    if (existingReward) {
-      console.log("Referral reward already granted for this user.");
-      return { status: 0, message: "Already rewarded" };
+
+    if (existingPendingReward) {
+      console.log("Pending reward already exists for this referral signup.");
+      return { status: 0, message: "Reward already created" };
     }
 
+    // Create pending rewards
     await prisma.$transaction(async (tx) => {
-      await tx.rewardsLedger.createMany({
-        data: [
-          {
-            userId: treasury.id,
-            deltaPoints: referrerReward,
-            reason: RewardsReason.REFERRAL_SIGNUP,
-            refId: referrerUserId,
-            transactionType: TransactionType.DEBIT,
-          },
-          {
-            userId: referrerUserId,
-            deltaPoints: referrerReward,
-            reason: RewardsReason.REFERRAL_SIGNUP,
-            refId: referredUserId,
-            transactionType: TransactionType.CREDIT,
-          },
-          {
-            userId: treasury.id,
-            deltaPoints: referredReward,
-            reason: RewardsReason.REFERRAL_SIGNUP,
-            refId: referredUserId,
-            transactionType: TransactionType.DEBIT,
-          },
-          {
-            userId: referredUserId,
-            deltaPoints: referredReward,
-            reason: RewardsReason.REFERRAL_SIGNUP,
-            refId: referrerUserId,
-            transactionType: TransactionType.CREDIT,
-          },
-        ],
-      });
 
-      await tx.users.update({
-        where: { id: treasury.id },
-        data: { points: { decrement: totalDebit } },
-      });
-
+      // Referrer reward should be REFERRAL_ACTIVATION
       if (referrerReward > 0) {
-        await tx.users.update({
-          where: { id: referrerUserId },
-          data: { points: { increment: referrerReward } },
+        await tx.pendingReward.create({
+          data: {
+            userId: referrerUserId,
+            amount: referrerReward,
+            reason: RewardsReason.REFERRAL_ACTIVATION,  
+            status: PendingRewardStatus.UNCLAIMED,
+            sourceRefId: referredUserId,
+          },
         });
       }
 
+      // Referred user reward stays REFERRAL_SIGNUP
       if (referredReward > 0) {
-        await tx.users.update({
-          where: { id: referredUserId },
-          data: { points: { increment: referredReward } },
+        await tx.pendingReward.create({
+          data: {
+            userId: referredUserId,
+            amount: referredReward,
+            reason: RewardsReason.REFERRAL_SIGNUP,     
+            status: PendingRewardStatus.UNCLAIMED,
+            sourceRefId: referrerUserId,
+          },
         });
       }
     });
 
-    console.log(
-      `Referral signup rewards processed: Treasury -${totalDebit}, Referrer +${referrerReward}, Referred +${referredReward}`
-    );
-
     return {
       status: 1,
-      message: "Referral rewards credited successfully",
+      message: "Pending referral rewards created successfully",
     };
   } catch (error: any) {
     console.error("rewardOnReferralSignup error:", error);
     return {
       status: 0,
-      message: error?.message || "Failed to process referral rewards",
+      message: error?.message || "Failed to create referral pending rewards",
     };
   }
 };
