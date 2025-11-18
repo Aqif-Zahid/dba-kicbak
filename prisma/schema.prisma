@@ -39,7 +39,6 @@ model Users {
   referralsAsReferred Referrals?      @relation("referrals_referred_user_idTousers")
   referralsAsReferrer Referrals[]     @relation("referrals_referrer_user_idTousers")
   rewardsLedger       RewardsLedger[]
-  pendingRewards PendingReward[]
 
   // user–referrer chain
   referrer  Users?  @relation("UserReferrer", fields: [referrerId], references: [id])
@@ -367,26 +366,6 @@ model Referrals {
   @@map("referrals")
 }
 
-model PendingReward {
-  id        Int                   @id @default(autoincrement()) @map("id")
-
-  userId    Int                   @map("user_id")
-  user      Users                 @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "pending_reward_user_id_users_id_fk")
-
-  amount    Int                   @map("amount")
-  reason    RewardsReason         @map("reason")
-
-  // Optional link to a referral, campaign, transaction, etc.
-  sourceRefId Int?                @map("source_ref_id")
-
-  status    PendingRewardStatus   @default(UNCLAIMED) @map("status")
-
-  createdAt DateTime?             @default(now()) @map("created_at")
-  claimedAt DateTime?             @map("claimed_at")
-
-  @@map("pending_rewards")
-}
-
 
 model RewardsLedger {
   id              Int             @id @default(autoincrement()) @map("id")
@@ -396,6 +375,7 @@ model RewardsLedger {
   refId           Int?            @map("ref_id")
   transactionType TransactionType @map("transaction_type")
   createdAt       DateTime?       @default(now()) @map("created_at")
+  claimed Boolean @default(false) @map("claimed")
 
   users Users? @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "rewards_ledger_user_id_users_id_fk")
 
@@ -607,7 +587,3 @@ enum CommunityType {
   RESTRICTED
 }
 
-enum PendingRewardStatus {
-  UNCLAIMED
-  CLAIMED
-}

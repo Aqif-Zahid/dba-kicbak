@@ -13,10 +13,12 @@ import {
 
 /**
  * Creates a double-entry transaction in the rewards ledger.
+ * Treasury = claimed TRUE + treasury snapshot decremented
+ * User     = claimed FALSE (until user clicks "claim")
  */
 export const createLedgerTransaction = async (
-  debitId: number,
-  creditId: number,
+  debitId: number,    // treasury
+  creditId: number,   // user
   amount: number,
   reason: RewardsReason,
   refId?: number
@@ -30,6 +32,7 @@ export const createLedgerTransaction = async (
       refId,
     });
     if (!parsed.success) throw parsed.error;
+
     if (debitId === creditId) {
       throw new AppError(
         400,
@@ -39,6 +42,11 @@ export const createLedgerTransaction = async (
     }
 
     return await prisma.$transaction(async (tx) => {
+      /**
+       * =============================
+       * 1) TREASURY DEBIT ENTRY
+       * =============================
+       */
       const debitEntry = await tx.rewardsLedger.create({
         data: {
           userId: debitId,
@@ -46,9 +54,23 @@ export const createLedgerTransaction = async (
           reason,
           refId,
           transactionType: TransactionType.DEBIT,
+          claimed: true, // treasury debit is instantly claimed
         },
       });
 
+      /**
+       * Decrement treasury snapshot
+       */
+      await tx.users.update({
+        where: { id: debitId },
+        data: { points: { decrement: amount } },
+      });
+
+      /**
+       * =============================
+       * 2) USER CREDIT ENTRY (pending claim)
+       * =============================
+       */
       const creditEntry = await tx.rewardsLedger.create({
         data: {
           userId: creditId,
@@ -56,8 +78,15 @@ export const createLedgerTransaction = async (
           reason,
           refId,
           transactionType: TransactionType.CREDIT,
+          claimed: false, // pending until user claims
         },
       });
+
+      /**
+       * IMPORTANT:
+       * Do NOT increment user.points here.
+       * User snapshot updates ONLY in /api/rewards POST.
+       */
 
       return { debitEntry, creditEntry };
     });
@@ -72,6 +101,7 @@ export const createLedgerTransaction = async (
 
 /**
  * Returns total debit, total credit and net balance for a user.
+ * ONLY counts claimed entries (fixes UI showing unclaimed rewards early)
  */
 export const getUserLedgerSummary = async (userId: number) => {
   try {
@@ -82,8 +112,12 @@ export const getUserLedgerSummary = async (userId: number) => {
       { total_debit: number | null; total_credit: number | null }[]
     >`
       SELECT
-        COALESCE(SUM(CASE WHEN "transaction_type" = 'DEBIT'  THEN "delta_points" ELSE 0 END)::double precision, 0) AS total_debit,
-        COALESCE(SUM(CASE WHEN "transaction_type" = 'CREDIT' THEN "delta_points" ELSE 0 END)::double precision, 0) AS total_credit
+        COALESCE(SUM(CASE 
+          WHEN "transaction_type" = 'DEBIT' AND "claimed" = true 
+          THEN "delta_points" ELSE 0 END)::double precision, 0) AS total_debit,
+        COALESCE(SUM(CASE 
+          WHEN "transaction_type" = 'CREDIT' AND "claimed" = true 
+          THEN "delta_points" ELSE 0 END)::double precision, 0) AS total_credit
       FROM "rewards_ledger"
       WHERE "user_id" = ${userId};
     `;
@@ -95,15 +129,20 @@ export const getUserLedgerSummary = async (userId: number) => {
     return {
       totalDebit,
       totalCredit,
-      balance: totalCredit - totalDebit,
+      balance: totalCredit - totalDebit, // only claimed entries
     };
   } catch (e) {
-    throw wrapError(e, "Failed to fetch ledger summary", "LEDGER_SUMMARY_FAILED");
+    throw wrapError(
+      e,
+      "Failed to fetch ledger summary",
+      "LEDGER_SUMMARY_FAILED"
+    );
   }
 };
 
 /**
- * Returns ledger data (debit, credit, balance + transaction list) for a user within a date range.
+ * Returns ledger transactions + summary within date range.
+ * ALSO excludes unclaimed entries from summary.
  */
 export const getUserLedgerData = async (
   userId: number,
@@ -131,8 +170,12 @@ export const getUserLedgerData = async (
       { total_debit: number | null; total_credit: number | null }[]
     >`
       SELECT
-        COALESCE(SUM(CASE WHEN "transaction_type" = 'DEBIT'  THEN "delta_points" ELSE 0 END)::double precision, 0) AS total_debit,
-        COALESCE(SUM(CASE WHEN "transaction_type" = 'CREDIT' THEN "delta_points" ELSE 0 END)::double precision, 0) AS total_credit
+        COALESCE(SUM(CASE 
+          WHEN "transaction_type" = 'DEBIT' AND "claimed" = true 
+          THEN "delta_points" ELSE 0 END)::double precision, 0) AS total_debit,
+        COALESCE(SUM(CASE 
+          WHEN "transaction_type" = 'CREDIT' AND "claimed" = true 
+          THEN "delta_points" ELSE 0 END)::double precision, 0) AS total_credit
       FROM "rewards_ledger"
       WHERE "user_id" = ${userId}
         AND "created_at" BETWEEN ${finalStart} AND ${finalEnd};
@@ -142,6 +185,10 @@ export const getUserLedgerData = async (
     const totalDebit = toNumberSafe(totals.total_debit);
     const totalCredit = toNumberSafe(totals.total_credit);
 
+    /**
+     * Full transaction list (claimed + unclaimed)
+     * Unclaimed still appear in list, they are NOT counted toward balance.
+     */
     const rawTransactions = await prisma.rewardsLedger.findMany({
       where: {
         userId,
