@@ -12,6 +12,8 @@ import { SearchField } from "./search-field";
 import { ThemeToggle } from "./theme-toggle";
 import { FaCommentDots } from "react-icons/fa6";
 
+import { HeaderClient } from "./header-client";
+
 interface HeaderProps {
   user: any;
 }
@@ -65,25 +67,31 @@ export const Header = async ({ user }: HeaderProps) => {
               <Link
                 href="/bookmarks"
                 className="relative flex items-center justify-center w-11 h-11 rounded-full 
-             text-muted-foreground transition-colors hover:bg-gray-200"
+                text-muted-foreground transition-colors hover:bg-gray-200"
                 title="Bookmarks"
               >
                 <Bookmark size={20} />
               </Link>
+
               <MessagesButton
                 initialState={{ unreadCount: unreadMessagesCount }}
               />
+
               <Link
                 href="/posts/create"
                 className="relative flex items-center text-sm font-bold justify-center w-25 h-11 rounded-full 
-             text-gray-900 transition-colors hover:bg-gray-200"
-                title="Bookmarks"
+                text-gray-900 transition-colors hover:bg-gray-200"
               >
                 <PlusSquare size={20} className="mr-2" /> Create
               </Link>
+
               <NotificationsButton
                 initialState={{ unreadCount: unreadNotificationsCount }}
               />
+
+              {/* Points badge + rewards dialog (client) */}
+              <HeaderClient user={user} />
+
               <UserButton className="ml-4" />
             </>
           ) : (
@@ -91,8 +99,7 @@ export const Header = async ({ user }: HeaderProps) => {
               <Link
                 href="/posts"
                 className="relative flex items-center text-sm font-bold justify-center w-25 h-11 rounded-full 
-             text-gray-900 transition-colors hover:bg-gray-200"
-                title="Bookmarks"
+                text-gray-900 transition-colors hover:bg-gray-200"
               >
                 <FaCommentDots size={20} className="mr-2 text-primary" /> Posts
               </Link>
@@ -102,7 +109,7 @@ export const Header = async ({ user }: HeaderProps) => {
           )}
         </div>
 
-        {/* Mobile Menu Button */}
+        {/* Mobile Menu */}
         <MobileMenuButton
           user={user}
           unreadNotificationsCount={unreadNotificationsCount}
