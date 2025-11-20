@@ -35,7 +35,7 @@ model Users {
   organizations     Organization[]
   passwordResetOtps PasswordResetOtp[]
 
-  referralCodes       ReferralCodes?
+  referralCodes       ReferralCodes[]
   referralsAsReferred Referrals?      @relation("referrals_referred_user_idTousers")
   referralsAsReferrer Referrals[]     @relation("referrals_referrer_user_idTousers")
   rewardsLedger       RewardsLedger[]
