@@ -20,10 +20,10 @@ import { useConfirm } from "@/hooks/use-confirm";
 import { useDeleteCommunity } from "@/services/communities/use-delete-community";
 import { useJoinCommunity } from "@/services/communities/use-join-community";
 import { Community } from "@/types/types";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const CommunityPage = () => {
   const { user: currentUser } = useUser();
-  const router = useRouter();
   const [search, setSearch] = useState("");
 
   // Fetch communities
@@ -88,25 +88,39 @@ const CommunityPage = () => {
                 transition={{ duration: 0.3 }}
               >
                 <Card className="relative shadow hover:shadow-lg transition-all h-full">
-                  <CardHeader>
-                    <CardTitle className="text-xl font-bold">
-                      {community.name}
-                    </CardTitle>
-                    <CardDescription className="text-sm text-muted-foreground mb-2">
-                      {community.description}
-                    </CardDescription>
+                  <CardHeader className="flex items-center gap-4">
+                    {/* Community Icon or Fallback */}
+                    <Avatar className="w-12 h-12">
+                      {community.icon ? (
+                        <AvatarImage
+                          src={community.icon}
+                          alt={community.name}
+                        />
+                      ) : (
+                        <AvatarFallback>{community.name[0]}</AvatarFallback>
+                      )}
+                    </Avatar>
 
-                    {/* Topics */}
-                    <div className="flex flex-wrap gap-2 mt-1">
-                      {community.topics?.map((topic) => (
-                        <Badge
-                          key={topic.id}
-                          variant="outline"
-                          className="text-sm"
-                        >
-                          {topic.title}
-                        </Badge>
-                      ))}
+                    <div className="flex-1 min-w-0">
+                      <CardTitle className="text-xl font-bold truncate overflow-hidden whitespace-nowrap">
+                        {community.name}
+                      </CardTitle>
+                      <CardDescription className="text-sm text-muted-foreground mb-2">
+                        {community.description}
+                      </CardDescription>
+
+                      {/* Topics */}
+                      <div className="flex flex-wrap gap-2 mt-1">
+                        {community.topics?.map((topic) => (
+                          <Badge
+                            key={topic.id}
+                            variant="outline"
+                            className="text-sm"
+                          >
+                            {topic.title}
+                          </Badge>
+                        ))}
+                      </div>
                     </div>
                   </CardHeader>
 

@@ -32,6 +32,9 @@ export const CreateCommunityMain = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
+  // FIX: New state to control when the final button becomes type="submit"
+  const [isFinalStepActive, setIsFinalStepActive] = useState<boolean>(false);
+
   // ------------------------
   // Form schema
   // ------------------------
@@ -101,12 +104,35 @@ export const CreateCommunityMain = () => {
   const next = async () => {
     const fields = stepFields[step];
     if (!fields) return;
-    const ok = await form.trigger(fields, { shouldFocus: true });
-    if (!ok) return;
-    setStep((s) => Math.min(s + 1, steps.length));
+
+    const valid = await form.trigger(fields);
+    if (!valid) return;
+
+    // Only move to next step if not last
+    if (step < steps.length) {
+      const nextStep = step + 1;
+      setStep(nextStep);
+
+      // FIX: Activate the submit button state if we are moving to the final step (4)
+      if (nextStep === steps.length) {
+        // Use a short delay to ensure the re-render completes before setting the button type
+        setTimeout(() => {
+          setIsFinalStepActive(true);
+        }, 100);
+      } else {
+        // Reset the state for safety if somehow moving back/forward from other steps
+        setIsFinalStepActive(false);
+      }
+    }
   };
 
-  const prev = () => setStep((s) => Math.max(s - 1, 1));
+  const prev = () => {
+    setStep((s) => Math.max(s - 1, 1));
+    // Reset the active state immediately when moving back from the final step
+    if (step === steps.length) {
+      setIsFinalStepActive(false);
+    }
+  };
 
   // ------------------------
   // Submit
@@ -203,20 +229,22 @@ export const CreateCommunityMain = () => {
             </Button>
 
             {step < steps.length ? (
-              <Button
-                type="button"
-                onClick={next}
-                disabled={form.formState.isSubmitting}
-              >
+              <Button type="button" onClick={next} disabled={loading}>
                 Next
               </Button>
             ) : (
+              // FIX APPLIED HERE: Control the button type to prevent immediate submission
               <Button
-                type="submit"
+                // Use type="submit" only after the state flag is set
+                type={isFinalStepActive ? "submit" : "button"}
                 size="lg"
-                disabled={form.formState.isSubmitting || loading}
+                disabled={loading}
+                // If it's not active yet (during the 100ms delay), manually trigger submit on click
+                onClick={
+                  isFinalStepActive ? undefined : form.handleSubmit(onSubmit)
+                }
               >
-                {form.formState.isSubmitting || loading ? (
+                {loading ? (
                   <span className="inline-flex items-center">
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />{" "}
                     Submitting…
