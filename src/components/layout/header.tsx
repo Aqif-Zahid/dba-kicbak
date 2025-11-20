@@ -12,7 +12,7 @@ import { SearchField } from "./search-field";
 import { ThemeToggle } from "./theme-toggle";
 import { FaCommentDots } from "react-icons/fa6";
 
-import { HeaderClient } from "./header-client";
+import { RewardsSection } from "./rewards-section";
 
 interface HeaderProps {
   user: any;
@@ -90,7 +90,7 @@ export const Header = async ({ user }: HeaderProps) => {
               />
 
               {/* Points badge + rewards dialog (client) */}
-              <HeaderClient user={user} />
+              <RewardsSection user={user} />
 
               <UserButton className="ml-4" />
             </>

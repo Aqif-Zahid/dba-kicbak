@@ -4,11 +4,11 @@ import { useState } from "react";
 import { ClaimRewardsDialog } from "../rewards/claim-rewards-dialog";
 import { UserPointsBadge } from "../common/user-points-badge";
 
-interface HeaderClientProps {
+interface RewardsSectionProps {
   user: any;
 }
 
-export const HeaderClient = ({ user }: HeaderClientProps) => {
+export const RewardsSection = ({ user }: RewardsSectionProps) => {
   const [dialogOpen, setDialogOpen] = useState(false);
 
   if (!user) return null;
