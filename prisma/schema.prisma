@@ -341,7 +341,7 @@ model ReferralCodes {
   active     Boolean?         @default(true) @map("active")
   createdAt  DateTime?        @default(now()) @map("created_at")
   campaignId Int?             @map("campaign_id")
-  userId     Int?             @unique(map: "referral_codes_user_id_unique") @map("user_id")
+  userId     Int?             @map("user_id")
   users      Users?           @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "referral_codes_user_id_users_id_fk")
   referrals  Referrals[]
 
