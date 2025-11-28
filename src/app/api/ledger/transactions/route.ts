@@ -145,13 +145,19 @@ export const GET = async (req: NextRequest) => {
       targetUserId = userId;
     }
 
-    // Default date range: last 7 days
-    const now = new Date();
-    const defaultStart = new Date(now);
-    defaultStart.setDate(now.getDate() - 7);
+    /* ============================
+       Date Range Logic (Corrected)
+       - Only apply createdAt filter if BOTH startDate and endDate are provided
+       - Otherwise return full history
+       ============================ */
+    let createdAtFilter = undefined;
 
-    const finalStart = startDate ? new Date(startDate) : defaultStart;
-    const finalEnd = endDate ? new Date(endDate) : now;
+    if (startDate && endDate) {
+      createdAtFilter = {
+        gte: new Date(startDate),
+        lte: new Date(endDate),
+      };
+    }
 
     // Pagination
     const currentPage = page && page > 0 ? page : 1;
@@ -160,8 +166,11 @@ export const GET = async (req: NextRequest) => {
 
     const where: any = {
       userId: targetUserId,
-      createdAt: { gte: finalStart, lte: finalEnd },
     };
+
+    if (createdAtFilter) {
+      where.createdAt = createdAtFilter;
+    }
 
     if (type) where.transactionType = type;
     if (reason) where.reason = reason;
@@ -183,8 +192,8 @@ export const GET = async (req: NextRequest) => {
           totalCount,
           page: currentPage,
           limit: pageLimit,
-          startDate: finalStart,
-          endDate: finalEnd,
+          startDate: startDate || null,
+          endDate: endDate || null,
           filterType: type || null,
           filterReason: reason || null,
           targetUserId,
