@@ -1,5 +1,3 @@
-"use client";
-
 import { LedgerList } from "@/components/ledger/ledger-list";
 
 const Page = () => {
