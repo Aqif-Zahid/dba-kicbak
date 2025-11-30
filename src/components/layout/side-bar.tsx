@@ -10,6 +10,7 @@ import {
   MessageCircle,
   Plus,
   GiftIcon,
+  Receipt,
 } from "lucide-react";
 import { Button } from "../ui/button";
 import Link from "next/link";
@@ -188,6 +189,19 @@ export const Sidebar = async ({ className, user }: MenubarProps) => {
               <Link href="/user/profiles">
                 <UserCog className="w-16 h-16 flex-shrink-0" />
                 <span className="hidden lg:inline">Manage Profiles</span>
+              </Link>
+            </Button>
+
+            {/* ===== View Ledger (added) ===== */}
+            <Button
+              variant={url.includes("/rewards/ledger") ? "default" : "ghost"}
+              className="flex items-center justify-start gap-3 my-2 hover:bg-primary hover:text-white"
+              title="View Ledger"
+              asChild
+            >
+              <Link href="/rewards/ledger">
+                <Receipt className="w-16 h-16 flex-shrink-0" />
+                <span className="hidden lg:inline">View Ledger</span>
               </Link>
             </Button>
 
