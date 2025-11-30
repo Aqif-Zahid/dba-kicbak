@@ -2,8 +2,6 @@
 
 import { LedgerList } from "@/components/ledger/ledger-list";
 
-export const dynamic = "force-static";
-
 const Page = () => {
   return (
     <div className="space-y-6">
