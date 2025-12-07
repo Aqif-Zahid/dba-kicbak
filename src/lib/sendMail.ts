@@ -29,7 +29,6 @@ export const sendEmail = async (options: EmailOptions) => {
       subject: options.subject,
       html: options.html,
     });
-
     console.log(`Email sent successfully to ${options.to}`);
   } catch (error) {
     console.error(`Error sending email to ${options.to}:`, error);

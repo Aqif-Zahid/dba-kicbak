@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import prisma from "@/lib/prisma";
 import streamServerClient from "@/lib/stream";
-import { generateEmailAlias } from "@/lib/email-alias";
 
 // === Zod validation ===
 const signupSchema = z.object({
@@ -66,7 +65,7 @@ export async function POST(req: Request) {
 
     // 3️⃣ Transaction: Create user + default profile
     const result = await prisma.$transaction(async (tx: any) => {
-      // 3a. Update User (activate + assign alias)
+      // 3a. Create User
       await tx.users.update({
         where: { id: existingUser.id },
         data: {
@@ -100,7 +99,6 @@ export async function POST(req: Request) {
         username: usernameDesired,
         name: `${firstName} ${lastName}`,
       });
-
       return { userId: existingUser.id, profileId: newProfile.id };
     });
 
