@@ -74,7 +74,6 @@ export async function POST(req: Request) {
           status: "ACTIVE",
           referralCode,
           inviteRequired: false,
-          emailAlias: generateEmailAlias(existingUser.email),
         },
       });
 
