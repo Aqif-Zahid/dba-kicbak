@@ -63,6 +63,7 @@ export async function GET(req: NextRequest) {
         select: {
           id: true,
           email: true,
+          emailAlias: true,
           phoneNumber: true,
           status: true,
           createdAt: true,

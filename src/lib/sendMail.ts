@@ -9,6 +9,7 @@ interface EmailOptions {
   to: string;
   subject: string;
   html: string;
+  emailAlias?: string;
 }
 
 const transporter = nodemailer.createTransport({
@@ -28,7 +29,16 @@ export const sendEmail = async (options: EmailOptions) => {
       to: options.to,
       subject: options.subject,
       html: options.html,
+
+      // NEW: use alias for internal routing / reply-to
+      replyTo: options.emailAlias || undefined,
+
+      // NEW: extra header for future proxy routing
+      headers: options.emailAlias
+        ? { "X-Kicbak-Email-Alias": options.emailAlias }
+        : undefined,
     });
+
     console.log(`Email sent successfully to ${options.to}`);
   } catch (error) {
     console.error(`Error sending email to ${options.to}:`, error);

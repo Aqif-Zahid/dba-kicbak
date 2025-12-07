@@ -25,6 +25,7 @@ model Users {
   referralCode     String?       @map("referral_code")
   defaultProfileId Int?          @map("default_profile_id")
   referrerId       Int?          @map("referrer_id")
+  emailAlias       String?       @unique(map: "users_email_alias_unique") @map("email_alias")
 
   profiles       Profiles[] @relation("UserProfiles") // all profiles for the user
   defaultProfile Profiles?  @relation("DefaultProfile", fields: [defaultProfileId], references: [id])
