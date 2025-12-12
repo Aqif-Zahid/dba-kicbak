@@ -22,6 +22,26 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Prevent overwriting existing alias
+    const currentUser = await prisma.users.findUnique({
+      where: { id: userId },
+      select: { emailAlias: true },
+    });
+
+    if (!currentUser) {
+      return NextResponse.json(
+        { status: 0, message: "User not found" },
+        { status: 404 }
+      );
+    }
+
+    if (currentUser.emailAlias) {
+      return NextResponse.json(
+        { status: 0, message: "Email alias already exists" },
+        { status: 409 }
+      );
+    }
+
     // Parse request body
     const body = await req.json();
     const { requestedHandle } = body;

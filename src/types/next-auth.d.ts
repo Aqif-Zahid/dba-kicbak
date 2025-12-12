@@ -12,6 +12,7 @@ declare module "next-auth" {
       dateOfBirth?: string | null;
       defaultProfileId: number;
       email?: string | null;
+      emailAlias?: string | null;
     };
   }
 
@@ -24,6 +25,7 @@ declare module "next-auth" {
     profilePicture?: string | null;
     dateOfBirth?: string | null;
     defaultProfileId: number;
+    emailAlias?: string | null;
   }
 
   interface JWT {
@@ -36,5 +38,6 @@ declare module "next-auth" {
     dateOfBirth?: string | null;
     email?: string | null;
     defaultProfileId: number;
+    emailAlias?: string | null;
   }
 }

@@ -11,6 +11,7 @@ import {
   Plus,
   GiftIcon,
   Receipt,
+  Settings,
 } from "lucide-react";
 import { Button } from "../ui/button";
 import Link from "next/link";
@@ -212,8 +213,8 @@ export const Sidebar = async ({ className, user }: MenubarProps) => {
               asChild
             >
               <Link href="/user/change-password">
-                <LockKeyhole className="w-16 h-16 flex-shrink-0" />
-                <span className="hidden lg:inline">Change Password</span>
+                <Settings className="w-16 h-16 flex-shrink-0" />
+                <span className="hidden lg:inline">User Settings</span>
               </Link>
             </Button>
 

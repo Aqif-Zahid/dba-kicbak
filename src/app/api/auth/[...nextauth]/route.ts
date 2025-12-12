@@ -20,6 +20,7 @@ declare module "next-auth" {
     phoneNumber: string | null;
     dateOfBirth: string | null;
     defaultProfileId: string | number | null;
+    emailAlias?: string | null;
   }
 }
 
@@ -70,6 +71,7 @@ export const authOptions: AuthOptions = {
           phoneNumber: userRecord.phoneNumber,
           dateOfBirth: userRecord.dateOfBirth,
           defaultProfileId: userRecord.defaultProfileId,
+          emailAlias: userRecord.emailAlias,
         };
       },
     }),
@@ -121,6 +123,7 @@ export const authOptions: AuthOptions = {
           phoneNumber: existingUser.phoneNumber,
           dateOfBirth: existingUser.dateOfBirth,
           defaultProfileId: existingUser.defaultProfileId,
+          emailAlias: existingUser.emailAlias,
         };
       },
     }),
@@ -151,12 +154,23 @@ export const authOptions: AuthOptions = {
       return true;
     },
 
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger }) {
       if (user) {
         token = { ...token, ...user };
         if ((user as any).redirectTo)
           token.redirectTo = (user as any).redirectTo;
       }
+
+      // refresh emailAlias on session update
+      if (trigger === "update") {
+        const dbUser = await prisma.users.findUnique({
+          where: { id: Number(token.id) },
+          select: { emailAlias: true },
+        });
+
+        token.emailAlias = dbUser?.emailAlias ?? null;
+      }
+
       return token;
     },
 
