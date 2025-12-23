@@ -1,16 +1,36 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getUser } from "@/lib/auth";
-import apiClientAuth from "@/lib/api-client-auth";
+import thirdPartyClientAuth from "@/lib/api-client-auth";
 
 export async function POST(req: Request) {
   try {
     // Allow either: normal logged-in user OR third-party Bearer token
     const session = await getUser(req as any);
-    const apiClient = session?.id ? null : await apiClientAuth.getApiClientFromRequest(req as any);
+    const thirdPartyClient =
+      session?.id ? null : await thirdPartyClientAuth.getThirdPartyClientFromRequest(req as any);
 
-    if (!session?.id && !apiClient) {
+    if (!session?.id && !thirdPartyClient) {
       return NextResponse.json({ status: 0, message: "Unauthorized" }, { status: 401 });
+    }
+
+    // If third-party request, resolve owner (referrer) userId
+    let referrerId: number | null = null;
+
+    if (thirdPartyClient) {
+      const owner = await prisma.thirdPartyClient.findUnique({
+        where: { id: thirdPartyClient.thirdPartyClientId },
+        select: { userId: true },
+      });
+
+      if (!owner) {
+        return NextResponse.json(
+          { status: 0, message: "Invalid third party client" },
+          { status: 401 }
+        );
+      }
+
+      referrerId = owner.userId;
     }
 
     const body = await req.json();
@@ -37,7 +57,6 @@ export async function POST(req: Request) {
       )
     );
 
-    // If someone sends only empty strings
     if (emails.length === 0) {
       return NextResponse.json(
         { status: 0, message: "Email is required" },
@@ -60,6 +79,7 @@ export async function POST(req: Request) {
         data: newEmails.map((email) => ({
           email,
           status: "PENDING",
+          referrerId: referrerId ?? undefined,
         })),
         skipDuplicates: true,
       });
@@ -85,7 +105,7 @@ export async function POST(req: Request) {
         {
           status: 1,
           message: "Invite request submitted successfully",
-          user: user,
+          user,
         },
         { status: 200 }
       );

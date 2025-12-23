@@ -5,7 +5,7 @@ import { getUser } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { AppError } from "@/lib/ledger";
 import { createLedgerTransaction } from "@/actions/ledger/ledger-actions";
-import apiClientAuth from "@/lib/api-client-auth";
+import thirdPartyClientAuth from "@/lib/api-client-auth";
 
 /* ============================
    POST Body Schema (Create Transaction)
@@ -37,10 +37,10 @@ const querySchema = z.object({
 export const POST = async (req: NextRequest) => {
   try {
     const token = await getUser(req as any);
-    const apiClient =
-      token && token.id ? null : await apiClientAuth.getApiClientFromRequest(req as any);
+    const thirdPartyClient =
+      token && token.id ? null : await thirdPartyClientAuth.getThirdPartyClientFromRequest(req as any);
 
-    if ((!token || !token.id) && !apiClient) {
+    if ((!token || !token.id) && !thirdPartyClient) {
       return NextResponse.json(
         { status: 0, message: "Unauthorized" },
         { status: 401 }

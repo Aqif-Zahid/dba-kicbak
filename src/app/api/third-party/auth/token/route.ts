@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import prisma from "@/lib/prisma";
+import thirdPartyClientAuth from "@/lib/api-client-auth";
 import bcrypt from "bcryptjs";
-import apiClientAuth from "@/lib/api-client-auth";
-
 
 const bodySchema = z.object({
-  api_username: z.string().min(1, "api_username is required"),
-  api_password: z.string().min(1, "api_password is required"),
+  client_key: z.string().min(1, "client_key is required"),
+  client_secret: z.string().min(1, "client_secret is required"),
 });
 
 export async function POST(req: NextRequest) {
@@ -22,28 +21,45 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const client = await prisma.apiClient.findUnique({
-      where: { username: parsed.data.api_username },
+    const { client_key, client_secret } = parsed.data;
+
+    const client = await prisma.thirdPartyClient.findUnique({
+      where: { clientKey: client_key },
     });
 
     if (!client || !client.isActive) {
-      return NextResponse.json({ status: 0, message: "Invalid credentials" }, { status: 401 });
+      return NextResponse.json(
+        { status: 0, message: "Invalid credentials" },
+        { status: 401 }
+      );
     }
 
-    const valid = await bcrypt.compare(parsed.data.api_password, client.passwordHash);
+    const valid = await bcrypt.compare(client_secret, client.clientSecretHash);
 
     if (!valid) {
-      return NextResponse.json({ status: 0, message: "Invalid credentials" }, { status: 401 });
+      return NextResponse.json(
+        { status: 0, message: "Invalid credentials" },
+        { status: 401 }
+      );
     }
 
-    const { token, expiresAt } = await apiClientAuth.signApiClientToken(client.id);
+    const { token, expiresAt } = await thirdPartyClientAuth.signThirdPartyClientToken(client.id);
+
 
     return NextResponse.json(
-      { status: 1, message: "Token generated successfully", token, expiresAt },
+      {
+        status: 1,
+        message: "Token generated successfully",
+        token,
+        expiresAt,
+      },
       { status: 200 }
     );
-  } catch (err) {
-    console.log(err);
-    return NextResponse.json({ status: 0, message: "Internal server error" }, { status: 500 });
+  } catch (error) {
+    console.error("Third party token error:", error);
+    return NextResponse.json(
+      { status: 0, message: "Internal server error" },
+      { status: 500 }
+    );
   }
 }
