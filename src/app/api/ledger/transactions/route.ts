@@ -5,6 +5,7 @@ import { getUser } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { AppError } from "@/lib/ledger";
 import { createLedgerTransaction } from "@/actions/ledger/ledger-actions";
+import thirdPartyClientAuth from "@/lib/api-client-auth";
 
 /* ============================
    POST Body Schema (Create Transaction)
@@ -13,6 +14,7 @@ const transactionBodySchema = z.object({
   type: z.enum(["SPEND", "BUY"]),
   amount: z.number().positive().finite(),
   narration: z.nativeEnum(RewardsReason).optional(),
+  userEmail: z.string().email().optional(),
 });
 
 /* ============================
@@ -35,9 +37,12 @@ const querySchema = z.object({
 export const POST = async (req: NextRequest) => {
   try {
     const token = await getUser(req as any);
-    if (!token || !token.id) {
+    const thirdPartyClient =
+      token && token.id ? null : await thirdPartyClientAuth.getThirdPartyClientFromRequest(req as any);
+
+    if ((!token || !token.id) && !thirdPartyClient) {
       return NextResponse.json(
-        { status: 0, message: "Unauthorized: No active session" },
+        { status: 0, message: "Unauthorized" },
         { status: 401 }
       );
     }
@@ -71,8 +76,33 @@ export const POST = async (req: NextRequest) => {
       );
     }
 
-    const { type, amount, narration } = parsed.data;
-    const sessionUserId = Number(token.id);
+    const { type, amount, narration, userEmail } = parsed.data;
+
+    let sessionUserId: number;
+
+    if (token && token.id) {
+      sessionUserId = Number(token.id);
+    } else {
+      if (!userEmail) {
+        return NextResponse.json(
+          { status: 0, message: "userEmail is required for third-party requests" },
+          { status: 400 }
+        );
+      }
+
+      const user = await prisma.users.findUnique({
+        where: { email: userEmail.trim().toLowerCase() },
+      });
+
+      if (!user) {
+        return NextResponse.json(
+          { status: 0, message: "User not found for the provided email" },
+          { status: 404 }
+        );
+      }
+
+      sessionUserId = user.id;
+    }
 
     // Double-entry: choose debit/credit accounts
     const debitId = type === "SPEND" ? sessionUserId : treasury.id;
