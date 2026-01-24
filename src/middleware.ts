@@ -4,9 +4,17 @@ import { getUser } from "./lib/auth";
 
 // Role-based route access
 const routeRoles: Record<string, string[] | "ANY"> = {
-  "/admins": ["ADMIN"], // Only admin
+  "/admin": ["ADMIN"], // Only admin
   "/users": "ANY", // Any authenticated user
 };
+
+const privateRoutes = [
+  "/change-password",
+  "/user/profiles",
+  "/messages",
+  "/bookmarks",
+  "/notifications",
+];
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
@@ -22,6 +30,10 @@ export async function middleware(req: NextRequest) {
   }
 
   const user = await getUser(req);
+  if (privateRoutes.includes(pathname) && !user) {
+    return NextResponse.redirect(new URL("/", req.url));
+  }
+
   // Check protected routes
   for (const [routePrefix, roles] of Object.entries(routeRoles)) {
     if (pathname.startsWith(routePrefix)) {

@@ -1,0 +1,44 @@
+"use client";
+import React, { useEffect, useState } from "react";
+import { FiChevronUp } from "react-icons/fi";
+import { motion } from "framer-motion";
+import { useSigninModal } from "@/hooks/use-signin-modal";
+
+export const ScrollToTopButton = () => {
+  const [showScrollToTop, setShowScrollToTop] = useState(false);
+  const { open } = useSigninModal();
+
+  // Handle "scroll to top" button visibility
+  useEffect(() => {
+    const handleScroll = () => setShowScrollToTop(window.scrollY > 300);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
+
+  // 🔹 Listen for "open-signin-modal" event globally
+  useEffect(() => {
+    const openHandler = () => open();
+    window.addEventListener("open-signin-modal", openHandler);
+    return () => window.removeEventListener("open-signin-modal", openHandler);
+  }, [open]);
+
+  return (
+    <>
+      {showScrollToTop && (
+        <motion.button
+          onClick={scrollToTop}
+          initial={{ opacity: 0, y: 50 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 50 }}
+          transition={{ duration: 0.3 }}
+          className="fixed cursor-pointer bottom-6 right-6 bg-primary hover:bg-gray-900 text-white p-3 rounded-full shadow-lg z-50"
+          aria-label="Scroll to top"
+        >
+          <FiChevronUp />
+        </motion.button>
+      )}
+    </>
+  );
+};

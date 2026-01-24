@@ -19,16 +19,11 @@ import { Input } from "../ui/input";
 import { AlertTriangle, CheckCircle } from "lucide-react";
 import { Button } from "../ui/button";
 import { motion } from "framer-motion";
+import { useRequestInviteModal } from "@/hooks/use-request-invite-modal";
 
-interface RequestInviteCodeModalProps {
-  show: boolean;
-  setShow: React.Dispatch<React.SetStateAction<boolean>>;
-}
+export const RequestInviteCodeModal = () => {
+  const { isOpen, close } = useRequestInviteModal();
 
-export const RequestInviteCodeModal = ({
-  show,
-  setShow,
-}: RequestInviteCodeModalProps) => {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -48,7 +43,10 @@ export const RequestInviteCodeModal = ({
     try {
       setLoading(true);
       setError(null);
-      const res = await axios.post("/api/invite", values);
+      const data = {
+        email: values.email.toLowerCase(),
+      };
+      const res = await axios.post("/api/invite", data);
       if (res.data.status === 1) {
         setSubmitted(true);
         form.reset();
@@ -67,9 +65,9 @@ export const RequestInviteCodeModal = ({
   };
 
   return (
-    <ResponsiveModal open={show} onOpenChange={() => setShow(false)} size="sm">
+    <ResponsiveModal open={isOpen} onOpenChange={close} size="sm">
       {submitted ? (
-        <section className="border border-slate-100">
+        <section>
           <div className="flex flex-col items-center text-center gap-4">
             <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-emerald-100 to-emerald-50 shadow-md">
               <CheckCircle className="w-12 h-12 text-emerald-600" />
@@ -92,7 +90,7 @@ export const RequestInviteCodeModal = ({
                 color: "#ffffff",
                 boxShadow: "0px 4px 15px rgba(236, 72, 153, 0.5)",
               }}
-              onClick={() => setShow(false)}
+              onClick={close}
               whileTap={{ scale: 0.95 }}
               transition={{ type: "spring", stiffness: 300 }}
               className="text-primary cursor-pointer transition-colors duration-300 border border-primary px-10 py-2 rounded-xl"

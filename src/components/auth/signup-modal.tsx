@@ -24,9 +24,17 @@ interface SignupModalProps {
   show: boolean;
   setShow: React.Dispatch<React.SetStateAction<boolean>>;
   username?: string;
+  referralCode: string;
+  email: string;
 }
 
-export const SignupModal = ({ show, setShow, username }: SignupModalProps) => {
+export const SignupModal = ({
+  show,
+  setShow,
+  username,
+  referralCode,
+  email,
+}: SignupModalProps) => {
   const router = useRouter();
   const close = () => {
     setShow(false);
@@ -60,7 +68,7 @@ export const SignupModal = ({ show, setShow, username }: SignupModalProps) => {
     defaultValues: {
       firstName: "",
       lastName: "",
-      email: "",
+      email: email,
       usernameDesired: username ?? "",
       password: "",
     },
@@ -73,8 +81,10 @@ export const SignupModal = ({ show, setShow, username }: SignupModalProps) => {
       const data = {
         ...values,
         usernameDesired: username || values.usernameDesired,
+        referralCode: referralCode,
+        email: email,
       };
-      const res = await axios.post("api/signup", data);
+      const res = await axios.post("/api/signup", data);
       if (res.data.status === 1) {
         setSubmitted(true);
       } else {
@@ -97,7 +107,7 @@ export const SignupModal = ({ show, setShow, username }: SignupModalProps) => {
   };
 
   const handleContinue = () => {
-    router.refresh();
+    router.push("/");
     close();
   };
 
@@ -122,44 +132,53 @@ export const SignupModal = ({ show, setShow, username }: SignupModalProps) => {
   return (
     <ResponsiveModal open={show} onOpenChange={close} fullScreen={true}>
       {submitted ? (
-        <section className="border border-slate-100">
-          <div className="flex flex-col items-center text-center gap-4">
-            <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-emerald-100 to-emerald-50 shadow-md">
-              <CheckCircle className="w-12 h-12 text-emerald-600" />
-            </div>
-
-            <h2 className="text-2xl sm:text-3xl font-semibold text-slate-900">
-              Registration to Kicbak.
-            </h2>
-
-            <p className="text-sm sm:text-base text-slate-600 max-w-xl">
-              Your request for registration received successfully. We'll review
-              it and get back to you soon.
-            </p>
-
-            <motion.button
-              type="button"
-              whileHover={{
-                scale: 1.05,
-                backgroundColor: "#ff135e",
-                color: "#ffffff",
-                boxShadow: "0px 4px 15px rgba(236, 72, 153, 0.5)",
-              }}
-              onClick={handleContinue}
-              whileTap={{ scale: 0.95 }}
-              transition={{ type: "spring", stiffness: 300 }}
-              className="text-primary cursor-pointer transition-colors duration-300 border border-primary px-10 py-2 rounded-xl"
-            >
-              Continue
-            </motion.button>
-
-            <p className="mt-3 text-xs text-slate-400">
-              Need help?{" "}
-              <a href="#" className="underline">
-                Contact support
-              </a>
-            </p>
+        <section className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4 py-10 bg-gradient-to-br   mx-auto">
+          {/* Icon */}
+          <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-gradient-to-br from-emerald-200 to-emerald-100 shadow-lg mb-6">
+            <CheckCircle className="w-14 h-14 text-emerald-600 animate-bounce" />
           </div>
+
+          {/* Headline */}
+          <h2 className="text-3xl font-bold text-gray-900 mb-2">
+            Registration Complete!
+          </h2>
+
+          {/* Subtext */}
+          <p className="text-base sm:text-lg text-gray-700 mb-1">
+            Thank you for joining{" "}
+            <span className="font-semibold text-primary">Kicbak</span>.
+          </p>
+          <p className="text-sm sm:text-base text-gray-500 mb-6">
+            Your registration has been successfully completed.
+          </p>
+
+          {/* Continue Button */}
+          <motion.button
+            type="button"
+            whileHover={{
+              scale: 1.05,
+              backgroundColor: "#ff135e", // emerald
+              color: "#ffffff",
+              boxShadow: "0px 6px 20px rgba(16, 185, 129, 0.4)",
+            }}
+            onClick={handleContinue}
+            whileTap={{ scale: 0.95 }}
+            transition={{ type: "spring", stiffness: 300 }}
+            className="bg-white border border-primary text-primary font-semibold px-12 py-3 rounded-xl shadow-md transition-colors duration-300"
+          >
+            Continue
+          </motion.button>
+
+          {/* Support Link */}
+          <p className="mt-4 text-sm text-gray-400">
+            Need help?{" "}
+            <a
+              href="#"
+              className="underline hover:text-primary transition-colors"
+            >
+              Contact support
+            </a>
+          </p>
         </section>
       ) : (
         <>
@@ -223,6 +242,7 @@ export const SignupModal = ({ show, setShow, username }: SignupModalProps) => {
                         {...field}
                         type="email"
                         placeholder="Enter email address"
+                        disabled
                       />
                     </FormControl>
                     <FormMessage />

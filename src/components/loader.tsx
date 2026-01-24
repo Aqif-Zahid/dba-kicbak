@@ -1,10 +1,11 @@
 "use client";
-import { Loader } from "lucide-react";
+
+import Loader from "./common/loader";
 
 export const PageLoader = () => {
   return (
     <div className="flex  justify-center items-center h-screen">
-      <Loader className="size-6 animate-spin  text-muted-foreground" />
+      <Loader />
     </div>
   );
 };

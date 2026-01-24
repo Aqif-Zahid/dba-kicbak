@@ -1,71 +1,113 @@
 "use client";
+import {
+  Loader,
+  UserIcon,
+  Monitor,
+  Sun,
+  Moon,
+  Check,
+  LogOutIcon,
+} from "lucide-react";
 
-import { Loader, LogOut } from "lucide-react";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuPortal,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useUser } from "@/providers/auth-provider";
 
-export const UserButton = () => {
+import Link from "next/link";
+import { UserAvatar } from "../common/user-avatar";
+import { cn } from "@/lib/utils";
+import { useTheme } from "next-themes";
+import { useQueryClient } from "@tanstack/react-query";
+
+interface UserButtonProps {
+  className?: string;
+}
+
+export const UserButton = ({ className }: UserButtonProps) => {
   const { user, loading, logout } = useUser();
+  const { theme, setTheme } = useTheme();
+  const queryClient = useQueryClient();
 
   if (loading) {
     return (
-      <div className="size-10 rounded-full flex items-center justify-center bg-neutral-200 border border-neutral-300 ">
-        <Loader className="size-4 animate-spin text-muted-foreground" />
+      <div className="w-10 h-10 rounded-full flex items-center justify-center bg-neutral-200 border border-neutral-300">
+        <Loader className="w-4 h-4 animate-spin text-muted-foreground" />
       </div>
     );
   }
 
-  if (!user) {
-    return null;
-  }
+  if (!user) return null;
 
-  const { name, email } = user;
-
-  const avatarFallback = name
-    ? name.charAt(0).toUpperCase()
-    : email.charAt(0).toUpperCase() ?? "U";
+  const { displayName, email, role, image } = user;
+  const avatarFallback =
+    displayName?.charAt(0).toUpperCase() ||
+    email?.charAt(0).toUpperCase() ||
+    "U";
 
   return (
-    <DropdownMenu modal={false}>
-      <DropdownMenuTrigger className="outline-none relative">
-        <Avatar className="size-10 hover:opacity-75 transition border border-neutral-300 ">
-          <AvatarFallback className="bg-neutral-200 font-medium text-neutral-500 flex justify-center items-center">
-            {avatarFallback}
-          </AvatarFallback>
-        </Avatar>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button className={cn("flex-none rounded-full", className)}>
+          <UserAvatar
+            avatarFallback={avatarFallback}
+            avatarUrl={image}
+            size={40}
+          />
+        </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent
-        align="end"
-        side="bottom"
-        className="w-60"
-        sideOffset={10}
-      >
-        <div className="flex flex-col items-center justify-center gap-2 px-2.5 py-4">
-          <Avatar className="size-[52px] transition border border-neutral-300 ">
-            <AvatarFallback className="bg-neutral-200 text-xl font-medium text-neutral-500 flex justify-center items-center">
-              {avatarFallback}
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex flex-col items-center justify-center">
-            <p className="text-sm font-medium text-neutral-900">
-              {name || "User"}
-            </p>
-            <p className="text-xs text-neutral-500">{email}</p>
-          </div>
-        </div>
-
+      <DropdownMenuContent>
+        <DropdownMenuLabel>{role}</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <Link href={`/${user.username}`}>
+          <DropdownMenuItem>
+            <UserIcon className="mr-2 size-4" />
+            Profile
+          </DropdownMenuItem>
+        </Link>
+        <DropdownMenuSub>
+          <DropdownMenuSubTrigger>
+            <Monitor className="mr-2 size-4" />
+            Theme
+          </DropdownMenuSubTrigger>
+          <DropdownMenuPortal>
+            <DropdownMenuSubContent>
+              <DropdownMenuItem onClick={() => setTheme("system")}>
+                <Monitor className="mr-2 size-4" />
+                System Default
+                {theme == "system" && <Check className="ms-2 size-4" />}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setTheme("light")}>
+                <Sun className="mr-2 size-4" />
+                Light
+                {theme == "light" && <Check className="ms-2 size-4" />}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setTheme("dark")}>
+                <Moon className="mr-2 size-4" />
+                Dark
+                {theme == "dark" && <Check className="ms-2 size-4" />}
+              </DropdownMenuItem>
+            </DropdownMenuSubContent>
+          </DropdownMenuPortal>
+        </DropdownMenuSub>
+        <DropdownMenuSeparator />
         <DropdownMenuItem
-          onClick={() => logout()}
-          className="h-10 flex items-center justify-center text-amber-700 font-medium cursor-pointer"
+          onClick={() => {
+            logout();
+            queryClient.clear(); // Clear all queries and invalidate all cached data
+          }}
         >
-          <LogOut className="size-4 mr-2" />
-          Logout
+          <LogOutIcon className="mr-2 size-4" />
+          Log out
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

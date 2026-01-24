@@ -1,0 +1,77 @@
+"use client";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import Link from "next/link";
+import { PropsWithChildren } from "react";
+import { Linkify } from "./linkify";
+import { FollowerInfo } from "@/types/types";
+import { useUser } from "@/providers/auth-provider";
+import { UserAvatar } from "../common/user-avatar";
+import { FollowButton } from "../followers/follow-button";
+import { FollowerCount } from "./follower-count";
+import { ProfileResponse } from "@/types/profile";
+interface UserTooltipProps extends PropsWithChildren {
+  profile: ProfileResponse;
+}
+export const UserTooltip = ({ profile, children }: UserTooltipProps) => {
+  const { user: loggedInUser } = useUser();
+  const followerState: FollowerInfo = {
+    // Use optional chaining and default to 0 if _count is missing
+    followers: profile._count?.followers ?? 0,
+    isFollowedByUser: !!profile.followers?.some(
+      (follower) => follower.followerId === loggedInUser?.defaultProfileId
+    ),
+  };
+
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>{children}</TooltipTrigger>
+        <TooltipContent>
+          <div className="flex max-w-80 flex-col gap-3 break-words pax-1 py-2.5 md:min-w-52">
+            <div className="flex justify-between items-center gap-2">
+              <Link href={`/${profile.username}`}>
+                <UserAvatar
+                  size={70}
+                  avatarUrl={profile.profilePicture}
+                  avatarFallback={
+                    profile.displayName?.charAt(0).toUpperCase() || "U"
+                  }
+                />
+              </Link>
+              {loggedInUser?.defaultProfileId !== profile.id && (
+                <FollowButton
+                  profileId={profile.id}
+                  initialState={followerState}
+                />
+              )}
+            </div>
+            <div>
+              <Link href={`/${profile.username}`}>
+                <div className="text-lg font-semibold hover:underline">
+                  {profile.displayName}
+                </div>
+                <div className="text-muted-foreground">@{profile.username}</div>
+              </Link>
+            </div>
+            {profile.bio && (
+              <Linkify>
+                <div className="line-clamp-4 whitespace-pre-line">
+                  {profile.bio}
+                </div>
+              </Linkify>
+            )}
+            <FollowerCount
+              profileId={profile.id}
+              initialState={followerState}
+            />
+          </div>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+};

@@ -137,3 +137,92 @@ button {
   padding-left: 1rem;
   padding-right: 1rem;
 }
+
+.str-chat {
+  --str-chat__font-family: inherit;
+  --str-chat__primary-color: theme(colors.primary.DEFAULT);
+  --str-chat__on-primary-color: theme(colors.primary.foreground);
+  --str-chat__active-primary-color: theme(colors.primary.foreground);
+  --str-chat__primary-color-low-emphasis: color-mix(
+    in hsl,
+    hsl(var(--primary)) 10%,
+    transparent
+  );
+  --str-chat__background-color: theme(colors.card.DEFAULT);
+  --str-chat__secondary-background-color: theme(colors.card.DEFAULT);
+  --str-chat__message-textarea-background-color: theme(colors.background);
+  --str-chat__channel-preview-active-background-color: theme(
+    colors.accent.DEFAULT
+  );
+  --str-chat__channel-preview-hover-background-color: var(
+    --str-chat__channel-preview-active-background-color
+  );
+  --str-chat__secondary-surface-color: theme(colors.muted.DEFAULT);
+  --str-chat__own-message-bubble-color: theme(colors.primary.foreground);
+  --str-chat__primary-surface-color: theme(colors.primary.DEFAULT);
+  --str-chat__primary-surface-color-low-emphasis: var(
+    --str-chat__primary-color-low-emphasis
+  );
+  --str-chat__disabled-color: theme(colors.muted.DEFAULT);
+  --str-chat__cta-button-border-radius: var(--radius);
+}
+
+.str-chat-channel-list {
+  border-right: none;
+}
+
+.str-chat__channel-list-react .str-chat__channel-list-messenger-react {
+  padding-bottom: 0;
+}
+
+.str-chat__channel-search-bar-button--exit-search {
+  display: none;
+}
+
+/* =========================================== */
+/*   Reward Bubble Custom Animations (Kicbak)  */
+/* =========================================== */
+
+@keyframes pulse-slow {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.08);
+  }
+}
+
+@keyframes wiggle {
+  0%   { transform: rotate(0deg); }
+  20%  { transform: rotate(-4deg); }
+  40%  { transform: rotate(4deg); }
+  60%  { transform: rotate(-3deg); }
+  80%  { transform: rotate(3deg); }
+  100% { transform: rotate(0deg); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@layer utilities {
+  .animate-pulse-slow {
+    animation: pulse-slow 2s infinite ease-in-out;
+  }
+
+  .animate-wiggle {
+    animation: wiggle 1s infinite ease-in-out;
+  }
+
+  .animate-fadeIn {
+    animation: fadeIn 0.25s ease-out;
+  }
+
+  /* Combined attention-grabber */
+  .animate-reward-bubble {
+    animation:
+      pulse-slow 2.5s infinite ease-in-out,
+      wiggle 1.5s infinite ease-in-out;
+  }
+}

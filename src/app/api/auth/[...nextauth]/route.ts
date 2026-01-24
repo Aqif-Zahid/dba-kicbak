@@ -1,21 +1,37 @@
 import NextAuth, { AuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
-// import AppleProvider from "next-auth/providers/apple";
 import bcrypt from "bcryptjs";
-import { drizzle } from "drizzle-orm/node-postgres";
-import { eq } from "drizzle-orm";
-import { Pool } from "pg";
-import { authProviderEnum, users } from "@/db/schema";
+import prisma from "@/lib/prisma";
+import type {
+  Users as UserType,
+  Profiles as ProfileType,
+} from "@prisma/client";
 
-// --- Drizzle ORM setup ---
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-const db = drizzle(pool);
+// Extend NextAuth User type
+declare module "next-auth" {
+  interface User {
+    id: string;
+    status: string;
+    role: string | null;
+    username: string | null;
+    displayName: string | null;
+    image: string | null;
+    phoneNumber: string | null;
+    dateOfBirth: string | null;
+    defaultProfileId: string | number | null;
+    emailAlias?: string | null;
+  }
+}
 
-// --- NextAuth configuration ---
+type UserWithRelations = UserType & {
+  profiles: ProfileType[];
+  defaultProfile: ProfileType | null;
+};
+
 export const authOptions: AuthOptions = {
   providers: [
-    // Credentials login
+    // --- Credentials Login ---
     CredentialsProvider({
       name: "Credentials",
       credentials: {
@@ -25,105 +41,149 @@ export const authOptions: AuthOptions = {
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
 
-        const user = await db
-          .select()
-          .from(users)
-          .where(eq(users.email, credentials.email))
-          .limit(1);
+        const userRecord = (await prisma.users.findUnique({
+          where: { email: credentials.email },
+          include: { defaultProfile: true },
+        })) as UserWithRelations | null;
 
-        if (!user[0] || !user[0].passwordHash || user[0].status !== "ACTIVE")
+        if (
+          !userRecord ||
+          !userRecord.passwordHash ||
+          userRecord.status !== "ACTIVE"
+        ) {
           return null;
+        }
 
         const isValid = await bcrypt.compare(
           credentials.password,
-          user[0].passwordHash
+          userRecord.passwordHash
         );
-
         if (!isValid) return null;
 
         return {
-          id: user[0].id.toString(),
-          email: user[0].email,
-          name: user[0].displayName,
-          role: user[0].role,
+          id: userRecord.id.toString(),
+          email: userRecord.email,
+          status: userRecord.status,
+          role: userRecord.defaultProfile?.role ?? null,
+          displayName: userRecord.defaultProfile?.displayName ?? null,
+          username: userRecord.defaultProfile?.username ?? null,
+          image: userRecord.defaultProfile?.profilePicture ?? null,
+          phoneNumber: userRecord.phoneNumber,
+          dateOfBirth: userRecord.dateOfBirth,
+          defaultProfileId: userRecord.defaultProfileId,
+          emailAlias: userRecord.emailAlias,
         };
       },
     }),
 
-    // Google login
+    // --- Google Login ---
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-    }),
+      async profile(profile) {
+        const existingUser = (await prisma.users.findUnique({
+          where: { email: profile.email },
+          include: { defaultProfile: true },
+        })) as UserWithRelations | null;
 
-    // Apple login (optional)
-    // AppleProvider({
-    //   clientId: process.env.APPLE_CLIENT_ID!,
-    //   clientSecret: {
-    //     appleId: process.env.APPLE_CLIENT_ID!,
-    //     teamId: process.env.APPLE_TEAM_ID!,
-    //     privateKey: process.env.APPLE_PRIVATE_KEY!.replace(/\\n/g, "\n"),
-    //     keyId: process.env.APPLE_KEY_ID!,
-    //   },
-    // }),
+        if (!existingUser || existingUser.status !== "ACTIVE") {
+          let newUser = existingUser;
+          if (!existingUser) {
+            newUser = await prisma.users.create({
+              data: {
+                email: profile.email!,
+                authProvider: "GOOGLE",
+                status: "PENDING",
+              },
+              include: { profiles: true, defaultProfile: true },
+            });
+          }
+          return {
+            id: newUser?.id.toString() || "0", //Temporary will check for a better solution
+            email: newUser?.email,
+            status: "PENDING",
+            role: null,
+            displayName: `${profile.given_name}_${profile.family_name}`,
+            username: null,
+            image: profile.image,
+            phoneNumber: null,
+            dateOfBirth: null,
+            defaultProfileId: newUser?.defaultProfileId || 0,
+          };
+        }
+
+        return {
+          id: existingUser.id.toString(),
+          email: existingUser.email,
+          status: existingUser.status,
+          role: existingUser.defaultProfile?.role ?? null,
+          displayName: existingUser.defaultProfile?.displayName ?? null,
+          username: existingUser.defaultProfile?.username ?? null,
+          image: existingUser.defaultProfile?.profilePicture ?? null,
+          phoneNumber: existingUser.phoneNumber,
+          dateOfBirth: existingUser.dateOfBirth,
+          defaultProfileId: existingUser.defaultProfileId,
+          emailAlias: existingUser.emailAlias,
+        };
+      },
+    }),
   ],
 
-  session: {
-    strategy: "jwt",
-  },
-
   callbacks: {
-    // Attach role to JWT
-    async jwt({ token, user, account }) {
-      if (user) {
-        token.id = user.id as string;
-        token.role = user.role as string;
+    async signIn({ user, account }) {
+      if (account?.provider !== "google") return true;
+      if (!user?.email) return false;
+
+      const existingUser = (await prisma.users.findUnique({
+        where: { email: user.email },
+        include: { defaultProfile: true },
+      })) as UserWithRelations | null;
+
+      // New or Pending → return redirect URL as string
+      if (!existingUser || existingUser.status === "PENDING") {
+        return `/api/auth/complete-profile/set-cookie?id=${
+          user.id
+        }&email=${encodeURIComponent(
+          user.email
+        )}&displayName=${encodeURIComponent(
+          user.displayName || ""
+        )}&image=${encodeURIComponent(user.image || "")}`;
       }
 
-      // --- Auto create social user if first login ---
-      if (account && account.provider !== "credentials" && !user) {
-        const email = token.email;
-        if (email) {
-          const existing = await db
-            .select()
-            .from(users)
-            .where(eq(users.email, email))
-            .limit(1);
+      // Active → allow login normally
+      return true;
+    },
 
-          if (existing.length === 0) {
-            const inserted = await db
-              .insert(users)
-              .values({
-                email,
-                username: email.split("@")[0],
-                displayName: email.split("@")[0],
-                status: "ACTIVE",
-                role: "TRAVELER",
-                personaTags: [],
-                provider:
-                  account.provider.toUpperCase() as (typeof authProviderEnum.enumValues)[number],
-              })
-              .returning();
+    async jwt({ token, user, trigger }) {
+      if (user) {
+        token = { ...token, ...user };
+        if ((user as any).redirectTo)
+          token.redirectTo = (user as any).redirectTo;
+      }
 
-            token.id = inserted[0].id.toString();
-            token.role = inserted[0].role;
-          } else {
-            token.id = existing[0].id.toString();
-            token.role = existing[0].role;
-          }
-        }
+      // refresh emailAlias on session update
+      if (trigger === "update") {
+        const dbUser = await prisma.users.findUnique({
+          where: { id: Number(token.id) },
+          select: { emailAlias: true },
+        });
+
+        token.emailAlias = dbUser?.emailAlias ?? null;
       }
 
       return token;
     },
 
-    // Attach JWT data to session
     async session({ session, token }) {
-      if (token) {
-        (session.user as any).id = token.id;
-        (session.user as any).role = token.role;
-      }
+      session.user = { ...session.user, ...token } as typeof session.user;
       return session;
+    },
+
+    async redirect({ url, baseUrl }) {
+      // Handle relative URLs
+      if (url.startsWith("/")) return `${baseUrl}${url}`;
+      if (url.startsWith(baseUrl)) return url;
+      return baseUrl;
     },
   },
 
@@ -132,6 +192,6 @@ export const authOptions: AuthOptions = {
   },
 };
 
-// --- App Router requires named exports for HTTP methods ---
+// --- App Router handlers ---
 export const GET = NextAuth(authOptions);
 export const POST = NextAuth(authOptions);

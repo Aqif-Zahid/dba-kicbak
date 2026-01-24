@@ -12,8 +12,11 @@ import { useSession, signOut } from "next-auth/react";
 interface User {
   id: string;
   email: string;
-  name?: string;
+  displayName?: string;
   role?: string;
+  username?: string;
+  image?: string;
+  defaultProfileId: number;
 }
 
 interface UserContextType {
@@ -33,8 +36,11 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       setUser({
         id: (session.user as any).id,
         email: session.user.email!,
-        name: session.user.name ?? undefined,
+        displayName: (session.user as any).displayName ?? "",
         role: (session.user as any).role,
+        username: (session.user as any).username ?? "",
+        image: session.user.profilePicture ?? "",
+        defaultProfileId: (session.user as any).defaultProfileId ?? 0,
       });
     } else {
       setUser(null);
