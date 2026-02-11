@@ -45,6 +45,9 @@ jobs:
             npm install --frozen-lockfile
             npm run build
 
+            mkdir -p ./.next/standalone/public
+            mkdir -p ./.next/standalone/.next/static
+
             # These three lines are MANDATORY for Standalone mode
             cp -r ./public ./.next/standalone/public || true
             cp -r ./.next/static ./.next/standalone/.next/static || true
