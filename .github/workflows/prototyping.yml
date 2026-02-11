@@ -32,13 +32,13 @@ jobs:
           rsync -avz --delete \
           --exclude "node_modules" \
           --exclude ".env" \
-          ./ ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/var/www/prototyping
+          ./ ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/var/www/proto
 
       # ⚡ Next.js Production Build & Restart
       - name: Build and Restart App
         run: |
           ssh root@${{ secrets.VPS_HOST }} << 'EOF'
-            cd /var/www/htprototyping
+            cd /var/www/proto
             if [ ! -f .env ]; then
               cp .env.example .env
             fi
@@ -59,7 +59,7 @@ jobs:
 
             echo "Restarting PM2 process..."
             # This will restart the app, or start it if it's not running
-            pm2 restart next-app || pm2 start npm --name "next-app" -- start
+            pm2 restart proto-kicbak || pm2 start npm --name "proto-kicbak" -- start
             
             pm2 save
             echo "Deployment Complete!"

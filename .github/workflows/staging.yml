@@ -59,7 +59,7 @@ jobs:
 
             echo "Restarting PM2 process..."
             # This will restart the app, or start it if it's not running
-            pm2 restart next-app || pm2 start npm --name "next-app" -- start
+            pm2 restart staging-kicbak || pm2 start npm --name "staging-kicbak" -- start
             
             pm2 save
             echo "Deployment Complete!"
