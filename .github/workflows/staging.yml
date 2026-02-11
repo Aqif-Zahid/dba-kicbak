@@ -1,26 +1,43 @@
-name: Deploy to Server
+name: 🚀 Deploy on push to VPS
+
 on:
   push:
     branches:
-      - staging  # Trigger only on pushes to the staging branch
+      - staging
 
 jobs:
   deploy:
+    name: Deploy to VPS
     runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
 
-      - name: Execute Remote SSH Commands
-        uses: appleboy/ssh-action@v1.0.3
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # 🔑 Setup SSH for VPS
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.7.0
         with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
-          port: 22
-          script: |
-            cd /path/to/your/project
-            git pull origin staging
-            # Add build or restart commands here, e.g.:
-            # npm install && npm run build
-            # pm2 restart app-name
+          ssh-private-key: ${{ secrets.VPS_SSH_KEY }}
+
+      # 🔑 Add server host key to known_hosts
+      - name: Add server to known_hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
+
+      # 📂 Copy project files to VPS
+      - name: Deploy via SCP
+        run: |
+          rsync -avz --delete \
+          --exclude "node_modules" \
+          --exclude "vendor" \
+          --exclude "storage" \
+          --exclude ".env" \
+          ./ ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/var/www/html
+
+      # ⚡ Run Node commands on VPS
+      - name: Run SSH commands
+        run: |
+          ssh ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
+            cd /var/www/html
