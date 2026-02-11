@@ -38,7 +38,7 @@ jobs:
       - name: Build and Restart App
         run: |
           ssh root@${{ secrets.VPS_HOST }} << 'EOF'
-            cd /var/www/htprototypingml
+            cd /var/www/htprototyping
             if [ ! -f .env ]; then
               cp .env.example .env
             fi
