@@ -3,7 +3,7 @@ name: 🚀 Deploy on push to VPS
 on:
   push:
     branches:
-      - staging
+      - prototyping
 
 jobs:
   deploy:
@@ -31,17 +31,17 @@ jobs:
         run: |
           rsync -avz --delete \
           --exclude "node_modules" \
-          --exclude "vendor" \
-          --exclude "storage" \
           --exclude ".env" \
-          ./ ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/var/www/html
+          ./ ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/var/www/prototyping
 
       # ⚡ Next.js Production Build & Restart
       - name: Build and Restart App
         run: |
           ssh root@${{ secrets.VPS_HOST }} << 'EOF'
-            cd /var/www/html
-            
+            cd /var/www/htprototypingml
+            if [ ! -f .env ]; then
+              cp .env.example .env
+            fi
             # Load NVM/Node if not in path (uncomment if needed)
             # export NVM_DIR="$HOME/.nvm"
             # [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
