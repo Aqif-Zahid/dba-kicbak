@@ -35,32 +35,22 @@ jobs:
           ./ ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/var/www/proto
 
       # ⚡ Next.js Production Build & Restart
-      - name: Build and Restart App
+      - name: Build & Restart PM2
         run: |
           ssh root@${{ secrets.VPS_HOST }} << 'EOF'
-            cd /var/www/proto
-            if [ ! -f .env ]; then
-              cp .env.example .env
-            fi
-            # Load NVM/Node if not in path (uncomment if needed)
-            # export NVM_DIR="$HOME/.nvm"
-            # [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-
-            echo "Installing dependencies..."
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+            
+            cd /var/www/html
             npm install --frozen-lockfile
-
-            echo "Running Database Migrations..."
-            # Uncomment the one you use:
-            npx prisma migrate deploy
-            # npx drizzle-kit migrate
-
-            echo "Building Next.js application..."
             npm run build
 
-            echo "Restarting PM2 process..."
-            # This will restart the app, or start it if it's not running
-            pm2 restart proto-kicbak || pm2 start npm --name "proto-kicbak" -- start
-            
+            # These three lines are MANDATORY for Standalone mode
+            cp -r ./public ./.next/standalone/public || true
+            cp -r ./.next/static ./.next/standalone/.next/static || true
+            cp .env ./.next/standalone/.env || true
+
+            # Start using the standalone server
+            pm2 restart next-app || pm2 start .next/standalone/server.js --name "next-app"
             pm2 save
-            echo "Deployment Complete!"
           EOF
