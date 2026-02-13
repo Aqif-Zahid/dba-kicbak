@@ -17,13 +17,15 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
-      - name: Install & Build
-        # We build the 'standalone' folder here on GitHub's powerful servers
+      - name: Install, Generate Prisma, & Build
         run: |
           npm install --frozen-lockfile
+          # Generate Prisma client before building
+          npx prisma generate
           npm run build
         env:
-          # Next.js needs these at build time
+          # Dummy URL just to satisfy the build process
+          DATABASE_URL: "postgresql://dummy:dummy@localhost:5432/dummy"
           NEXT_PRIVATE_STANDALONE: true 
 
       - name: Setup SSH
@@ -35,20 +37,23 @@ jobs:
         run: ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
 
       - name: Deploy Standalone to VPS
-        # We ONLY send the necessary production files (~5-20MB instead of 500MB)
         run: |
-          # Copy the standalone folder, static files, and public files
+          # 1. Upload the main server file and dependencies
           rsync -avz --delete -e "ssh -o StrictHostKeyChecking=yes" \
-          ./.next/standalone/ \
-          ./.next/static/ \
-          ./public/ \
-          root@${{ secrets.VPS_HOST }}:/var/www/html/
+          ./.next/standalone/ root@${{ secrets.VPS_HOST }}:/var/www/html/
+
+          # 2. Upload Static and Public files (Next.js needs these separate)
+          rsync -avz -e "ssh -o StrictHostKeyChecking=yes" \
+          ./.next/static/ root@${{ secrets.VPS_HOST }}:/var/www/html/.next/static/
+          
+          rsync -avz -e "ssh -o StrictHostKeyChecking=yes" \
+          ./public/ root@${{ secrets.VPS_HOST }}:/var/www/html/public/
 
       - name: Restart PM2 on VPS
         run: |
           ssh root@${{ secrets.VPS_HOST }} << 'EOF'
             cd /var/www/html
-            # Ensure PM2 points to the standalone server.js
+            # Make sure your real .env is already on the VPS in /var/www/html/.env
             pm2 restart next-app || pm2 start server.js --name "next-app"
             pm2 save
           EOF
