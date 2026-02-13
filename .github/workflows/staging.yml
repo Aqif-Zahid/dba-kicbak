@@ -38,13 +38,13 @@ jobs:
       # ⚡ Next.js Production Build & Restart
       - name: Build & Restart PM2
         run: |
-          ssh root@${{ secrets.VPS_HOST }} << 'EOF'
+          ssh -o ServerAliveInterval=60 -o ServerAliveCountMax=10 root@${{ secrets.VPS_HOST }} << 'EOF'
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
             
             cd /var/www/html
             npm install --frozen-lockfile
-            npm run build
+            NODE_OPTIONS="--max-old-space-size=512" npm run build
 
             mkdir -p ./.next/standalone/public
             mkdir -p ./.next/standalone/.next/static
