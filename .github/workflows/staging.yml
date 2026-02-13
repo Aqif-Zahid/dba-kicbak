@@ -1,4 +1,4 @@
-name: 🚀 Build on GitHub & Deploy
+name: 🚀 Deploy & Build on VPS
 
 on:
   push:
@@ -6,27 +6,10 @@ on:
       - staging
 
 jobs:
-  build-and-deploy:
+  deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-
-      - name: Install, Generate Prisma, & Build
-        run: |
-          npm install --frozen-lockfile
-          # Generate Prisma client before building
-          npx prisma generate
-          npm run build
-        env:
-          # Dummy URL just to satisfy the build process
-          DATABASE_URL: "postgresql://dummy:dummy@localhost:5432/dummy"
-          NEXT_PRIVATE_STANDALONE: true 
 
       - name: Setup SSH
         uses: webfactory/ssh-agent@v0.9.0
@@ -36,24 +19,23 @@ jobs:
       - name: Add server to known_hosts
         run: ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
 
-      - name: Deploy Standalone to VPS
-        run: |
-          # 1. Upload the main server file and dependencies
-          rsync -avz --delete -e "ssh -o StrictHostKeyChecking=yes" \
-          ./.next/standalone/ root@${{ secrets.VPS_HOST }}:/var/www/html/
-
-          # 2. Upload Static and Public files (Next.js needs these separate)
-          rsync -avz -e "ssh -o StrictHostKeyChecking=yes" \
-          ./.next/static/ root@${{ secrets.VPS_HOST }}:/var/www/html/.next/static/
-          
-          rsync -avz -e "ssh -o StrictHostKeyChecking=yes" \
-          ./public/ root@${{ secrets.VPS_HOST }}:/var/www/html/public/
-
-      - name: Restart PM2 on VPS
+      - name: Sync Files & Build on VPS
         run: |
           ssh root@${{ secrets.VPS_HOST }} << 'EOF'
             cd /var/www/html
-            # Make sure your real .env is already on the VPS in /var/www/html/.env
-            pm2 restart next-app || pm2 start server.js --name "next-app"
+            
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+
+            npm install --frozen-lockfile --prefer-offline
+
+            npx prisma generate
+
+            NODE_OPTIONS="--max-old-space-size=512" npm run build
+
+            cp -r ./public ./.next/standalone/public || true
+            cp -r ./.next/static ./.next/standalone/.next/static || true
+
+            pm2 restart staging-kicbak || pm2 start .next/standalone/server.js --name "staging-kicbak"
             pm2 save
           EOF
