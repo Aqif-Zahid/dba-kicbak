@@ -65,7 +65,7 @@ jobs:
             cp -r ./.next/static ./.next/standalone/.next/static || true
 
             echo "🔄 Restarting PM2..."
-            pm2 restart next-app || pm2 start .next/standalone/server.js --name "next-app"
+            pm2 restart staging-kicbak || pm2 start .next/standalone/server.js --name "staging-kicbak"
             
             pm2 save
             echo "✅ Deployment successful!"
