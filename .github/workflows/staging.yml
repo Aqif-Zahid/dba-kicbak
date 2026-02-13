@@ -32,7 +32,8 @@ jobs:
           rsync -avz --delete \
           --exclude "node_modules" \
           --exclude ".env" \
-          ./ ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/var/www/staging
+          --exclude ".github" \
+          ./ ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/var/www/html
 
       # ⚡ Next.js Production Build & Restart
       - name: Build & Restart PM2
@@ -54,6 +55,6 @@ jobs:
             cp .env ./.next/standalone/.env || true
 
             # Start using the standalone server
-            pm2 restart next-app || pm2 start .next/standalone/server.js --name "next-app"
+            pm2 restart staging-kicbak || pm2 start .next/standalone/server.js --name "staging-kicbak"
             pm2 save
           EOF
