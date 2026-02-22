@@ -1,0 +1,9 @@
+{
+  "name": "kicbak-monorepo",
+  "private": true,
+  "workspaces": [
+    "apps/kicbak",
+    "apps/dba",
+    "apps/api"
+  ]
+}

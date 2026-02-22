@@ -1,0 +1,47 @@
+{
+  "memberTypes": [
+    {
+      "type": "operator",
+      "label": "Operators",
+      "definition": "Directly operates a travel or hospitality business that serves consumers.",
+      "examples": "Hotels, short-term rental hosts, property managers, tour operators, attractions, experience providers, DMCs.",
+      "criteria": "Must actually operate a travel business that serves end consumers/travelers. Co-hosting consultants, virtual assistants, or service providers to operators do NOT qualify as operators."
+    },
+    {
+      "type": "partner",
+      "label": "Tech & Services",
+      "definition": "Provides technology, software, tools, or professional services to the travel and hospitality industry.",
+      "examples": "PMS, booking engines, channel managers, analytics platforms, AI tools for operators, consultants, agencies, revenue managers, marketing strategists, trainers, inspection software, claims management.",
+      "criteria": "Serves the travel industry (primarily operators) in a B2B capacity. Includes both technology companies and professional service providers. Does NOT include consumer-facing platforms (those are Consumer Platforms)."
+    },
+    {
+      "type": "distribution",
+      "label": "Consumer Platforms",
+      "definition": "Operates consumer-facing platforms, apps, websites, or tools that help travelers discover, plan, or book accommodations and experiences.",
+      "examples": "Booking marketplaces (Airbnb, Booking.com, Expedia), metasearch engines, travel apps, travel websites, AI travel assistants, listing sites, price comparison tools, travel discovery platforms.",
+      "criteria": "Consumers/travelers are the primary users, or equally important users alongside suppliers (as in marketplaces). The platform serves travelers directly, not just industry operators. If a company also provides B2B software alongside a consumer platform, it may qualify for both categories."
+    },
+    {
+      "type": "creator",
+      "label": "Creators & Media",
+      "definition": "Produces content whose primary audience is consumers and travelers.",
+      "examples": "Travel publishers, travel blogs, travel newsletters aimed at travelers, travel influencer brands, travel content creators.",
+      "criteria": "The audience must be consumers/travelers, not the industry. Professionals who publish content as part of their B2B services (e.g., industry newsletters, educational content for operators) are Tech & Services, not Creators & Media."
+    },
+    {
+      "type": "association",
+      "label": "Industry Organizations",
+      "definition": "Organizations, conferences, and groups that convene, represent, or advocate for the travel and hospitality sector.",
+      "examples": "Trade associations, DMOs/CVBs, tourism boards, regional alliances, industry conferences, professional networks.",
+      "criteria": "Must be an organized body that convenes, represents, or advocates for travel industry participants. Not a commercial operator, technology provider, or content creator."
+    }
+  ],
+  "tags": {
+    "description": "Tags indicate which market segments a member serves. Members can have zero or more tags.",
+    "available": [
+      "Hotels",
+      "Short Term Rentals",
+      "Experiences"
+    ]
+  }
+}

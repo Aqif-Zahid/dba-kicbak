@@ -1,0 +1,72 @@
+name: 🚀 Deploy & Build on VPS
+
+on:
+  push:
+    branches:
+      - staging
+
+jobs:
+  deploy:
+    name: Build and Deploy to VPS
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 🔑 Setup SSH
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.VPS_SSH_KEY }}
+
+      # 🔑 Add server to known_hosts to prevent interactive prompts
+      - name: Add server to known_hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
+
+      # 📂 Sync project files
+      - name: Sync files to VPS
+        run: |
+          rsync -avz --delete \
+          -e "ssh -o StrictHostKeyChecking=yes" \
+          --exclude "node_modules" \
+          --exclude ".env" \
+          --exclude ".git" \
+          --exclude ".github" \
+          --exclude ".next" \
+          ./ root@${{ secrets.VPS_HOST }}:/var/www/html
+
+      # ⚡ Build and Restart on VPS
+      - name: Build and Restart App
+        run: |
+          ssh root@${{ secrets.VPS_HOST }} << 'EOF'
+            # 1. Load NVM / Node environment
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+            
+            # 2. Increase Memory Limit for Node (Uses Swap to prevent OOM crash)
+            export NODE_OPTIONS="--max-old-space-size=2048"
+
+            cd /var/www/html
+
+            echo "📦 Installing dependencies..."
+            npm install --frozen-lockfile
+
+            echo "🗄️ Generating Prisma Client..."
+            npx prisma generate
+
+            echo "🏗️ Building Next.js application..."
+            npm run build
+
+            echo "📦 Setting up standalone folders..."
+            cp -r ./public ./.next/standalone/public || true
+            cp -r ./.next/static ./.next/standalone/.next/static || true
+
+            echo "🔄 Restarting PM2..."
+            pm2 restart staging-kicbak || pm2 start .next/standalone/server.js --name "staging-kicbak"
+            
+            pm2 save
+            echo "✅ Deployment successful!"
+          EOF

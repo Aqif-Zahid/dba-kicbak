@@ -1,0 +1,23 @@
+{
+  "name": "direct-booking-alliance",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "next": "14.1.0",
+    "react": "18.2.0",
+    "react-dom": "18.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "18.19.130",
+    "@types/react": "18.3.28",
+    "eslint": "^8.40.0",
+    "eslint-config-next": "^13.3.0",
+    "typescript": "5.9.3"
+  }
+}
