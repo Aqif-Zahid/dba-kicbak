@@ -29,3 +29,6 @@ next-env.d.ts
 /.clerk/
 
 /src/generated/prisma
+
+# Next.js build output
+.next/

@@ -1,0 +1,1194 @@
+[
+  {
+    "id": "arlen-ritchie",
+    "slug": "arlen-ritchie",
+    "name": "Arlen Ritchie",
+    "type": "partner",
+    "description": "Arlen is the Executive Director of the Direct Booking Alliance and the founder of Kicbak, a peer-to-peer protocol for cooperation within the travel industry to help accelerate the shift to direct bookings. Through the Alliance, he works with operators, technology partners, and industry leaders to build shared infrastructure for direct distribution.",
+    "website": "",
+    "location": "",
+    "category": "Executive Director",
+    "tags": [],
+    "socialLinks": {
+      "linkedin": "https://linkedin.com/in/arlenritchie"
+    },
+    "photo": "",
+    "roles": [
+      "executive-director"
+    ],
+    "joinedAt": "2024-01-01"
+  },
+  {
+    "id": "kay-walten",
+    "slug": "kay-walten",
+    "name": "Kay Walten",
+    "type": "partner",
+    "description": "Founder of Smart Pineapple, a SaaS Marketing Suite for independent accommodations. With 35+ years in hospitality, Kay built one of Mexico's first online travel services and has grown online communities to 100,000+ members. Director of Destination Partnerships at Blueview Productions.",
+    "website": "https://smartpineapple.io",
+    "location": "USA",
+    "category": "Founder & Direct Booking Strategist",
+    "tags": [
+      "Hotels",
+      "Short Term Rentals"
+    ],
+    "socialLinks": {
+      "linkedin": "https://www.linkedin.com/in/kaywalten"
+    },
+    "quote": "The Alliance amplifies the voices of independent operators who deserve better.",
+    "photo": "",
+    "roles": [
+      "director"
+    ],
+    "joinedAt": "2024-01-10"
+  },
+  {
+    "id": "smart-pineapple",
+    "slug": "smart-pineapple",
+    "name": "Smart Pineapple",
+    "type": "partner",
+    "description": "Smart Pineapple is a consultancy and SaaS Marketing Suite dedicated to empowering independent accommodations. Through their AI for Hospitality initiative, they provide strategic guidance and innovative solutions to help hotels, vacation rentals, and short-term rental operators optimize their direct booking strategies and leverage AI technology for growth.",
+    "website": "https://www.smartpineapple.ai",
+    "location": "",
+    "category": "Consultancy & SaaS Marketing",
+    "tags": [
+      "Hotels",
+      "Short Term Rentals"
+    ],
+    "socialLinks": {
+      "linkedin": "https://www.linkedin.com/company/smartpineapple/"
+    },
+    "logo": "",
+    "roles": [],
+    "joinedAt": "2026-02-10"
+  },
+  {
+    "id": "still-waters-safaris",
+    "slug": "still-waters-safaris",
+    "name": "Still Waters Safaris Company Limited",
+    "type": "operator",
+    "description": "Female-owned boutique safari company in Tanzania creating tailor-made luxury safaris, Kilimanjaro hikes, Zanzibar beach escapes, and authentic cultural experiences with a strong focus on sustainability and community impact.",
+    "website": "https://www.stillwaterssafaris.co.tz/",
+    "location": "Arusha, Tanzania",
+    "category": "Destination Management Company (DMC)",
+    "tags": [
+      "Experiences"
+    ],
+    "socialLinks": {
+      "linkedin": "https://www.linkedin.com/in/amanda-kessy-362032177"
+    },
+    "logo": "https://drive.google.com/thumbnail?id=19TWS_A7bkqdo9KXOs_BjpgVvJHnau7xg&sz=w400",
+    "roles": [],
+    "joinedAt": "2026-02-11"
+  },
+  {
+    "id": "the-killington-group",
+    "slug": "the-killington-group",
+    "name": "The Killington Group",
+    "type": "operator",
+    "description": "The Killington Group (TKG) manages all reservations and properties in-house, ensuring consistent quality, personalized service, and seamless experiences from booking to check-out. With a dedicated team, TKG delivers reliable comfort, swift issue resolution, and genuine, lasting guest relationships.",
+    "website": "https://www.killingtongroup.com",
+    "location": "Killington, Vermont USA",
+    "category": "Property Management",
+    "tags": [
+      "Short Term Rentals"
+    ],
+    "socialLinks": {},
+    "logo": "https://drive.google.com/thumbnail?id=1PpjtBDnxrgAUF6CSTzdAVPMh7UxpO8Xz&sz=w400",
+    "roles": [],
+    "joinedAt": "2026-02-11"
+  },
+  {
+    "id": "bluesky-cohosts",
+    "slug": "bluesky-cohosts",
+    "name": "Bluesky Cohosts",
+    "type": "operator",
+    "description": "Stays that run smooth. Memories that last. Blue Sky Cohosts manages short-term rentals for owners who want peace of mind and guests who want everything to work seamlessly. We take care of every detail so both sides can relax. From listings and cleaning to quick replies and thoughtful touches, we make hospitality feel effortless.",
+    "website": "https://blueskycohosts.com/",
+    "location": "Myrtle Beach, South Carolina, USA",
+    "category": "Property Management",
+    "tags": [
+      "Short Term Rentals"
+    ],
+    "socialLinks": {},
+    "logo": "https://drive.google.com/thumbnail?id=1A5yPbKUcV_7_tMKz8WnZR-CBQZzMlC_i&sz=w400",
+    "roles": [],
+    "joinedAt": "2026-02-11"
+  },
+  {
+    "id": "house-of-the-sun-akumal",
+    "slug": "house-of-the-sun-akumal",
+    "name": "House of the Sun Akumal",
+    "type": "operator",
+    "description": "At House of the Sun, every stay is more than just a getaway\u2014it's a true beachfront experience. Located in Tulum, Mexico area on the beach of Aventuras Akumal.",
+    "website": "https://houseofthesunakumal.com",
+    "location": "Akumal, Mexico",
+    "category": "Vacation Rental",
+    "tags": [
+      "Short Term Rentals",
+      "Experiences"
+    ],
+    "socialLinks": {},
+    "logo": "https://drive.google.com/thumbnail?id=1-Z6d1S4o22Q8IxQdP3Rcu9W8TFNHR69j&sz=w400",
+    "roles": [],
+    "joinedAt": "2026-02-11"
+  },
+  {
+    "id": "inhotel",
+    "slug": "inhotel",
+    "name": "inHotel",
+    "type": "partner",
+    "description": "inHotel is the agentic operating system for travel and hospitality. We empower local providers and teams through AI agents that integrate with systems, follow SOPs, and drive direct bookings. By connecting destination ecosystems, we enable local economies to thrive. Open and partner-friendly.",
+    "website": "https://www.inhotel.io",
+    "location": "Geneva, Switzerland",
+    "category": "Agentic Operating System",
+    "tags": [
+      "Hotels"
+    ],
+    "socialLinks": {
+      "linkedin": "https://www.linkedin.com/in/janpopovic"
+    },
+    "logo": "https://drive.google.com/thumbnail?id=16psXcVC9F0hAd9zLax0frmZaQqcU_cUh&sz=w400",
+    "roles": [],
+    "joinedAt": "2026-02-11"
+  },
+  {
+    "id": "overseasinfo-tv",
+    "slug": "overseasinfo-tv",
+    "name": "Overseasinfo.tv Ltd",
+    "type": "distribution",
+    "description": "Overseasinfo.tv is a video-led travel discovery and conversation platform that connects travellers with hotels, tour operators, and local experiences and sends them directly to the provider\u2019s own booking channel.",
+    "website": "https://overseasinfo.tv",
+    "location": "Turkey",
+    "category": "Travel Discovery Platform",
+    "tags": [
+      "Hotels",
+      "Experiences"
+    ],
+    "socialLinks": {
+      "linkedin": "https://www.linkedin.com/in/martinruk1956"
+    },
+    "logo": "https://drive.google.com/thumbnail?id=1Tg8XFJ-o8obM6U9buB26B5iYCnrPcOuS&sz=w400",
+    "roles": [],
+    "joinedAt": "2026-02-11"
+  },
+  {
+    "id": "travelese",
+    "slug": "travelese",
+    "name": "Travelese",
+    "type": "distribution",
+    "description": "Travelese is a lifestyle-first travel planning platform that matches people to experiences\u2014not destinations\u2014unlocking higher conversion and monetization for hosts.",
+    "website": "https://www.travelese.app",
+    "location": "Beckley, WV USA",
+    "category": "Travel Planning Platform",
+    "tags": [
+      "Experiences"
+    ],
+    "socialLinks": {
+      "linkedin": "https://www.linkedin.com/in/rareearthsolutions/"
+    },
+    "logo": "https://drive.google.com/thumbnail?id=1kNLvROm3TX6uDiYJem2hXCNVKXrJuxh8&sz=w400",
+    "roles": [],
+    "joinedAt": "2026-02-11"
+  },
+  {
+    "id": "rare-earth-solutions",
+    "slug": "rare-earth-solutions",
+    "name": "Rare Earth Solutions Inc.",
+    "type": "partner",
+    "description": "Travelese is a lifestyle-first travel planning platform that matches people to experiences\u2014not destinations\u2014unlocking higher conversion and monetization for hosts.",
+    "website": "https://www.travelese.ai",
+    "location": "Beckley, WV USA",
+    "category": "Travel Tech",
+    "tags": [
+      "Experiences"
+    ],
+    "socialLinks": {
+      "linkedin": "https://www.linkedin.com/in/rareearthsolutions/"
+    },
+    "logo": "https://drive.google.com/thumbnail?id=1G1DuPooqm1C49Qn1oZwdEy8oazvBZjc8&sz=w400",
+    "roles": [],
+    "joinedAt": "2026-02-11"
+  },
+  {
+    "id": "tara-home-consulting",
+    "slug": "tara-home-consulting",
+    "name": "Tara Home Consulting",
+    "type": "partner",
+    "description": "Tara Home Consulting is a CEO-driven boutique consulting firm specialized in Scaling and M&A for Short Term Rental (STR) Property Management Companies. We help STR operators increase EBITDA, branding, marketing, improve operational performance, and prepare for capital events: growth, acquisition and exit. Advisory is financial + operational, not coaching.",
+    "website": "https://tarahome.consulting/",
+    "location": "Lugano, Ticino, Switzerland",
+    "category": "STR Consulting & M&A Advisory",
+    "tags": [
+      "Short Term Rentals"
+    ],
+    "socialLinks": {
+      "linkedin": "https://www.linkedin.com/in/cristiana-carpini-strconsulting/"
+    },
+    "logo": "https://drive.google.com/thumbnail?id=1_YLBEImT7NPPMzjYOt-26dRewnh_Ta3t&sz=w400",
+    "roles": [],
+    "joinedAt": "2026-02-11"
+  },
+  {
+    "id": "wvrec",
+    "slug": "wvrec",
+    "name": "WVREC | Women Vacation Rental European Conference",
+    "type": "association",
+    "description": "If you are a woman who wants to do business, make connections and grow in an inspiring environment, WVREC is for you.",
+    "website": "https://wvrec.eu",
+    "location": "Barcelona, Spain",
+    "category": "Industry Conference",
+    "tags": [
+      "Short Term Rentals"
+    ],
+    "socialLinks": {
+      "linkedin": "https://www.linkedin.com/company/wvrec/"
+    },
+    "logo": "https://drive.google.com/thumbnail?id=1uR7V3hxuVXsCGrj-fl2sOnAbnW_FbqJx&sz=w400",
+    "roles": [],
+    "joinedAt": "2026-02-11"
+  },
+  {
+    "id": "awamazing-consulting",
+    "slug": "awamazing-consulting",
+    "name": "Awa'Mazing Consulting",
+    "type": "partner",
+    "description": "We help boutique and independent hotels elevate service quality, engage their teams, and build authentic guest experiences \u2014 from the inside out. Each hotel has its own soul \u2014 and our role is to reveal it through structure, culture, and care. Whether you're running a lakeside lodge in Canada, a city boutique hotel, or a resort abroad, we partner with you to streamline operations, empower your people, strengthen your brand, and deliver service that guests remember.",
+    "website": "https://www.awamazingconsulting.com",
+    "location": "Thunder Bay, Canada",
+    "category": "Hospitality Consulting",
+    "tags": [
+      "Hotels"
+    ],
+    "socialLinks": {
+      "linkedin": "https://www.linkedin.com/in/awadiakhate/"
+    },
+    "logo": "https://drive.google.com/thumbnail?id=1VIkV0EoHufDr9MnxOkARDeU7jP-iCT0L&sz=w400",
+    "roles": [],
+    "joinedAt": "2026-02-11"
+  },
+  {
+    "id": "polydom-ai",
+    "slug": "polydom-ai",
+    "name": "Polydom.ai",
+    "type": "partner",
+    "description": "Polydom builds Una, an AI Host for hotels and STR. Una handles end-to-end bookings, guest communication, and operational tasks across phone, web, messaging, and email\u2014reducing staffing gaps and costs while increasing direct revenue 24/7.",
+    "website": "https://polydom.ai/",
+    "location": "Washington, DC, USA",
+    "category": "AI Host Platform",
+    "tags": [
+      "Hotels",
+      "Short Term Rentals"
+    ],
+    "socialLinks": {
+      "linkedin": "https://www.linkedin.com/in/lana-udalov-98309b5a/"
+    },
+    "logo": "https://drive.google.com/thumbnail?id=1tNUtJKuiFwVFvxgFK-cLxrj8QfOmtzWa&sz=w400",
+    "roles": [],
+    "joinedAt": "2026-02-11"
+  },
+  {
+    "id": "ai-tourism-innovator",
+    "slug": "ai-tourism-innovator",
+    "name": "AI Tourism Innovator",
+    "type": "partner",
+    "description": "AI Tourism Innovator helps travel tech companies reach tour operators, travel agencies, DMOs and hotels with AI-powered content strategy + LinkedIn B2B lead generation.",
+    "website": "https://ai-tourism-innovator.com/",
+    "location": "Budapest, Hungary",
+    "category": "AI Content Strategy & Lead Generation",
+    "tags": [
+      "Hotels",
+      "Experiences"
+    ],
+    "socialLinks": {
+      "linkedin": "https://www.linkedin.com/in/ivan-ivanovic-marketing/"
+    },
+    "logo": "https://drive.google.com/thumbnail?id=1IOOO5fT5wU_fw8bPwWC7yLXj87RmfXHq&sz=w400",
+    "roles": [],
+    "joinedAt": "2026-02-11"
+  },
+  {
+    "id": "pendailey-consulting",
+    "slug": "pendailey-consulting",
+    "name": "PenDailey Consulting",
+    "type": "partner",
+    "description": "PenDailey offers branding, marketing, and commercial strategy support to hospitality, tourism, and wellness businesses. Our goal is to improve communities and the planet through our work. We work with businesses that connect people with each other, themselves, and the planet. We help craft your story, attract your people, and better the world around you.",
+    "website": "https://pendailey.com",
+    "location": "Vero Beach, FL USA",
+    "category": "Branding & Marketing Strategy",
+    "tags": [
+      "Hotels",
+      "Experiences"
+    ],
+    "socialLinks": {
+      "linkedin": "https://linkedin.com/in/empendailey"
+    },
+    "logo": "https://drive.google.com/thumbnail?id=1GDwLMCQnz_FuMEYbPYfZ4RLTRNtHQm-2&sz=w400",
+    "roles": [],
+    "joinedAt": "2026-02-11"
+  },
+  {
+    "id": "michael-shetler",
+    "slug": "michael-shetler",
+    "name": "Michael Shetler",
+    "type": "operator",
+    "description": "Realtor and STR owner/operator.",
+    "website": "https://scandinavianblissinthewoods.com",
+    "location": "Glen Rock, NJ",
+    "category": "Realtor & STR Owner/Operator",
+    "tags": [
+      "Short Term Rentals"
+    ],
+    "socialLinks": {
+      "linkedin": "https://www.linkedin.com/in/ridgewood/"
+    },
+    "logo": "",
+    "roles": [],
+    "joinedAt": "2026-02-11"
+  },
+  {
+    "id": "direct-booking-success",
+    "slug": "direct-booking-success",
+    "name": "Direct Booking Success",
+    "type": "partner",
+    "description": "Direct Booking Success helps hosts and property managers reduce OTA dependency by building clear, repeatable marketing systems that support consistent direct bookings, without urgency, hacks, or overwhelm.",
+    "website": "https://directbookingsuccess.com",
+    "location": "Vancouver, Canada",
+    "category": "Direct Booking Strategy",
+    "tags": [
+      "Short Term Rentals"
+    ],
+    "socialLinks": {
+      "linkedin": "https://www.linkedin.com/in/jennboyles/"
+    },
+    "logo": "https://drive.google.com/thumbnail?id=1qMMrGyt8okJThn8FtG54hUa8K0qQ-bsj&sz=w400",
+    "roles": [],
+    "joinedAt": "2026-02-11"
+  },
+  {
+    "id": "touchright-software",
+    "slug": "touchright-software",
+    "name": "TouchRight Software",
+    "type": "partner",
+    "description": "Provides software to enable property managers to do inspections and reports quickly, professionally whilst staying compliant. Keeping all the property information in one place.",
+    "website": "https://www.touchrightsoftware.com",
+    "location": "Global, Based in London UK",
+    "category": "Property Management",
+    "tags": [
+      "Short Term Rentals"
+    ],
+    "socialLinks": {
+      "linkedin": "https://www.linkedin.com/in/miriam-roth-0548a5366"
+    },
+    "logo": "https://drive.google.com/thumbnail?id=1wH58lbanDIszLa5UBv35SGCphumZWsTY&sz=w400",
+    "roles": [],
+    "joinedAt": "2026-02-11"
+  },
+  {
+    "id": "glatt-consulting",
+    "slug": "glatt-consulting",
+    "name": "Glatt Consulting",
+    "type": "partner",
+    "description": "Fractional editorial leader for the hospitality ecosystem. Helping brands and trade media translate complex industry info into high-trust narratives that build market authority. Using deep industry access, crafting authentic points of view that ensure messages land and earn executive trust.",
+    "website": "https://www.jenglatt.com",
+    "location": "Wilmington, NC, USA",
+    "category": "Newsletter & Creator Brands",
+    "tags": [],
+    "socialLinks": {
+      "linkedin": "https://www.linkedin.com/in/jennifer-glatt"
+    },
+    "logo": "",
+    "roles": [],
+    "joinedAt": "2026-02-11"
+  },
+  {
+    "id": "sherpera",
+    "slug": "sherpera",
+    "name": "Sherpera",
+    "type": "partner",
+    "description": "Sherpera empowers luxury resorts and travel companies to take control of their data, AI, and technology to drive more direct bookings and revenue. Through strategic transformation, we help you reduce OTA dependency, enable conversational commerce, and create unforgettable guest experiences.",
+    "website": "https://www.sherpera.com",
+    "location": "Warwick, NY",
+    "category": "Strategic Transformation",
+    "tags": [
+      "Hotels"
+    ],
+    "socialLinks": {
+      "linkedin": "https://www.linkedin.com/in/peterladka/"
+    },
+    "logo": "https://drive.google.com/thumbnail?id=1vi39OIYDfwBruZxr_Es8wNnfEcyEeYZr&sz=w400",
+    "roles": [],
+    "joinedAt": "2026-02-11"
+  },
+  {
+    "id": "plumfind",
+    "slug": "plumfind",
+    "name": "Plumfind",
+    "type": "partner",
+    "description": "Plumfind is an analytics and applied AI company that has an in-depth understanding of the hospitality industry. We help hotels maximize revenue through conversion optimization and operational excellence.",
+    "website": "https://www.plumfind.com",
+    "location": "Montreal, Canada",
+    "category": "Analytics & AI",
+    "tags": [
+      "Hotels"
+    ],
+    "socialLinks": {
+      "linkedin": "https://www.linkedin.com/in/gurtuna/"
+    },
+    "logo": "https://drive.google.com/thumbnail?id=1csT0i4lzQUdi1lYni4jGmaIESxbcqQh6&sz=w400",
+    "roles": [],
+    "joinedAt": "2026-02-11"
+  },
+  {
+    "id": "santiagor",
+    "slug": "santiagor",
+    "name": "SantiagoR.com",
+    "type": "partner",
+    "description": "AI For Tourism & Talent Growth. How To AI For Tourism.",
+    "website": "https://www.santiagor.com",
+    "location": "Konigswinter, Germany",
+    "category": "Newsletter & Educator",
+    "tags": [
+      "Experiences"
+    ],
+    "socialLinks": {
+      "linkedin": "https://www.linkedin.com/in/srg/"
+    },
+    "logo": "https://drive.google.com/thumbnail?id=1g63d89jjseuKT8oaE8oQ10oSY_CfYeW2&sz=w400",
+    "roles": [],
+    "joinedAt": "2026-02-11"
+  },
+  {
+    "id": "the-bower-at-broulee",
+    "slug": "the-bower-at-broulee",
+    "name": "The Bower at Broulee",
+    "type": "operator",
+    "description": "Hide away in 100 acres of coastal forest at The Bower at Broulee, where five private luxury cabins let couples switch off, light the fire, soak in a double spa, and sleep deeply. Close to beaches and great food you leave calm, recharged, and reconnected. No kids, no noise, just nature and you. Pure.",
+    "website": "https://thebower.com.au",
+    "location": "Broulee, NSW, Australia",
+    "category": "Hotel",
+    "tags": [
+      "Hotels"
+    ],
+    "socialLinks": {},
+    "logo": "https://drive.google.com/thumbnail?id=14TAnZSJmO7x5KsYdoQLo1gOa5Q6VeVlm&sz=w400",
+    "roles": [],
+    "joinedAt": "2026-02-11"
+  },
+  {
+    "id": "jetquid",
+    "slug": "jetquid",
+    "name": "JetQuid",
+    "type": "partner",
+    "description": "Jetquid is an all-in-one business platform that helps properties and hospitality brands automate operations, manage bookings, and drive guest marketing from a single dashboard. It's designed to simplify workflows and boost growth for resorts, agencies, and multi-property groups.",
+    "website": "https://www.jetquid.com/",
+    "location": "Bengaluru, Karnataka, India",
+    "category": "Hospitality Platform",
+    "tags": [
+      "Hotels"
+    ],
+    "socialLinks": {
+      "linkedin": "https://www.linkedin.com/in/john-varghese-n/"
+    },
+    "logo": "https://drive.google.com/thumbnail?id=1CfB7EpXUZuOuf7pznPJohY79wOydd0MO&sz=w400",
+    "roles": [],
+    "joinedAt": "2026-02-12"
+  },
+  {
+    "id": "second-step",
+    "slug": "second-step",
+    "name": "Second Step",
+    "type": "partner",
+    "description": "We help hospitality and tourism businesses - including vacation rental brands, boutique properties, tour operators, hotels, and property managers - grow their digital presence and increase direct bookings through strategic analysis and optimization.",
+    "website": "https://www.getsecondstep.com",
+    "location": "India",
+    "category": "Digital Strategy",
+    "tags": [
+      "Hotels",
+      "Short Term Rentals"
+    ],
+    "socialLinks": {
+      "linkedin": "https://www.linkedin.com/in/shivendrarawat/"
+    },
+    "logo": "https://drive.google.com/thumbnail?id=1UtQlu1mjVlT7nr8VI7ycs380LM66JEPX&sz=w400",
+    "roles": [],
+    "joinedAt": "2026-02-12"
+  },
+  {
+    "id": "have-you-got",
+    "slug": "have-you-got",
+    "name": "Have You Got",
+    "type": "distribution",
+    "description": "Have You Got (HYG) is a booking and referral platform connecting travellers with professionally verified property managers. HYG promotes collaboration over competition, supporting local networks and plants 15 trees per booking, offering a more responsible, relationship-led way to travel and grow.",
+    "website": "https://haveyougot.com",
+    "location": "Global",
+    "category": "Booking & Referral Platform",
+    "tags": [
+      "Short Term Rentals"
+    ],
+    "socialLinks": {
+      "linkedin": "https://www.linkedin.com/in/deborah-labi-a7566a2b/"
+    },
+    "logo": "https://drive.google.com/thumbnail?id=1RRtRD3VbvEByhgMbEe0wnj344usfcpAJ&sz=w400",
+    "roles": [],
+    "joinedAt": "2026-02-12"
+  },
+  {
+    "id": "white-sky-hospitality",
+    "slug": "white-sky-hospitality",
+    "name": "White Sky Hospitality",
+    "type": "partner",
+    "description": "White Sky Hospitality helps ambitious hotel brands and management companies navigate today's complex distribution landscape. In an industry where over 80% of bookings are made online, we bring clarity to commercial strategy, optimise distribution channels, and develop teams that drive sustainable revenue growth.",
+    "website": "https://whiteskyhospitality.com/",
+    "location": "Oxfordshire, United Kingdom",
+    "category": "Distribution & Revenue Strategy",
+    "tags": [
+      "Hotels"
+    ],
+    "socialLinks": {
+      "linkedin": "https://www.linkedin.com/in/vineethpurushothaman/"
+    },
+    "logo": "",
+    "roles": [],
+    "joinedAt": "2026-02-12"
+  },
+  {
+    "id": "traveltechies",
+    "slug": "traveltechies",
+    "name": "TravelTechies",
+    "type": "partner",
+    "description": "TravelTechies works with travel-tech companies navigating change, uncertainty, or their next big leap. We bring experience from scrappy startups to $100M global operations - and we plug in as your temporary C-level partner to find what's stuck and get it moving.",
+    "website": "https://travel-techies.com/",
+    "location": "London, England / Tel-Aviv, Israel / Remote",
+    "category": "Travel-Tech Consultancy",
+    "tags": [],
+    "socialLinks": {
+      "linkedin": "https://www.linkedin.com/in/elad-leibovich/"
+    },
+    "logo": "",
+    "roles": [],
+    "joinedAt": "2026-02-12"
+  },
+  {
+    "id": "nature-meetings",
+    "slug": "nature-meetings",
+    "name": "Nature Meetings",
+    "type": "operator",
+    "description": "Nature Meetings delivers small-group guided walks in Madeira led by expert, engaging guides. Guests praise clear communication, safety, personalised pacing and rich insights into nature and culture. Reliable logistics and genuine human connection consistently turn scenic hikes into memorable experiences.",
+    "website": "https://www.naturemeetings.com",
+    "location": "Madeira, Portugal",
+    "category": "Activity Provider & Guide",
+    "tags": [
+      "Experiences"
+    ],
+    "socialLinks": {
+      "linkedin": "https://www.linkedin.com/in/andrewzino/"
+    },
+    "logo": "https://drive.google.com/thumbnail?id=1roJQL-Jfe1IoZyfkMPy4WepRLfOlYjwi&sz=w400",
+    "roles": [],
+    "joinedAt": "2026-02-12"
+  },
+  {
+    "id": "hyperfunnel",
+    "slug": "hyperfunnel",
+    "name": "Hyperfunnel",
+    "type": "partner",
+    "description": "We are building a voice AI travel agent for Samsung Smart TVs. Hotels, Cruise Lines and DMOs will be able to advertise to targeted consumers on the Samsung TV home-screen. Introducing a new supplier-friendly, profitable, transparent distribution channel for the travel industry on SmartTVs.",
+    "website": "https://hyperfunnel.ai",
+    "location": "Barcelona, Spain",
+    "category": "Voice AI & Distribution",
+    "tags": [
+      "Hotels"
+    ],
+    "socialLinks": {
+      "linkedin": "https://linkedin.com/in/ashwinkamlani"
+    },
+    "logo": "https://drive.google.com/thumbnail?id=1q9KLGzE2DTHkEB6iwaDZDoT8SwYV_0BH&sz=w400",
+    "roles": [],
+    "joinedAt": "2026-02-12"
+  },
+  {
+    "id": "strategy-cues",
+    "slug": "strategy-cues",
+    "name": "Strategy Cues",
+    "type": "partner",
+    "description": "Operating across 11+ countries, Strategy Cues powers revenue and operations for short-term rentals worldwide. Works closely with leadership teams to drive pricing, performance, and profitability through revenue management, onboarding and setup advisory, org restructuring, planning, and reputation management. Managing over 2,100+ active listings.",
+    "website": "https://strategycues.com/",
+    "location": "Dubai, UAE",
+    "category": "Revenue Management Consultancy",
+    "tags": [
+      "Short Term Rentals"
+    ],
+    "socialLinks": {
+      "linkedin": "https://www.linkedin.com/in/ishan-gangakhedkar-revenue/"
+    },
+    "logo": "https://drive.google.com/thumbnail?id=1l0uHm4Bl243ZGyI95VoNb6O7uwkgOkfq&sz=w400",
+    "roles": [],
+    "joinedAt": "2026-02-12"
+  },
+  {
+    "id": "araya-resort",
+    "slug": "araya-resort",
+    "name": "Araya Resort",
+    "type": "operator",
+    "description": "Overlooking the jungle with panoramic ocean views, Araya Resort is a boutique luxury retreat designed for connection, comfort, and celebration. A place to disconnect to reconnect. Private ocean view villas, an infinity pool, spa amenities, and sweeping twilight skies create an elevated Caribbean escape where adventure and serenity exist in perfect balance.",
+    "website": "https://arayaresort.com",
+    "location": "Las Galeras, Samana, Dominican Republic",
+    "category": "Hotel",
+    "tags": [
+      "Hotels"
+    ],
+    "socialLinks": {
+      "linkedin": "https://www.linkedin.com/in/deannaleecd/"
+    },
+    "logo": "https://drive.google.com/thumbnail?id=1GrqXbKgfpqVO2WV96ji87atE2xr0YaFg&sz=w400",
+    "roles": [],
+    "joinedAt": "2026-02-12"
+  },
+  {
+    "id": "smart-hotel",
+    "slug": "smart-hotel",
+    "name": "Smart Hotel",
+    "type": "partner",
+    "description": "Smarthotel is a hotel technology company that provides seamless software to streamline bookings, payments, websites and distribution for hoteliers. Trusted by thousands of properties globally, its tools help hotels boost direct bookings, save time and improve guest experiences through integrated, PMS-friendly solutions.",
+    "website": "https://www.smarthotel.nl/",
+    "location": "Utrecht, Netherlands",
+    "category": "Hotel Technology Platform",
+    "tags": [
+      "Hotels"
+    ],
+    "socialLinks": {
+      "linkedin": "https://www.linkedin.com/in/qvgazendam/"
+    },
+    "logo": "https://drive.google.com/thumbnail?id=1ZWTh4Pyl1exBDiPlg89Tt_cY06tq6ZPp&sz=w400",
+    "roles": [],
+    "joinedAt": "2026-02-12"
+  },
+  {
+    "id": "blaze",
+    "slug": "blaze",
+    "name": "Blaze",
+    "type": "partner",
+    "description": "Blaze is an innovative AI platform that instantly analyzes 100% of guest reviews content to deliver deep, strategic and actionable business intelligence for hoteliers to drive immediate improvement.",
+    "website": "https://www.blazereviews.co/hotels/",
+    "location": "Israel",
+    "category": "AI Review Analytics",
+    "tags": [
+      "Hotels"
+    ],
+    "socialLinks": {
+      "linkedin": "https://www.linkedin.com/in/lital-shpaner-564326120/"
+    },
+    "logo": "https://drive.google.com/thumbnail?id=13qCRa97d6qUtNIptA-YpI0PCrO2gZVoA&sz=w400",
+    "roles": [],
+    "joinedAt": "2026-02-12"
+  },
+  {
+    "id": "flip-to",
+    "slug": "flip-to",
+    "name": "Flip.to",
+    "type": "partner",
+    "description": "From inspiring a massive, new, right-fit audience with the help of past travelers, to sparking conversations with planners deciding where to go next\u2014Flip.to's out-of-the-box platform inspires growth, increases conversion, and tracks impact directly to revenue, all in real-time\u2014and that's just the start.",
+    "website": "https://www.flip.to",
+    "location": "Lake Mary, FL",
+    "category": "Traveler Engagement Platform",
+    "tags": [
+      "Hotels"
+    ],
+    "socialLinks": {
+      "linkedin": "https://www.linkedin.com/in/edward-st-onge-7b53735/"
+    },
+    "logo": "",
+    "roles": [],
+    "joinedAt": "2026-02-12"
+  },
+  {
+    "id": "spry-church-cozy-cottage",
+    "slug": "spry-church-cozy-cottage",
+    "name": "Spry Church Cozy Cottage",
+    "type": "operator",
+    "description": "Church and cottage rental in Lion's Head, Ontario.",
+    "website": "https://lionsheadbnb.ca/",
+    "location": "Lion's Head, Ontario, Canada",
+    "category": "Vacation Rental",
+    "tags": [
+      "Short Term Rentals"
+    ],
+    "socialLinks": {
+      "linkedin": "https://www.linkedin.com/in/tonymooncom/"
+    },
+    "logo": "",
+    "roles": [],
+    "joinedAt": "2026-02-12"
+  },
+  {
+    "id": "insiderbnb",
+    "slug": "insiderbnb",
+    "name": "InsiderBnb Inc.",
+    "type": "distribution",
+    "description": "InsiderBnb helps travelers searching on OTAs find verified direct booking info, to avoid fees. Copy a property's VRBO/Airbnb URL, paste it into InsiderBnb.com, and we output the host's website/info, if verified \u2014 book direct and avoid fees.",
+    "website": "https://insiderbnb.com",
+    "location": "Mendham, NJ, USA",
+    "category": "Direct Booking Discovery",
+    "tags": [
+      "Short Term Rentals"
+    ],
+    "socialLinks": {
+      "linkedin": "https://www.linkedin.com/in/markgavagan/"
+    },
+    "logo": "https://drive.google.com/thumbnail?id=1j5qwzkcyEwfRlO1XQtmJr25k60zmU61a&sz=w400",
+    "roles": [],
+    "joinedAt": "2026-02-12"
+  },
+  {
+    "id": "guestcentric",
+    "slug": "guestcentric",
+    "name": "Guestcentric",
+    "type": "partner",
+    "description": "Guestcentric enables hoteliers to run their hotel's entire online business from a single platform. Hypercommerce unifies your website, booking, distribution, payments, and marketing into one system. So you sell more direct, stay in control, and protect your brand. One platform. One logic. Real results.",
+    "website": "https://www.guestcentric.com",
+    "location": "New York, NY, USA",
+    "category": "Hypercommerce Platform",
+    "tags": [
+      "Hotels"
+    ],
+    "socialLinks": {
+      "linkedin": "https://www.linkedin.com/in/pcolaco/"
+    },
+    "logo": "https://drive.google.com/thumbnail?id=1x2GAeC7K4EBSLEQCuKRKeAdY8fD7v1Ht&sz=w400",
+    "roles": [],
+    "joinedAt": "2026-02-12"
+  },
+  {
+    "id": "ccn-group-flightclaimeu",
+    "slug": "ccn-group-flightclaimeu",
+    "name": "CCN Group FlightClaimEU",
+    "type": "partner",
+    "description": "Claims Corporation Network is a European insurance claims service provider. A technology-driven claims management company working with insurers, brokers, and large commercial clients to handle and process insurance claims. A third-party administrator (TPA) that helps insurance organizations streamline claim workflows and improve service delivery.",
+    "website": "https://www.claimscorpnetwork.com",
+    "location": "Amsterdam, Netherlands",
+    "category": "Claims Management Technology",
+    "tags": [],
+    "socialLinks": {
+      "linkedin": "https://www.linkedin.com/in/cees-werff-0b92861/"
+    },
+    "logo": "https://drive.google.com/thumbnail?id=17GvVyAo7s7GKjeLFR8DdtkE2hLfAz2bk&sz=w400",
+    "roles": [],
+    "joinedAt": "2026-02-12"
+  },
+  {
+    "id": "nokumo",
+    "slug": "nokumo",
+    "name": "Nokumo",
+    "type": "partner",
+    "description": "Nokumo is a cloud-based Property Management System (PMS), Channel Manager (CM) and Online Booking Engine (OBE) designed specifically for the hospitality industry - including hotels, travel agencies, and short-term rental operators. Our platform helps businesses streamline daily operations, automate administrative tasks, and grow revenue, all from one intuitive system.",
+    "website": "https://www.nokumo.net",
+    "location": "Croatia",
+    "category": "PMS & Channel Manager",
+    "tags": [
+      "Hotels",
+      "Short Term Rentals"
+    ],
+    "socialLinks": {
+      "linkedin": "https://www.linkedin.com/in/darioalfirevic/"
+    },
+    "logo": "https://drive.google.com/thumbnail?id=1yJtF3LqFflWbZqzk78RL0foCLflA2Gvr&sz=w400",
+    "roles": [],
+    "joinedAt": "2026-02-12"
+  },
+  {
+    "id": "adchieve",
+    "slug": "adchieve",
+    "name": "Adchieve",
+    "type": "partner",
+    "description": "Google Hotel Ads, AI and Automation. Hotel marketing platform.",
+    "website": "https://www.adchieve.com",
+    "location": "Den Bosch, Netherlands",
+    "category": "Hotel Marketing Platform",
+    "tags": [
+      "Hotels"
+    ],
+    "socialLinks": {
+      "linkedin": "https://nl.linkedin.com/in/markvanwerven"
+    },
+    "logo": "https://drive.google.com/thumbnail?id=1YqbCLHPZaKFbX6ZrDxhOoteQt2A5Oe7H&sz=w400",
+    "roles": [],
+    "joinedAt": "2026-02-12"
+  },
+  {
+    "id": "travelnet",
+    "slug": "travelnet",
+    "name": "TravelNet",
+    "type": "partner",
+    "description": "Turn every traveler you already touch into reusable direct demand. Capture consented traveler leads at your touchpoints, exchange likely non-returners for matched new travelers across the Alliance, and convert direct earlier in the journey.",
+    "website": "https://travelnet.biz/",
+    "location": "Worldwide",
+    "category": "Traveler Lead Exchange",
+    "tags": [],
+    "socialLinks": {
+      "linkedin": "https://www.linkedin.com/in/traveldudes/"
+    },
+    "logo": "https://drive.google.com/thumbnail?id=1vzIMZwrCj3w-Je-9-wyqvrsLYbJXiQ0w&sz=w400",
+    "roles": [],
+    "joinedAt": "2026-02-12"
+  },
+  {
+    "id": "travel-dudes",
+    "slug": "travel-dudes",
+    "name": "Travel Dudes",
+    "type": "creator",
+    "description": "Travelers visit Travel Dudes for finding more advice and to help other travelers to explore the world. And we can promote you exclusively via guest posting - uncommercial travel tips - pushing direct bookings.",
+    "website": "https://traveldudes.com/",
+    "location": "Worldwide",
+    "category": "Publisher & Creator Brands",
+    "tags": [
+      "Experiences"
+    ],
+    "socialLinks": {
+      "linkedin": "https://www.linkedin.com/in/traveldudes/"
+    },
+    "logo": "https://drive.google.com/thumbnail?id=12zvZj2a0-KSC-qJBlK1XcQiUDyJk9tK7&sz=w400",
+    "roles": [],
+    "joinedAt": "2026-02-12"
+  },
+  {
+    "id": "xo-hotels",
+    "slug": "xo-hotels",
+    "name": "XO Hotels",
+    "type": "operator",
+    "description": "XO Hotels, your best hotels in Amsterdam.",
+    "website": "https://www.xohotels.com",
+    "location": "Amsterdam, the Netherlands",
+    "category": "Hotel",
+    "tags": [
+      "Hotels"
+    ],
+    "socialLinks": {
+      "linkedin": "https://www.linkedin.com/in/angelina-motzo-72a4aa12/"
+    },
+    "logo": "https://drive.google.com/thumbnail?id=1qVw8R4QyJmlNj8a5AgDuX_J5D7jQg2fr&sz=w400",
+    "roles": [],
+    "joinedAt": "2026-02-12"
+  },
+  {
+    "id": "gumo",
+    "slug": "gumo",
+    "name": "Gumo",
+    "type": "distribution",
+    "description": "AI Travel Assistant helping consumers book direct.",
+    "website": "https://gumo.me/chat",
+    "location": "Bangalore, India",
+    "category": "AI Travel Assistant",
+    "tags": [],
+    "socialLinks": {
+      "linkedin": "https://www.linkedin.com/in/shakirmohammad/"
+    },
+    "logo": "https://drive.google.com/thumbnail?id=1HAg6Fy-F6P29W9gBb4InNf81pXAJ7k2_&sz=w400",
+    "roles": [],
+    "joinedAt": "2026-02-12"
+  },
+  {
+    "id": "seasonal-properties",
+    "slug": "seasonal-properties",
+    "name": "Seasonal Properties",
+    "type": "distribution",
+    "description": "At its core, Seasonal Properties is about redefining how real estate and hospitality come together. It supports local economies, aligns with destination partners, and encourages a balanced approach to tourism that respects residents while still welcoming global travellers. A scalable platform featuring member benefits, owner portals, referral programs, and advanced digital experiences.",
+    "website": "https://www.seasonalproperties.com",
+    "location": "The Blue Mountains, Ontario",
+    "category": "Seasonal Property Platform",
+    "tags": [
+      "Short Term Rentals"
+    ],
+    "socialLinks": {
+      "linkedin": "https://www.linkedin.com/in/sean-landreth-6a181522/"
+    },
+    "logo": "https://drive.google.com/thumbnail?id=1x2U2a5kFuvrvPx4QETl4iWnLJdJQYin0&sz=w400",
+    "roles": [],
+    "joinedAt": "2026-02-12"
+  },
+  {
+    "id": "regiohotel-group",
+    "slug": "regiohotel-group",
+    "name": "Regiohotel Group",
+    "type": "operator",
+    "description": "Regiohotel Group is a hotel operator based in Germany.",
+    "website": "https://regiohotel.de",
+    "location": "Germany",
+    "category": "Hotel",
+    "tags": [
+      "Hotels"
+    ],
+    "socialLinks": {
+      "linkedin": "https://www.linkedin.com/in/johannes-pf%C3%BCtzner-160727170/"
+    },
+    "logo": "https://drive.google.com/thumbnail?id=1__CQtZ1mXZUnp62n4m_j6sij11Pi03h1&sz=w400",
+    "roles": [],
+    "joinedAt": "2026-02-12"
+  },
+  {
+    "id": "agentic-hospitality",
+    "slug": "agentic-hospitality",
+    "name": "Agentic Hospitality",
+    "type": "partner",
+    "description": "Agentic Hospitality is an AI-native cloud platform for hotels that turns fragmented property data into structured, machine-readable distribution. We power direct bookings, AI visibility, and conversion optimization through Model Context Protocol, structured markup, and agentic booking workflows.",
+    "website": "https://www.agentichospitality.com/",
+    "location": "Louisville, United States",
+    "category": "AI Distribution Platform",
+    "tags": [
+      "Hotels"
+    ],
+    "socialLinks": {
+      "linkedin": "https://www.linkedin.com/company/agentic-hospitality/"
+    },
+    "logo": "https://drive.google.com/thumbnail?id=1gwSpTT8pGVws-00dVJOvvjVPXBjw_tBQ&sz=w400",
+    "roles": [],
+    "joinedAt": "2026-02-12"
+  },
+  {
+    "id": "internet-of-travel",
+    "slug": "internet-of-travel",
+    "name": "Internet of Travel",
+    "type": "partner",
+    "description": "Digital travel distribution provider that enables state-level travel stakeholders the ability to operate as their own OTA.",
+    "website": "https://www.internetoftravel.com",
+    "location": "San Mateo, CA",
+    "category": "Travel Distribution Infrastructure",
+    "tags": [
+      "Hotels"
+    ],
+    "socialLinks": {
+      "linkedin": "https://www.linkedin.com/in/chris-edwards-14094a8/"
+    },
+    "logo": "https://drive.google.com/thumbnail?id=1oed1n3bsLDycuP8RA3xeiuwnFrPPZQK1&sz=w400",
+    "roles": [],
+    "joinedAt": "2026-02-13"
+  },
+  {
+    "id": "lighthouse",
+    "slug": "lighthouse",
+    "name": "Lighthouse",
+    "type": "partner",
+    "description": "Lighthouse is the technology platform that turns data complexity into revenue growth. We give you the power to discover hidden insights, capture missed opportunities, and move faster while working smarter.",
+    "website": "https://www.mylighthouse.com/",
+    "location": "Berlin",
+    "category": "Data & Revenue Platform",
+    "tags": [
+      "Hotels"
+    ],
+    "socialLinks": {
+      "linkedin": "https://www.linkedin.com/in/philipp-stelzer-4b716b84/"
+    },
+    "logo": "https://drive.google.com/thumbnail?id=1ulSpPfA-G05PU_VOHrSQMaZ83CoVDyh0&sz=w400",
+    "roles": [],
+    "joinedAt": "2026-02-13"
+  },
+  {
+    "id": "kismet",
+    "slug": "kismet",
+    "name": "Kismet",
+    "type": "partner",
+    "description": "Kismet is the AI commerce platform for hotels. We give each property its own AI-ready identity\u2014content, real-time rates, loyalty, and personalization\u2014so you're discovered for what makes you distinctive, not reduced to a rate in a shared feed. Your brand. Your guest. Your booking.",
+    "website": "https://kismet.travel",
+    "location": "New York City, US",
+    "category": "AI Commerce Platform",
+    "tags": [
+      "Hotels"
+    ],
+    "socialLinks": {
+      "linkedin": "https://www.linkedin.com/in/jasoncincotta/"
+    },
+    "logo": "https://drive.google.com/thumbnail?id=161zv9M7kh-237O09nB1WGjy5LNtJKiLQ&sz=w400",
+    "roles": [],
+    "joinedAt": "2026-02-13"
+  },
+  {
+    "id": "go-visible-online",
+    "slug": "go-visible-online",
+    "name": "go visible online GmbH",
+    "type": "partner",
+    "description": "Helping hotels and tourism schools integrate artificial intelligence into their day-to-day marketing. With more than 20 years of experience in tourism, travel tech, and communication, turning complex concepts into practical training through workshops, classes, courses, and masterclasses.",
+    "website": "https://govisibleonline.com",
+    "location": "Germany",
+    "category": "AI & Marketing Training",
+    "tags": [
+      "Hotels"
+    ],
+    "socialLinks": {
+      "linkedin": "https://www.linkedin.com/in/maria-corpas/"
+    },
+    "logo": "https://drive.google.com/thumbnail?id=1T8MtXCZM_rKJDNqunn8I5QpJqgvAfVmA&sz=w400",
+    "roles": [],
+    "joinedAt": "2026-02-13"
+  },
+  {
+    "id": "market-movers",
+    "slug": "market-movers",
+    "name": "Market Movers LLC.",
+    "type": "partner",
+    "description": "Market Movers Travel is where \u201cwe should really fix our marketing\u201d turns into \u201coh wow, bookings are easier now.\u201d We clean up your data, connect your systems, and build a direct-booking engine that works in the scroll-to-stay world (and the AI one coming fast).",
+    "website": "https://marketmovers.travel/",
+    "location": "Huntsville, Alabama",
+    "category": "Marketing & Data Strategy",
+    "tags": [
+      "Hotels",
+      "Short Term Rentals"
+    ],
+    "socialLinks": {
+      "linkedin": "https://www.linkedin.com/in/sarahastahl/"
+    },
+    "logo": "https://drive.google.com/thumbnail?id=1_54VtYsaSink4_rV5d8lUoTi2MDCeMa8&sz=w400",
+    "roles": [],
+    "joinedAt": "2026-02-13"
+  },
+  {
+    "id": "ahmed-emmanuel",
+    "slug": "ahmed-emmanuel",
+    "name": "Ahmed Emmanuel",
+    "type": "partner",
+    "description": "Expert in boosting rental income, attracting more bookings, and reducing the stress of day-to-day management. Specializing in lead generation, vacation rental co-hosting, and real estate virtual assistance, streamlining operations, increasing occupancy rates, and maximizing profits.",
+    "website": "",
+    "location": "Nigeria",
+    "category": "Vacation Rental Co-hosting",
+    "tags": [
+      "Short Term Rentals"
+    ],
+    "socialLinks": {
+      "linkedin": "https://www.linkedin.com/in/ahmed-emmanuel-lare-str-va"
+    },
+    "logo": "",
+    "roles": [],
+    "joinedAt": "2026-02-13"
+  },
+  {
+    "id": "hichee",
+    "slug": "hichee",
+    "name": "HiChee",
+    "type": "distribution",
+    "description": "HiChee.com is an online meta-search platform that aggregates vacation rental listings from major platforms like Airbnb, Vrbo, and Booking.com for price comparison. The service provides comprehensive price comparisons, including taxes and fees, and sometimes enables direct booking. Operating worldwide and supporting multiple currencies, HiChee offers a Chrome Extension and a \u201cTrip List\u201d feature.",
+    "website": "https://hichee.com/",
+    "location": "Paia, Hawaii, USA",
+    "category": "Meta-Search & Price Comparison",
+    "tags": [
+      "Short Term Rentals"
+    ],
+    "socialLinks": {
+      "linkedin": "https://www.linkedin.com/in/railsonmaui/"
+    },
+    "logo": "https://drive.google.com/thumbnail?id=1TXCHIv-eEP3f2H3WQDGwYu7DE_LYcHbr&sz=w400",
+    "roles": [],
+    "joinedAt": "2026-02-13"
+  },
+  {
+    "id": "knokx",
+    "slug": "knokx",
+    "name": "KNOKX",
+    "type": "partner",
+    "description": "The all-in-one direct booking website and lead generation tool, seamlessly integrated with the industry's best property management and marketing software. Designed to help fast-track your growth, maximize revenue, and fulfill every host's dream of securing commission-free direct bookings.",
+    "website": "https://www.knokx.com",
+    "location": "Orlando, FL USA",
+    "category": "Direct Booking Platform",
+    "tags": [
+      "Short Term Rentals"
+    ],
+    "socialLinks": {
+      "linkedin": "https://www.linkedin.com/in/jerold-gamarra-3923731a/"
+    },
+    "logo": "https://drive.google.com/thumbnail?id=1jtrDcfTdxFbqvJGy7GiKRq0XMnGL7A3c&sz=w400",
+    "roles": [],
+    "joinedAt": "2026-02-13"
+  },
+  {
+    "id": "zeevou",
+    "slug": "zeevou",
+    "name": "Zeevou",
+    "type": "partner",
+    "description": "Zeevou is the go-to platform for STR operators looking to reduce their reliance on OTAs and save on commissions by boosting their direct bookings up to 75%, while reducing the time spent on repetitive tasks and eliminating human error. Zeevou also offers property managers tools to help diversify their revenue streams beyond just selling short term accommodation.",
+    "website": "https://zeevou.com/",
+    "location": "United Kingdom",
+    "category": "PMS & Direct Booking Platform",
+    "tags": [
+      "Short Term Rentals"
+    ],
+    "socialLinks": {
+      "linkedin": "https://www.linkedin.com/in/naimanispayman/"
+    },
+    "logo": "https://drive.google.com/thumbnail?id=1WHLuPJcC6SznsFlIC5icymQNnglqZtl-&sz=w400",
+    "roles": [],
+    "joinedAt": "2026-02-13"
+  },
+  {
+    "id": "awc",
+    "slug": "awc",
+    "name": "AWC (home of kahani)",
+    "type": "partner",
+    "description": "A creative storytelling agency for the hospitality industry, based in the UK. Our signature framework \u201ckahani\u201d is the first in the country that helps brands get found by AI search tools via strategic GEO - and chosen by humans, through compelling storytelling.",
+    "website": "https://www.artwork-creative.com",
+    "location": "Malvern, United Kingdom",
+    "category": "Creator Brands",
+    "tags": [
+      "Hotels"
+    ],
+    "socialLinks": {
+      "linkedin": "https://www.linkedin.com/in/neelykhan/"
+    },
+    "logo": "https://drive.google.com/thumbnail?id=1JR2dex_tPfjgtMewI2jVeTUmbYXOJa9Z&sz=w400",
+    "roles": [],
+    "joinedAt": "2026-02-13"
+  },
+  {
+    "id": "maison-labs",
+    "slug": "maison-labs",
+    "name": "Maison Labs",
+    "type": "partner",
+    "description": "Maison provides an AI-powered conversational commerce solution that enables guests to access real-time availability, rates, and property information through natural language interactions. Its content curation tools help hotels organize, validate, and structure their content so it is accurate, consistent, and ready to be consumed by AI agents.",
+    "website": "https://maison.cx",
+    "location": "Brooklyn, New York",
+    "category": "AI Conversational Commerce",
+    "tags": [
+      "Hotels"
+    ],
+    "socialLinks": {
+      "linkedin": "https://www.linkedin.com/in/jory-garcia/"
+    },
+    "logo": "https://drive.google.com/thumbnail?id=1L_MXVkpeIC3KOL1g6nB-G3Uqf8o2b1No&sz=w400",
+    "roles": [],
+    "joinedAt": "2026-02-13"
+  },
+  {
+    "id": "vosant-meetings",
+    "slug": "vosant-meetings",
+    "name": "Vosant Meetings and Travel LLC",
+    "type": "partner",
+    "description": "We enhance your ability to deliver meaningful experiences \u2014 for your guests, your clients, and your travelers. We support hotels, travel agencies, and small hospitality brands with the operational and technological expertise needed to streamline workflows, improve customer experience, and deliver standout service.",
+    "website": "https://www.vosantmeetings.com",
+    "location": "USA",
+    "category": "Hospitality Technology Consulting",
+    "tags": [
+      "Hotels"
+    ],
+    "socialLinks": {
+      "linkedin": "https://www.linkedin.com/in/arielmweinshanker/"
+    },
+    "logo": "https://drive.google.com/thumbnail?id=1yeHk2OttF5NFN_NtHULS5xiNfGcsYt1h&sz=w400",
+    "roles": [],
+    "joinedAt": "2026-02-13"
+  },
+  {
+    "id": "living-las-canteras-homes",
+    "slug": "living-las-canteras-homes",
+    "name": "Living Las Canteras Homes",
+    "type": "operator",
+    "description": "A holiday home management company 100% dedicated to Playa Las Canteras, Gran Canaria. Offering top-quality services with a highly professional and entirely local team from Las Palmas de Gran Canaria.",
+    "website": "https://www.livinglascanteras.com",
+    "location": "Las Palmas de Gran Canaria, Canary Islands (Spain)",
+    "category": "Holiday Home Management",
+    "tags": [
+      "Short Term Rentals"
+    ],
+    "socialLinks": {
+      "linkedin": "https://www.linkedin.com/in/juanbetancor/"
+    },
+    "logo": "https://drive.google.com/thumbnail?id=10qDfuYQZlfufrmxiqcZZfiepbQvE2wfE&sz=w400",
+    "roles": [],
+    "joinedAt": "2026-02-13"
+  }
+]
